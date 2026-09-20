@@ -48,7 +48,7 @@ test("tablet and mobile galleries use a horizontal photo carousel", () => {
   assert.match(gallerySource, /max-\[1023px\]:hidden/);
   assert.match(gallerySource, /FeaturedProjectsMobileCarousel/);
   assert.match(mobileCarouselSource, /overflow-x-auto/);
-  assert.match(mobileCarouselSource, /snap-x snap-mandatory/);
+  assert.match(mobileCarouselSource, /snap-x snap-mandatory/);\n  assert.match(mobileCarouselSource, /h-\\[500px\\] w-\\[300px\\]/);\n  assert.match(mobileCarouselSource, /gap-\\[24px\\]/);\n  assert.match(mobileCarouselSource, /data-featured-gallery-carousel-group/);\n  assert.match(mobileCarouselSource, /<MainLogo/);
   assert.match(mobileCarouselSource, /data-featured-gallery-carousel/);
   assert.doesNotMatch(mobileCarouselSource, /onClick/);
 });
