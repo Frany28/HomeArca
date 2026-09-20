@@ -178,14 +178,28 @@ function createFeaturedProjectsController({
       return null;
     }
 
-    const viewportRect = scroller.getBoundingClientRect();
-    const currentRect = projectPanels[currentIndex].getBoundingClientRect();
-    const projectedDistance = Math.max(0, direction * travelDistance);
-    const reachedEdge = direction > 0
-      ? currentRect.bottom <= viewportRect.bottom +
-        FEATURED_PROJECT_EDGE_TOLERANCE_PX + projectedDistance
-      : currentRect.top >= viewportRect.top -
-        FEATURED_PROJECT_EDGE_TOLERANCE_PX - projectedDistance;
+    const expansionEnabled = isExpansionEnabled();
+    let reachedEdge = false;
+
+    if (!expansionEnabled) {
+      const bounds = getPanelScrollBounds(projectPanels[currentIndex]);
+      if (!bounds) return null;
+
+      reachedEdge = direction > 0
+        ? scroller.scrollTop >= bounds.end - FEATURED_PROJECT_EDGE_TOLERANCE_PX
+        : scroller.scrollTop <= bounds.start + FEATURED_PROJECT_EDGE_TOLERANCE_PX;
+    } else {
+      const viewportRect = scroller.getBoundingClientRect();
+      const currentRect = projectPanels[currentIndex].getBoundingClientRect();
+      const projectedDistance = Math.max(0, direction * travelDistance);
+
+      reachedEdge = direction > 0
+        ? currentRect.bottom <= viewportRect.bottom +
+          FEATURED_PROJECT_EDGE_TOLERANCE_PX + projectedDistance
+        : currentRect.top >= viewportRect.top -
+          FEATURED_PROJECT_EDGE_TOLERANCE_PX - projectedDistance;
+    }
+
     if (!reachedEdge) return null;
 
     const nextPanel = projectPanels[nextIndex];
