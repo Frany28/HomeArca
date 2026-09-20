@@ -7,6 +7,12 @@ const ICON_ANIMATION = {
   opacity: [0.7, 1, 0.7, 0.7],
   y: [0, 6, 0, 0],
 };
+const HINT_INITIAL_STATE = { opacity: 0, y: 12 };
+const HINT_ANIMATION = { opacity: 1, y: 0 };
+const HINT_TRANSITION = {
+  duration: 0.6,
+  ease: [0.22, 1, 0.36, 1],
+};
 const ICON_TRANSITION = {
   opacity: {
     duration: 2,
@@ -25,14 +31,16 @@ const ICON_TRANSITION = {
 const SCROLL_HINT_VARIANTS = {
   centered: {
     className:
-      "top-1/2 left-1/2 w-[279px] -translate-x-1/2 items-center gap-[16px] p-[56px]",
+      "top-1/2 left-1/2 w-[279px] -translate-x-1/2 p-[56px]",
+    contentClassName: "items-center gap-[16px]",
     iconNodeId: "5074:27095",
     rootNodeId: "5074:27083",
     textNodeId: "5074:27084",
   },
   edge: {
     className:
-      "right-[51px] bottom-[51px] size-[144px] items-end gap-[16px] p-[56px]",
+      "right-[51px] bottom-[51px] size-[144px] p-[56px]",
+    contentClassName: "items-end gap-[16px]",
     iconNodeId: "5169:16283",
     rootNodeId: "5169:16271",
   },
@@ -47,28 +55,35 @@ function HomeScrollHint({ variant = "centered" }) {
       className={`pointer-events-none absolute z-[6] flex flex-col justify-center text-[var(--color-neutral-100-uniform)] ${variantConfig.className}`}
       data-node-id={variantConfig.rootNodeId}
     >
-      {variantConfig.textNodeId && (
-        <p
-          className="text-body-1 m-0 shrink-0 whitespace-nowrap"
-          data-node-id={variantConfig.textNodeId}
-        >
-          Desliza para ver más
-        </p>
-      )}
       <Motion.div
-        className="relative size-[32px] shrink-0"
-        data-node-id={variantConfig.iconNodeId}
-        data-name="icons/scroll-down"
-        initial={reduceMotion ? false : ICON_INITIAL_STATE}
-        animate={reduceMotion ? undefined : ICON_ANIMATION}
-        transition={reduceMotion ? undefined : ICON_TRANSITION}
-        style={reduceMotion ? { opacity: 0.7 } : undefined}
+        className={`flex flex-col ${variantConfig.contentClassName}`}
+        initial={reduceMotion ? false : HINT_INITIAL_STATE}
+        animate={reduceMotion ? undefined : HINT_ANIMATION}
+        transition={reduceMotion ? undefined : HINT_TRANSITION}
       >
-        <img
-          src={scrollDownIcon}
-          alt=""
-          className="absolute inset-0 block size-full max-w-none"
-        />
+        {variantConfig.textNodeId && (
+          <p
+            className="text-body-1 m-0 shrink-0 whitespace-nowrap"
+            data-node-id={variantConfig.textNodeId}
+          >
+            Desliza para ver más
+          </p>
+        )}
+        <Motion.div
+          className="relative size-[32px] shrink-0"
+          data-node-id={variantConfig.iconNodeId}
+          data-name="icons/scroll-down"
+          initial={reduceMotion ? false : ICON_INITIAL_STATE}
+          animate={reduceMotion ? undefined : ICON_ANIMATION}
+          transition={reduceMotion ? undefined : ICON_TRANSITION}
+          style={reduceMotion ? { opacity: 0.7 } : undefined}
+        >
+          <img
+            src={scrollDownIcon}
+            alt=""
+            className="absolute inset-0 block size-full max-w-none"
+          />
+        </Motion.div>
       </Motion.div>
     </div>
   );
