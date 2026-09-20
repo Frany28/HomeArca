@@ -1,4 +1,5 @@
 import HomeHeroTitle from "../HomeHeroTitle/HomeHeroTitle.jsx";
+import HomeScrollHint from "../HomeScrollHint/HomeScrollHint.jsx";
 
 function HomeScrollPanel({
   captionDescriptionNodeId,
@@ -8,6 +9,7 @@ function HomeScrollPanel({
   image,
   imageAlt,
   projectName,
+  showScrollHint = false,
   title,
   titleVisible = false,
   onTitleRevealComplete,
@@ -38,6 +40,7 @@ function HomeScrollPanel({
         visible={titleVisible}
         onRevealComplete={onTitleRevealComplete}
       />
+      {showScrollHint && <HomeScrollHint />}
     </section>
   );
 }

@@ -18,6 +18,7 @@ function HomeSections({
         <HomeScrollPanel
           key={panel.title}
           {...panel}
+          showScrollHint={panelIndex === 0}
           onTitleRevealComplete={() => {
             onTitleRevealComplete?.(panelIndex);
             if (panelIndex === 0) onInitialTitleReveal?.();
