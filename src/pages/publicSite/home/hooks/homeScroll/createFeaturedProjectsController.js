@@ -353,6 +353,45 @@ function createFeaturedProjectsController({
     });
   };
 
+  const pinMobileProjectBoundary = () => {
+    if (
+      activeSectionRef.current !== "featured-projects" ||
+      isExpansionEnabled() ||
+      runtime.activeTween ||
+      runtime.isProgrammaticScroll
+    ) {
+      return false;
+    }
+
+    const projectPanels = getProjectPanels();
+    const currentIndex = activeFeaturedProjectIndexRef.current;
+    const bounds = getPanelScrollBounds(projectPanels[currentIndex]);
+
+    if (!bounds) return false;
+
+    const hasPreviousProject = currentIndex > 0;
+    const hasNextProject = currentIndex < projectPanels.length - 1;
+
+    let pinnedScrollTop = null;
+
+    if (
+      hasPreviousProject &&
+      scroller.scrollTop < bounds.start - FEATURED_PROJECT_EDGE_TOLERANCE_PX
+    ) {
+      pinnedScrollTop = bounds.start;
+    } else if (
+      hasNextProject &&
+      scroller.scrollTop > bounds.end + FEATURED_PROJECT_EDGE_TOLERANCE_PX
+    ) {
+      pinnedScrollTop = bounds.end;
+    }
+
+    if (pinnedScrollTop === null) return false;
+
+    scroller.scrollTop = pinnedScrollTop;
+    return true;
+  };
+
   const pinExpansion = () => {
     if (reduceMotion || activeSectionRef.current !== "featured-projects") return false;
     const projectPanels = getProjectPanels();
@@ -623,6 +662,7 @@ function createFeaturedProjectsController({
   isImageProject,
   isProcessReturnGestureLocked,
   pinExpansion,
+  pinMobileProjectBoundary,
   prepareForScrollbarNavigation,
   resetNavigationState,
   setExpansionProgress,
