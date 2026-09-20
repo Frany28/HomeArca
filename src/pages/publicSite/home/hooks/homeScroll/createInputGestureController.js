@@ -29,7 +29,8 @@ function isInteractiveTarget(target) {
   );
 }
 
-const FEATURED_TOUCH_SWIPE_THRESHOLD_PX = 28;
+const FEATURED_TOUCH_SWIPE_THRESHOLD_PX = 18;
+const FEATURED_TOUCH_TRANSITION_BUFFER_PX = 72;
 
 function createInputGestureController({
   titleRevealLockedRef,
@@ -547,7 +548,7 @@ function createInputGestureController({
 
       const projectTransition = coordination.featured.getProjectTransition(
         direction,
-        absoluteVerticalDistance,
+        absoluteVerticalDistance + FEATURED_TOUCH_TRANSITION_BUFFER_PX,
       );
       if (projectTransition) {
         touchGesture.consumed = true;
