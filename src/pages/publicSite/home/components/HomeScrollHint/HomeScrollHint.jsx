@@ -25,7 +25,7 @@ const ICON_TRANSITION = {
 const SCROLL_HINT_VARIANTS = {
   centered: {
     className:
-      "top-1/2 left-1/2 w-[279px] -translate-x-1/2 -translate-y-1/2 items-center gap-[16px] p-[56px]",
+      "top-1/2 left-1/2 w-[279px] -translate-x-1/2 items-center gap-[16px] p-[56px]",
     iconNodeId: "5074:27095",
     rootNodeId: "5074:27083",
     textNodeId: "5074:27084",

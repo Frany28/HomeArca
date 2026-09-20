@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import HomeHeroTitle from "../HomeHeroTitle/HomeHeroTitle.jsx";
 import HomeScrollHint from "../HomeScrollHint/HomeScrollHint.jsx";
 
@@ -14,6 +16,19 @@ function HomeScrollPanel({
   titleVisible = false,
   onTitleRevealComplete,
 }) {
+  const [scrollHintVisible, setScrollHintVisible] = useState(false);
+
+  useEffect(() => {
+    if (!titleVisible) {
+      setScrollHintVisible(false);
+    }
+  }, [titleVisible]);
+
+  const handleTitleRevealComplete = () => {
+    setScrollHintVisible(true);
+    onTitleRevealComplete?.();
+  };
+
   return (
     <section
       className="relative h-dvh w-full shrink-0 overflow-hidden bg-[var(--color-neutral-950-uniform)]"
@@ -38,9 +53,11 @@ function HomeScrollPanel({
         projectName={projectName}
         title={title}
         visible={titleVisible}
-        onRevealComplete={onTitleRevealComplete}
+        onRevealComplete={handleTitleRevealComplete}
       />
-      {scrollHintVariant && <HomeScrollHint variant={scrollHintVariant} />}
+      {scrollHintVariant && titleVisible && scrollHintVisible && (
+        <HomeScrollHint variant={scrollHintVariant} />
+      )}
     </section>
   );
 }
