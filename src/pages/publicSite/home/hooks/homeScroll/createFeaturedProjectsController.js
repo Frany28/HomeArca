@@ -58,7 +58,11 @@ function createFeaturedProjectsController({
   const getProjectPanels = (section = getSection()) =>
     section ? [...section.querySelectorAll(FEATURED_PROJECT_SELECTOR)] : [];
   const isImageProject = (index, projectPanels = getProjectPanels()) =>
-    Boolean(projectPanels[index]?.querySelector?.(FEATURED_IMAGE_GALLERY_SELECTOR));
+    Boolean(
+      projectPanels[index]?.querySelector?.(FEATURED_IMAGE_GALLERY_SELECTOR) &&
+      !(typeof window !== "undefined" &&
+        window.matchMedia?.("(max-width: 1023px)").matches),
+    );
   const getExpansionProgress = (index) => expansionProgress[index]?.get() ?? 0;
   const getExpansionTarget = (index) => expansionTargets[index] ?? 0;
 

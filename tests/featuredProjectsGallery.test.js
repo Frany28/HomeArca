@@ -9,6 +9,13 @@ const gallerySource = readFileSync(
   ),
   "utf8",
 );
+const mobileCarouselSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/featuredProjects/components/FeaturedProjectsMobileCarousel.jsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
 const processGridSource = readFileSync(
   new URL(
     "../src/pages/publicSite/processes/components/ProcessesVideoGrid.jsx",
@@ -34,6 +41,16 @@ test("image galleries keep their bento layout but are no longer interactive view
   assert.doesNotMatch(gallerySource, /onClick=/);
   assert.doesNotMatch(gallerySource, /activeImage|selectedImage|isClosing/);
   assert.doesNotMatch(gallerySource, /role="dialog"|aria-modal/);
+});
+
+test("tablet and mobile galleries use a horizontal photo carousel", () => {
+  assert.match(gallerySource, /max-\[1023px\]:h-\[360px\]/);
+  assert.match(gallerySource, /max-\[1023px\]:hidden/);
+  assert.match(gallerySource, /FeaturedProjectsMobileCarousel/);
+  assert.match(mobileCarouselSource, /overflow-x-auto/);
+  assert.match(mobileCarouselSource, /snap-x snap-mandatory/);
+  assert.match(mobileCarouselSource, /data-featured-gallery-carousel/);
+  assert.doesNotMatch(mobileCarouselSource, /onClick/);
 });
 
 test("the bento scrubs through a reversible GSAP Flip layout", () => {

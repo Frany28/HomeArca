@@ -9,6 +9,13 @@ const panelSource = readFileSync(
   ),
   "utf8",
 );
+const controllerSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/home/hooks/homeScroll/createFeaturedProjectsController.js",
+    import.meta.url,
+  ),
+  "utf8",
+);
 
 test("Muelle Zulima and Apto. JC use the shared featured-project flow", () => {
   assert.match(panelSource, /data-featured-next-project/);
@@ -25,4 +32,5 @@ test("Muelle Zulima and Apto. JC use the shared featured-project flow", () => {
   assert.match(panelSource, /muelle-zulima-6\.webp/);
   assert.match(panelSource, /apto-jc-6\.webp/);
   assert.match(panelSource, /export \{ APTO_JC_PROJECT \}/);
+  assert.match(controllerSource, /matchMedia\?\.\("\(max-width: 1023px\)"\)/);
 });

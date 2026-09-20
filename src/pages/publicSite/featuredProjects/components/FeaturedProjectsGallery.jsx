@@ -6,6 +6,7 @@ import { Flip } from "gsap/Flip";
 
 import MainLogo from "../../../../assets/logos/MainLogo.jsx";
 import ProjectImage from "../../../../components/ui/ProjectImage/ProjectImage.jsx";
+import FeaturedProjectsMobileCarousel from "./FeaturedProjectsMobileCarousel.jsx";
 import mirror from "../../../../assets/featuredProjects/quinta-bella-vista-1.webp";
 import bedroom from "../../../../assets/featuredProjects/quinta-bella-vista-2.webp";
 import seating from "../../../../assets/featuredProjects/quinta-bella-vista-3.webp";
@@ -383,10 +384,16 @@ function FeaturedProjectsGallery({
           : undefined}
         style={sectionReveal ? undefined : { clipPath: "inset(0 0 0 0)" }}
         onAnimationComplete={() => onRevealComplete?.(visible ? 2 : 1)}
-        className={`relative ${containerClassName} overflow-hidden ${backgroundClassName}`}
+        className={`relative ${containerClassName} max-[1023px]:h-[360px] min-[768px]:max-[1023px]:h-[480px] overflow-hidden ${backgroundClassName}`}
       >
         {stage}
-        <div ref={gridRef} className="mx-auto grid h-full w-full max-w-[1441px] grid-cols-3 gap-[24px] px-[24px] py-[48px] max-[767px]:gap-[8px] max-[767px]:px-[16px]">
+        <div className="hidden h-full max-[1023px]:block">
+          <FeaturedProjectsMobileCarousel
+            columns={columns}
+            galleryLabel={galleryLabel}
+          />
+        </div>
+        <div ref={gridRef} className="mx-auto grid h-full w-full max-w-[1441px] grid-cols-3 gap-[24px] px-[24px] py-[48px] max-[767px]:gap-[8px] max-[767px]:px-[16px] max-[1023px]:hidden">
           {columns.map((cards, column) => (
             <div
               key={column}
