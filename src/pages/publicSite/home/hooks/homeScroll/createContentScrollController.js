@@ -212,6 +212,10 @@ function createContentScrollController({
         synchronizeTitleVisibility();
         return;
       }
+      if (coordination.featured.pinMobileProjectBoundary()) {
+        synchronizeTitleVisibility();
+        return;
+      }
       synchronizeContentScroll();
       return;
     }
