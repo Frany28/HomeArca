@@ -1,0 +1,146 @@
+/* ==========================================================================
+   Typography Utilities
+   Headings
+   ========================================================================== */
+.text-heading-1,
+.text-h1 {
+  /* Headings/h1 */
+  font-family: var(--font-sans);
+  font-size: 64px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 76px;
+  letter-spacing: -2px;
+}
+
+.text-heading-2 {
+  /* Headings/h2 */
+  font-family: var(--font-sans);
+  font-size: 56px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 66px;
+  letter-spacing: -2px;
+}
+
+.text-heading-3 {
+  /* Headings/h3 */
+  font-family: var(--font-sans);
+  font-size: 48px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 56px;
+  letter-spacing: -1px;
+}
+
+.text-heading-4 {
+  /* Headings/h4 */
+  font-family: var(--font-sans);
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 30px;
+  letter-spacing: -0.5px;
+}
+
+.text-heading-5 {
+  /* Headings/h5 */
+  font-family: var(--font-sans);
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 24px;
+  letter-spacing: -0.5px;
+}
+
+.text-heading-6 {
+  /* Headings/h6 */
+  font-family: var(--font-sans);
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 22px;
+  letter-spacing: -0.5px;
+}
+
+.text-heading-7 {
+  /* Headings/h7 */
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 19px;
+  letter-spacing: -0.5px;
+}
+
+.text-heading-8 {
+  /* Headings/h8 */
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 17px;
+  letter-spacing: -0.5px;
+}
+
+/* ==========================================================================
+   Typography Utilities
+   Body
+   ========================================================================== */
+.text-body-1 {
+  /* Body/b1 */
+  font-family: var(--font-sans);
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 21px;
+  letter-spacing: -0.5px;
+}
+
+.text-body-2 {
+  /* Body/b2 */
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 19px;
+  letter-spacing: -0.5px;
+}
+
+.text-body-3 {
+  /* Body/b3 */
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 17px;
+  letter-spacing: -0.5px;
+}
+
+.text-body-4 {
+  /* Body/b4 */
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 14px;
+  letter-spacing: -0.5px;
+}
+
+.text-body-5 {
+  /* Body/b5 */
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 12px;
+  letter-spacing: -0.5px;
+}
+
+.text-label-small {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 9px;
+  letter-spacing: 0.5px;
+}
