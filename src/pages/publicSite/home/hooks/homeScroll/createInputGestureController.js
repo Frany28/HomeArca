@@ -452,6 +452,16 @@ function createInputGestureController({
         startScrollTop: scroller.scrollTop,
         featuredProject: true,
         featuredBounds: bounds,
+        featuredBoundaryAtStart: bounds
+          ? {
+              down:
+                scroller.scrollTop >=
+                bounds.end - FEATURED_PROJECT_EDGE_TOLERANCE_PX,
+              up:
+                scroller.scrollTop <=
+                bounds.start + FEATURED_PROJECT_EDGE_TOLERANCE_PX,
+            }
+          : { down: false, up: false },
         featuredExpansion: imageProject && bounds
           ? {
               boundaryScrollTop: bounds.end,
@@ -546,53 +556,22 @@ function createInputGestureController({
       if (direction === null) return;
 
       const bounds = touchGesture.featuredBounds;
-      const projectBoundaryScrollTop = bounds
-        ? direction > 0
-          ? bounds.end
-          : bounds.start
-        : null;
-      const distanceToProjectBoundary = projectBoundaryScrollTop === null
-        ? Number.POSITIVE_INFINITY
-        : Math.max(
-            0,
-            direction * (
-              projectBoundaryScrollTop - touchGesture.startScrollTop
-            ),
-          );
-      const transitionIntentDistance =
-        absoluteVerticalDistance - distanceToProjectBoundary;
-      const reachedProjectBoundary =
-        projectBoundaryScrollTop !== null &&
-        transitionIntentDistance >= -FEATURED_PROJECT_EDGE_TOLERANCE_PX;
+      const startedAtBoundary = direction > 0
+        ? touchGesture.featuredBoundaryAtStart?.down
+        : touchGesture.featuredBoundaryAtStart?.up;
 
-      if (
-        reachedProjectBoundary &&
-        transitionIntentDistance >= FEATURED_TOUCH_SWIPE_THRESHOLD_PX
-      ) {
-        scroller.scrollTop = projectBoundaryScrollTop;
-
+      if (startedAtBoundary) {
         if (coordination.featured.transitionProject(direction, 0)) {
           touchGesture.consumed = true;
           return;
         }
-      }
 
-      const boundary = coordination.featured.getContentBoundary(direction);
-      const distanceToBoundary = boundary
-        ? Math.max(0, direction * (boundary.scrollTop - touchGesture.startScrollTop))
-        : Number.POSITIVE_INFINITY;
-      if (
-        boundary &&
-        distanceToBoundary <= absoluteVerticalDistance + FEATURED_PROJECT_EDGE_TOLERANCE_PX
-      ) {
-        scroller.scrollTop = boundary.scrollTop;
+        const boundary = coordination.featured.getContentBoundary(direction);
 
-        if (boundary.transition()) {
+        if (boundary && boundary.transition()) {
           touchGesture.consumed = true;
           return;
         }
-
-        coordination.content.synchronizeContentScroll();
       }
 
       if (bounds) {
