@@ -29,6 +29,8 @@ function isInteractiveTarget(target) {
   );
 }
 
+const FEATURED_TOUCH_SWIPE_THRESHOLD_PX = 28;
+
 function createInputGestureController({
   titleRevealLockedRef,
   pendingPanelDirectionRef,
@@ -504,7 +506,10 @@ function createInputGestureController({
       const isVerticalGesture =
         absoluteVerticalDistance >= Math.abs(horizontalDistance) * TOUCH_VERTICAL_DOMINANCE;
       if (!isVerticalGesture) return;
-      if (!touchGesture.captured && absoluteVerticalDistance < TOUCH_SWIPE_THRESHOLD_PX) return;
+      if (
+        !touchGesture.captured &&
+        absoluteVerticalDistance < FEATURED_TOUCH_SWIPE_THRESHOLD_PX
+      ) return;
 
       event.preventDefault();
       touchGesture.captured = true;
@@ -536,7 +541,7 @@ function createInputGestureController({
           endX: event.clientX,
           endY: event.clientY,
         },
-        { threshold: TOUCH_SWIPE_THRESHOLD_PX, verticalDominance: TOUCH_VERTICAL_DOMINANCE },
+        { threshold: FEATURED_TOUCH_SWIPE_THRESHOLD_PX, verticalDominance: TOUCH_VERTICAL_DOMINANCE },
       );
       if (direction === null) return;
 
