@@ -3,6 +3,8 @@ import HomeStatementPanel from "./HomeStatementPanel/HomeStatementPanel.jsx";
 import { HOME_SCROLL_PHASES } from "../utils/homeScrollNavigation.js";
 import { HOME_IMAGE_PANELS, HOME_STATEMENT } from "../homeContent.js";
 
+const SCROLL_HINT_VARIANTS = ["centered", "edge"];
+
 function HomeSections({
   active,
   mediaEnabled = active,
@@ -18,7 +20,7 @@ function HomeSections({
         <HomeScrollPanel
           key={panel.title}
           {...panel}
-          showScrollHint={panelIndex === 0}
+          scrollHintVariant={SCROLL_HINT_VARIANTS[panelIndex]}
           onTitleRevealComplete={() => {
             onTitleRevealComplete?.(panelIndex);
             if (panelIndex === 0) onInitialTitleReveal?.();

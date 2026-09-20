@@ -22,23 +22,42 @@ const ICON_TRANSITION = {
   },
 };
 
-function HomeScrollHint() {
+const SCROLL_HINT_VARIANTS = {
+  centered: {
+    className:
+      "top-1/2 left-1/2 w-[279px] -translate-x-1/2 -translate-y-1/2 items-center gap-[16px] p-[56px]",
+    iconNodeId: "5074:27095",
+    rootNodeId: "5074:27083",
+    textNodeId: "5074:27084",
+  },
+  edge: {
+    className:
+      "right-[51px] bottom-[51px] size-[144px] items-end gap-[16px] p-[56px]",
+    iconNodeId: "5169:16283",
+    rootNodeId: "5169:16271",
+  },
+};
+
+function HomeScrollHint({ variant = "centered" }) {
   const reduceMotion = useReducedMotion();
+  const variantConfig = SCROLL_HINT_VARIANTS[variant];
 
   return (
     <div
-      className="pointer-events-none absolute bottom-0 left-1/2 z-[6] flex w-[279px] -translate-x-1/2 flex-col items-center justify-center gap-[16px] p-[56px] text-[var(--color-neutral-100-uniform)]"
-      data-node-id="5074:27083"
+      className={`pointer-events-none absolute z-[6] flex flex-col justify-center text-[var(--color-neutral-100-uniform)] ${variantConfig.className}`}
+      data-node-id={variantConfig.rootNodeId}
     >
-      <p
-        className="text-body-1 m-0 shrink-0 whitespace-nowrap"
-        data-node-id="5074:27084"
-      >
-        Desliza para ver más
-      </p>
+      {variantConfig.textNodeId && (
+        <p
+          className="text-body-1 m-0 shrink-0 whitespace-nowrap"
+          data-node-id={variantConfig.textNodeId}
+        >
+          Desliza para ver más
+        </p>
+      )}
       <Motion.div
         className="relative size-[32px] shrink-0"
-        data-node-id="5074:27095"
+        data-node-id={variantConfig.iconNodeId}
         data-name="icons/scroll-down"
         initial={reduceMotion ? false : ICON_INITIAL_STATE}
         animate={reduceMotion ? undefined : ICON_ANIMATION}

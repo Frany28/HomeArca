@@ -9,7 +9,7 @@ function HomeScrollPanel({
   image,
   imageAlt,
   projectName,
-  showScrollHint = false,
+  scrollHintVariant,
   title,
   titleVisible = false,
   onTitleRevealComplete,
@@ -40,7 +40,7 @@ function HomeScrollPanel({
         visible={titleVisible}
         onRevealComplete={onTitleRevealComplete}
       />
-      {showScrollHint && <HomeScrollHint />}
+      {scrollHintVariant && <HomeScrollHint variant={scrollHintVariant} />}
     </section>
   );
 }
