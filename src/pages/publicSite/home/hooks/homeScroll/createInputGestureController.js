@@ -540,6 +540,16 @@ function createInputGestureController({
       );
       if (direction === null) return;
 
+      const projectTransition = coordination.featured.getProjectTransition(
+        direction,
+        absoluteVerticalDistance,
+      );
+      if (projectTransition) {
+        touchGesture.consumed = true;
+        coordination.featured.transitionProject(direction, absoluteVerticalDistance);
+        return;
+      }
+
       const boundary = coordination.featured.getContentBoundary(direction);
       const distanceToBoundary = boundary
         ? Math.max(0, direction * (boundary.scrollTop - touchGesture.startScrollTop))
