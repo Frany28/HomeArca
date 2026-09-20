@@ -441,7 +441,8 @@ function createInputGestureController({
       const projectPanels = coordination.featured.getProjectPanels();
       const projectIndex = activeFeaturedProjectIndexRef.current;
       const bounds = coordination.featured.getPanelScrollBounds(projectPanels[projectIndex]);
-      const imageProject = coordination.featured.isImageProject(projectIndex, projectPanels);
+      const imageProject = coordination.featured.isExpansionEnabled() &&
+        coordination.featured.isImageProject(projectIndex, projectPanels);
       touchGesture = {
         pointerId: event.pointerId,
         startX: event.clientX,

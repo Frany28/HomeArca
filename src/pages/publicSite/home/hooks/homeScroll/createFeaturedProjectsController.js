@@ -58,11 +58,10 @@ function createFeaturedProjectsController({
   const getProjectPanels = (section = getSection()) =>
     section ? [...section.querySelectorAll(FEATURED_PROJECT_SELECTOR)] : [];
   const isImageProject = (index, projectPanels = getProjectPanels()) =>
-    Boolean(
-      projectPanels[index]?.querySelector?.(FEATURED_IMAGE_GALLERY_SELECTOR) &&
-      !(typeof window !== "undefined" &&
-        window.matchMedia?.("(max-width: 1023px)").matches),
-    );
+    Boolean(projectPanels[index]?.querySelector?.(FEATURED_IMAGE_GALLERY_SELECTOR));
+  const isExpansionEnabled = () =>
+    !(typeof window !== "undefined" &&
+      window.matchMedia?.("(max-width: 1023px)").matches);
   const getExpansionProgress = (index) => expansionProgress[index]?.get() ?? 0;
   const getExpansionTarget = (index) => expansionTargets[index] ?? 0;
 
@@ -171,6 +170,7 @@ function createFeaturedProjectsController({
 
     const currentExpansionProgress = getExpansionProgress(currentIndex);
     if (
+      isExpansionEnabled() &&
       isImageProject(currentIndex, projectPanels) &&
       ((direction > 0 && currentExpansionProgress < 1) ||
         (direction < 0 && currentExpansionProgress > 0))
@@ -236,7 +236,7 @@ function createFeaturedProjectsController({
 
     expansionCompletionLock = null;
     if (direction < 0) {
-      if (isImageProject(transition.index)) {
+      if (isExpansionEnabled() && isImageProject(transition.index)) {
         setPreparationOffset(
           transition.index,
           scroller.scrollTop - transition.scrollTop,
@@ -296,6 +296,7 @@ function createFeaturedProjectsController({
     if (
       targetAlignment === "end" &&
       featuredProjectIndex !== null &&
+      isExpansionEnabled() &&
       isImageProject(featuredProjectIndex)
     ) {
       setPreparationOffset(
@@ -356,7 +357,7 @@ function createFeaturedProjectsController({
     if (reduceMotion || activeSectionRef.current !== "featured-projects") return false;
     const projectPanels = getProjectPanels();
     const currentIndex = activeFeaturedProjectIndexRef.current;
-    if (!isImageProject(currentIndex, projectPanels)) return false;
+    if (!isExpansionEnabled() || !isImageProject(currentIndex, projectPanels)) return false;
 
     const expansionAnchor = getExpansionAnchor(currentIndex, projectPanels);
     if (expansionAnchor === null) return false;
@@ -442,6 +443,7 @@ function createFeaturedProjectsController({
     if (
       !bounds ||
       expansionAnchor === null ||
+      !isExpansionEnabled() ||
       !isImageProject(currentIndex, projectPanels)
     ) return false;
 
@@ -617,6 +619,7 @@ function createFeaturedProjectsController({
   getProjectTransition,
   handleBoundaryWheel,
   handleExpansionInput,
+  isExpansionEnabled,
   isImageProject,
   isProcessReturnGestureLocked,
   pinExpansion,
