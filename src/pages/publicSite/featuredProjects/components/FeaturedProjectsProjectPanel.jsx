@@ -94,13 +94,13 @@ function FeaturedProjectsProjectPanel({
         className={`mx-auto flex w-full shrink-0 max-w-[1200px] flex-col items-center gap-[24px] px-[16px] ${project.headingClassName} text-center min-[768px]:px-[var(--spacing-gap-7)]`}
         data-node-id={project.nodeId}
       >
-        <p className="text-heading-4 m-0 w-full">
+        <p className="text-heading-4 m-0 w-full max-[767px]:text-[20px] max-[767px]:leading-[24px] max-[767px]:tracking-[-0.5px]">
           Proyectos Destacados
         </p>
-        <h2 className="text-heading-1 m-0 w-full max-[767px]:text-[38px] max-[767px]:leading-[46px]">
+        <h2 className="text-heading-1 m-0 w-full max-[767px]:text-[48px] max-[767px]:leading-[58px] max-[767px]:tracking-[-1px]">
           {project.title}
         </h2>
-        <p className={`text-heading-6 m-0 w-full ${project.descriptionClassName} opacity-60`}>
+        <p className={`text-heading-6 m-0 w-full ${project.descriptionClassName} opacity-60 max-[767px]:text-[18px] max-[767px]:leading-[22px] max-[767px]:tracking-[-0.5px]`}>
           {project.description}
         </p>
       </SectionTitleReveal>
