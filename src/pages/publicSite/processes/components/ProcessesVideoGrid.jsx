@@ -36,7 +36,6 @@ function ProcessesVideoGrid({ active, inert, onVideoOpen, videos }) {
               aria-hidden="true"
             >
               <source src={video.webm} type="video/webm" />
-              <source src={video.mp4} type="video/mp4" />
             </video>
           ) : (
             <img

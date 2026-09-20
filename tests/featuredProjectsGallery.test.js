@@ -113,5 +113,5 @@ test("process videos retain their click and modal behavior", () => {
   assert.match(processModalSource, /onClick=\{handleClose\}/);
   assert.match(processModalSource, /autoPlay/);
   assert.match(processModalSource, /<source src=\{video\.webm\}/);
-  assert.match(processModalSource, /<source src=\{video\.mp4\}/);
+  assert.doesNotMatch(processModalSource, /video\.mp4/);
 });
