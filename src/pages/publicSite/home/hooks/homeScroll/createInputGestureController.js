@@ -546,24 +546,32 @@ function createInputGestureController({
       if (direction === null) return;
 
       const bounds = touchGesture.featuredBounds;
-      const atProjectBoundary = bounds
+      const projectBoundaryScrollTop = bounds
         ? direction > 0
-          ? touchGesture.startScrollTop >=
-            bounds.end - FEATURED_PROJECT_EDGE_TOLERANCE_PX
-          : touchGesture.startScrollTop <=
-            bounds.start + FEATURED_PROJECT_EDGE_TOLERANCE_PX
-        : false;
+          ? bounds.end
+          : bounds.start
+        : null;
+      const distanceToProjectBoundary = projectBoundaryScrollTop === null
+        ? Number.POSITIVE_INFINITY
+        : Math.max(
+            0,
+            direction * (
+              projectBoundaryScrollTop - touchGesture.startScrollTop
+            ),
+          );
+      const transitionIntentDistance =
+        absoluteVerticalDistance - distanceToProjectBoundary;
+      const reachedProjectBoundary =
+        projectBoundaryScrollTop !== null &&
+        transitionIntentDistance >= -FEATURED_PROJECT_EDGE_TOLERANCE_PX;
 
-      if (atProjectBoundary) {
-        const projectTransition = coordination.featured.getProjectTransition(
-          direction,
-          0,
-        );
+      if (
+        reachedProjectBoundary &&
+        transitionIntentDistance >= FEATURED_TOUCH_SWIPE_THRESHOLD_PX
+      ) {
+        scroller.scrollTop = projectBoundaryScrollTop;
 
-        if (
-          projectTransition &&
-          coordination.featured.transitionProject(direction, 0)
-        ) {
+        if (coordination.featured.transitionProject(direction, 0)) {
           touchGesture.consumed = true;
           return;
         }
