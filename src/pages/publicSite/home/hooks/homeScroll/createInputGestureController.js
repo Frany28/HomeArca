@@ -560,9 +560,11 @@ function createInputGestureController({
           0,
         );
 
-        if (projectTransition) {
+        if (
+          projectTransition &&
+          coordination.featured.transitionProject(direction, 0)
+        ) {
           touchGesture.consumed = true;
-          coordination.featured.transitionProject(direction, 0);
           return;
         }
       }
@@ -576,9 +578,13 @@ function createInputGestureController({
         distanceToBoundary <= absoluteVerticalDistance + FEATURED_PROJECT_EDGE_TOLERANCE_PX
       ) {
         scroller.scrollTop = boundary.scrollTop;
-        touchGesture.consumed = true;
-        boundary.transition();
-        return;
+
+        if (boundary.transition()) {
+          touchGesture.consumed = true;
+          return;
+        }
+
+        coordination.content.synchronizeContentScroll();
       }
 
       if (bounds) {
