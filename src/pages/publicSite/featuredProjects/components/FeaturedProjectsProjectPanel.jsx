@@ -87,7 +87,7 @@ function FeaturedProjectsProjectPanel({
       aria-label={`Proyecto destacado ${project.title}`}
       aria-hidden={!active}
       inert={active ? undefined : ""}
-      className="relative flex min-h-0 flex-col gap-[var(--spacing-gap-7)] bg-[var(--color-neutral-100-uniform)] pt-[var(--spacing-gap-8)] text-[var(--color-primary-300)]"
+      className="relative flex min-h-0 flex-col gap-[var(--spacing-gap-7)] bg-[var(--color-neutral-100-uniform)] pt-[var(--spacing-gap-8)] text-[var(--color-primary-300)] max-[1023px]:min-h-dvh"
     >
       <SectionTitleReveal
         visible={titleVisible}
