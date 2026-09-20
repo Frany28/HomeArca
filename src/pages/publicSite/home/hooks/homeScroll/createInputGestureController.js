@@ -545,14 +545,26 @@ function createInputGestureController({
       );
       if (direction === null) return;
 
-      const projectTransition = coordination.featured.getProjectTransition(
-        direction,
-        absoluteVerticalDistance,
-      );
-      if (projectTransition) {
-        touchGesture.consumed = true;
-        coordination.featured.transitionProject(direction, absoluteVerticalDistance);
-        return;
+      const bounds = touchGesture.featuredBounds;
+      const atProjectBoundary = bounds
+        ? direction > 0
+          ? touchGesture.startScrollTop >=
+            bounds.end - FEATURED_PROJECT_EDGE_TOLERANCE_PX
+          : touchGesture.startScrollTop <=
+            bounds.start + FEATURED_PROJECT_EDGE_TOLERANCE_PX
+        : false;
+
+      if (atProjectBoundary) {
+        const projectTransition = coordination.featured.getProjectTransition(
+          direction,
+          0,
+        );
+
+        if (projectTransition) {
+          touchGesture.consumed = true;
+          coordination.featured.transitionProject(direction, 0);
+          return;
+        }
       }
 
       const boundary = coordination.featured.getContentBoundary(direction);
@@ -569,7 +581,6 @@ function createInputGestureController({
         return;
       }
 
-      const bounds = touchGesture.featuredBounds;
       if (bounds) {
         scroller.scrollTop = Math.min(
           Math.max(touchGesture.startScrollTop + verticalDistance, bounds.start),
