@@ -3,8 +3,8 @@ import { useEffect, useMemo, useRef } from "react";
 import MainLogo from "../../../../assets/logos/MainLogo.jsx";
 import ProjectImage from "../../../../components/ui/ProjectImage/ProjectImage.jsx";
 
-const AUTO_SCROLL_SPEED_PX_PER_SECOND = 18;
-const AUTO_SCROLL_RESUME_DELAY_MS = 1400;
+const AUTO_SCROLL_SPEED_PX_PER_SECOND = 24;
+const AUTO_SCROLL_RESUME_DELAY_MS = 1000;
 
 function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
   const carouselRef = useRef(null);
