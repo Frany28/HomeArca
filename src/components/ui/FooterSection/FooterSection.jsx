@@ -283,16 +283,16 @@ function PublicCtaFooter({
   return (
     <footer
       className={clsx(
-        "dark flex w-full flex-col items-start gap-[24px]",
+        "dark flex w-full flex-col items-start gap-[16px] min-[768px]:gap-[24px]",
         className,
       )}
       aria-label={ariaLabel}
-      data-node-id="5142:15337"
+      data-node-id="5149:15146"
       {...props}
     >
-      <div className="w-full px-[var(--spacing-gap-7)] pt-[24px] max-[767px]:px-0">
-        <div className="w-full border-b border-[var(--color-neutral-200)] py-[24px]">
-          <h2 className="text-heading-4 m-0 text-[var(--color-neutral-100-uniform)]">
+      <div className="w-full px-[var(--spacing-gap-7)] pt-[24px] max-[767px]:px-0 max-[767px]:pb-[16px] max-[767px]:pt-[16px]">
+        <div className="w-full border-b border-[var(--color-neutral-200)] py-[24px] max-[767px]:py-[16px]">
+          <h2 className="text-heading-4 m-0 text-[var(--color-neutral-100-uniform)] max-[767px]:text-center">
             {title}
           </h2>
         </div>
@@ -307,35 +307,36 @@ function PublicCtaFooter({
             className="h-[32px] w-[152px] shrink-0 justify-start"
           />
 
-          <HorizontalTabMenu
-            items={navItems}
-            activeIndex={resolvedActiveNavIndex}
-            interactive
-            onChange={onNavChange}
-            filled="off"
-            style="Brand"
-            orientation="horizontal"
-            className={clsx(
-              "hidden min-[1200px]:inline-flex",
-              navigationClassName,
-            )}
-            aria-label="Navegación del footer"
-          />
+          <div className="hidden min-[1200px]:block">
+            <HorizontalTabMenu
+              items={navItems}
+              activeIndex={resolvedActiveNavIndex}
+              interactive
+              onChange={onNavChange}
+              filled="off"
+              style="Brand"
+              orientation="horizontal"
+              className={navigationClassName}
+              aria-label="Navegación del footer"
+            />
+          </div>
 
-          <HorizontalTabMenu
-            items={navItems}
-            activeIndex={resolvedActiveNavIndex}
-            interactive
-            onChange={onNavChange}
-            filled="off"
-            style="Brand"
-            orientation="vertical"
-            className={clsx(
-              "min-[1200px]:hidden",
-              navigationClassName,
-            )}
-            aria-label="Navegación del footer"
-          />
+          <div className="block min-[1200px]:hidden">
+            <HorizontalTabMenu
+              items={navItems}
+              activeIndex={resolvedActiveNavIndex}
+              interactive
+              onChange={onNavChange}
+              filled="off"
+              style="Brand"
+              orientation="vertical"
+              className={clsx(
+                "gap-[8px]",
+                navigationClassName,
+              )}
+              aria-label="Navegación del footer"
+            />
+          </div>
 
           <div className="flex shrink-0 flex-wrap items-center justify-center gap-[var(--spacing-gap-2)]">
             {socialItems.map((item) => (
