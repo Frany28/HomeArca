@@ -2,7 +2,12 @@ import { ArrowRight } from "iconsax-react";
 
 import Button from "../../../../components/ui/Button/Button.jsx";
 import FooterSection from "../../../../components/ui/FooterSection/FooterSection.jsx";
-import { CONTACT_CONTENT, CONTACT_NAVIGATION_ITEMS } from "../contactContent.js";
+import {
+  CONTACT_CONTENT,
+  CONTACT_EXTERNAL_LINKS,
+  CONTACT_NAVIGATION_ITEMS,
+  CONTACT_SOCIAL_ITEMS,
+} from "../contactContent.js";
 import ContactTiltCard from "./ContactTiltCard.jsx";
 
 function ContactSection({ onNavigate }) {
@@ -42,6 +47,9 @@ function ContactSection({ onNavigate }) {
             fitContent
             showLeftIcon={false}
             showRightIcon
+            href={CONTACT_EXTERNAL_LINKS.whatsapp}
+            target="_blank"
+            rel="noopener noreferrer"
             iconRight={
               <ArrowRight
                 size="20"
@@ -62,6 +70,7 @@ function ContactSection({ onNavigate }) {
         presentation="publicCta"
         title={CONTACT_CONTENT.footerTitle}
         navItems={navigationLabels}
+        socialItems={CONTACT_SOCIAL_ITEMS}
         copyrightText={CONTACT_CONTENT.copyright}
         onNavChange={handleFooterNavigation}
         className="max-w-[1200px]"

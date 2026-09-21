@@ -7,6 +7,21 @@ import {
   BUTTON_VISUALS,
 } from "./buttonConfig.js";
 
+function getSafeLinkRel(target, rel) {
+  if (target !== "_blank") return rel;
+
+  const tokens = new Set(
+    String(rel ?? "")
+      .split(/\s+/)
+      .filter(Boolean),
+  );
+
+  tokens.add("noopener");
+  tokens.add("noreferrer");
+
+  return [...tokens].join(" ");
+}
+
 function Button({
   className,
   children = "Button",
@@ -22,7 +37,11 @@ function Button({
   type = "Solid",
   htmlType = "button",
   disabled = false,
+  href,
+  onClick,
+  rel,
   style,
+  target,
   tooltip,
   tooltipPosition = "Top center",
   "aria-label": ariaLabel,
@@ -34,8 +53,11 @@ function Button({
   const resolvedState = disabled ? "Disabled" : state;
   const visual = BUTTON_VISUALS[resolvedTheme][resolvedType];
   const isLink = resolvedType === "Link";
+  const isAnchor = typeof href === "string" && href.length > 0;
   const iconOnly = !showText;
   const isDisabled = resolvedState === "Disabled";
+  const Component = isAnchor ? "a" : "button";
+  const safeRel = isAnchor ? getSafeLinkRel(target, rel) : undefined;
   const interactiveClassName =
     BUTTON_INTERACTIVE_STYLES[resolvedTheme]?.[resolvedType];
   const showFocusRing =
@@ -48,7 +70,7 @@ function Button({
     : undefined;
 
   const buttonClassName = clsx(
-    "flex items-center justify-center overflow-visible rounded-[var(--radius-2)] font-medium tracking-[-0.5px] transition-colors duration-150 motion-reduce:transition-none",
+    "flex items-center justify-center overflow-visible rounded-[var(--radius-2)] font-medium tracking-[-0.5px] no-underline transition-colors duration-150 motion-reduce:transition-none",
     isDisabled ? "cursor-not-allowed" : "cursor-pointer",
     iconOnly
       ? BUTTON_SIZE_STYLES[resolvedSize].iconOnly
@@ -67,16 +89,35 @@ function Button({
     className,
   );
 
+  const handleClick = (event) => {
+    if (isDisabled) {
+      if (isAnchor) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+
+      return;
+    }
+
+    onClick?.(event);
+  };
+
   const button = (
-    <button
-      type={htmlType}
+    <Component
+      type={isAnchor ? undefined : htmlType}
+      href={isAnchor && !isDisabled ? href : undefined}
+      target={isAnchor ? target : undefined}
+      rel={safeRel}
       className={buttonClassName}
-      disabled={isDisabled}
+      disabled={isAnchor ? undefined : isDisabled}
+      aria-disabled={isAnchor && isDisabled ? true : undefined}
+      tabIndex={isAnchor && isDisabled ? -1 : undefined}
       style={{
         ...style,
         ...focusStyle,
       }}
       aria-label={ariaLabel}
+      onClick={onClick || isDisabled ? handleClick : undefined}
       {...props}
     >
       {showLeftIcon && iconLeft ? (
@@ -106,7 +147,7 @@ function Button({
           {iconRight}
         </span>
       ) : null}
-    </button>
+    </Component>
   );
 
   const tooltipText = resolveIconButtonTooltip({

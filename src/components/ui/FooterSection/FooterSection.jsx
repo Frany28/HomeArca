@@ -350,6 +350,9 @@ function PublicCtaFooter({
                 showRightIcon={false}
                 iconLeft={getSocialIcon(item.icon)}
                 aria-label={item.label}
+                href={item.href}
+                target={item.href ? "_blank" : undefined}
+                rel={item.href ? "noopener noreferrer" : undefined}
                 onClick={() => onSocialClick?.(item)}
               />
             ))}
@@ -654,6 +657,9 @@ function FooterSection({
               showRightIcon={false}
               iconLeft={getSocialIcon(item.icon)}
               aria-label={item.label}
+              href={item.href}
+              target={item.href ? "_blank" : undefined}
+              rel={item.href ? "noopener noreferrer" : undefined}
               onClick={() => onSocialClick?.(item)}
             />
           ))}
