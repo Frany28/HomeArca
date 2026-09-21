@@ -142,6 +142,10 @@ function ContactTiltCard() {
       const offsetX = clientX - (rect.left + rect.width / 2);
       const offsetY = clientY - (rect.top + rect.height / 2);
 
+      card.style.setProperty("--contact-touch-x", `${((normalizedX + 1) / 2) * 100}%`);
+      card.style.setProperty("--contact-touch-y", `${((normalizedY + 1) / 2) * 100}%`);
+      card.dataset.touchActive = "true";
+
       rotateXTo(-normalizedY * TOUCH_TILT_INTENSITY);
       rotateYTo(normalizedX * TOUCH_TILT_INTENSITY);
       glareXTo(offsetX * 0.47);
@@ -182,6 +186,9 @@ function ContactTiltCard() {
 
       touchPointerId = null;
       touchActive = false;
+      delete card.dataset.touchActive;
+      card.style.removeProperty("--contact-touch-x");
+      card.style.removeProperty("--contact-touch-y");
       resetTilt();
     };
 
@@ -270,7 +277,12 @@ function ContactTiltCard() {
         ref={cardRef}
         className="contact-tilt-card__surface relative aspect-[432/264.779] w-full overflow-hidden rounded-[var(--radius-4)] bg-[var(--color-primary-500-uniform)] will-change-transform"
         data-node-id="4856:5063"
+        onContextMenu={(event) => event.preventDefault()}
       >
+        <div
+          className="contact-tilt-card__mobile-gradient pointer-events-none absolute inset-0"
+          aria-hidden="true"
+        />
         <ShaderFill
           className="contact-tilt-card__gradient pointer-events-none absolute inset-0"
           shader={MOVING_GRADIENT_SHADER}
@@ -291,18 +303,24 @@ function ContactTiltCard() {
             src={secondaryLogoMark}
             alt="ARCA Studio"
             className="absolute inset-x-0 top-0 block h-[90.93%] w-full"
+            draggable={false}
+            onDragStart={(event) => event.preventDefault()}
           />
           <img
             src={secondaryLogoRegistration}
             alt=""
             aria-hidden="true"
             className="absolute bottom-0 left-[0.05%] block h-[5.1%] w-[23.35%]"
+            draggable={false}
+            onDragStart={(event) => event.preventDefault()}
           />
           <img
             src={secondaryLogoDate}
             alt=""
             aria-hidden="true"
             className="absolute bottom-0 right-[0.05%] block h-[5.1%] w-[15.28%]"
+            draggable={false}
+            onDragStart={(event) => event.preventDefault()}
           />
         </div>
       </div>
