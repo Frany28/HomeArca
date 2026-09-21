@@ -793,6 +793,27 @@ function createInputGestureController({
     nativeTouchIntent = null;
   };
 
+  const shouldDeferNativeContentSync = () => {
+    const intent = nativeTouchIntent;
+
+    if (
+      !intent ||
+      intent.triggered ||
+      coordination.featured.isExpansionEnabled()
+    ) {
+      return false;
+    }
+
+    if (intent.sourceSection === "process") {
+      return activeSectionRef.current === "process";
+    }
+
+    return (
+      activeSectionRef.current === "featured-projects" &&
+      activeFeaturedProjectIndexRef.current === intent.projectIndex
+    );
+  };
+
   const tryNativeTouchBoundaryTransition = () => {
     const intent = nativeTouchIntent;
 
@@ -1017,8 +1038,13 @@ function createInputGestureController({
     });
     scroller.addEventListener("touchcancel", cancelNativeFeaturedTouchGesture, true);
     scroller.addEventListener("keydown", handleKeyDown);
-    scroller.addEventListener("scroll", coordination.content.handleNativeScroll, { passive: true });
+    /*
+     * Mobile touch navigation must get the first look at native scroll.
+     * Otherwise content synchronization can change the active section/project
+     * before the boundary transition has a chance to claim the gesture.
+     */
     scroller.addEventListener("scroll", handleNativeTouchScroll, { passive: true });
+    scroller.addEventListener("scroll", coordination.content.handleNativeScroll, { passive: true });
     document.addEventListener(
       "mousedown",
       handleScrollbarMouseDown,
@@ -1105,6 +1131,7 @@ function createInputGestureController({
     observeConsumedWheelGesture,
     requireFreshWheelGesture,
     scheduleWheelGestureSettlement,
+    shouldDeferNativeContentSync,
   };
 }
 
