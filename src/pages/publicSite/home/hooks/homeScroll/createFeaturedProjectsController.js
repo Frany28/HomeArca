@@ -396,13 +396,9 @@ function createFeaturedProjectsController({
      * Durante una transición programática esta función ya sale arriba,
      * por lo que fijar ambos límites aquí no interfiere con la animación.
      */
-    if (
-      scroller.scrollTop < bounds.start - FEATURED_PROJECT_EDGE_TOLERANCE_PX
-    ) {
+    if (scroller.scrollTop < bounds.start) {
       pinnedScrollTop = bounds.start;
-    } else if (
-      scroller.scrollTop > bounds.end + FEATURED_PROJECT_EDGE_TOLERANCE_PX
-    ) {
+    } else if (scroller.scrollTop > bounds.end) {
       pinnedScrollTop = bounds.end;
     }
 
