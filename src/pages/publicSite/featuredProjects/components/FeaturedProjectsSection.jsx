@@ -40,7 +40,7 @@ function FeaturedProjectsSection({
           <h2 className="text-heading-1 m-0 w-full text-center max-[767px]:!text-[48px] max-[767px]:!leading-[58px] max-[767px]:!tracking-[-1px]" data-node-id="5210:16097">
             Quinta Bella Vista
           </h2>
-          <p className="text-heading-6 m-0 w-full max-w-[520px] text-center opacity-60 max-[767px]:!text-[18px] max-[767px]:!leading-[22px] max-[767px]:!tracking-[-0.5px]" data-node-id="5210:16098">
+          <p className="text-heading-6 m-0 w-full max-w-[520px] break-words text-center opacity-60 max-[767px]:max-w-[343px] max-[767px]:!text-[18px] max-[767px]:!leading-[22px] max-[767px]:!tracking-[-0.5px]" data-node-id="5210:16098">
             Diseño arquitectónico y ejecución integral para una residencia contemporánea ubicada en Maracaibo.
           </p>
         </SectionTitleReveal>
