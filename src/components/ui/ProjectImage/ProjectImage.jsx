@@ -59,11 +59,13 @@ function ProjectImage({
         <img
           src={src}
           alt={alt}
+          draggable={false}
+          onDragStart={(event) => event.preventDefault()}
           className={clsx(
             fit === "contain"
               ? "h-auto w-auto max-h-full max-w-full object-contain"
               : "size-full object-cover",
-            "transition-opacity duration-200",
+            "select-none [-webkit-user-drag:none] touch-pan-y transition-opacity duration-200",
             status === IMAGE_STATUS.LOADED || !revealOnLoad
               ? "content-reveal-media opacity-100"
               : "opacity-0",
