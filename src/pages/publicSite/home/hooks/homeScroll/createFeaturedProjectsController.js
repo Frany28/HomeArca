@@ -383,18 +383,24 @@ function createFeaturedProjectsController({
 
     if (!bounds) return false;
 
-    const hasPreviousProject = currentIndex > 0;
-    const hasNextProject = currentIndex < projectPanels.length - 1;
-
     let pinnedScrollTop = null;
 
+    /*
+     * En mobile/tablet el cruce entre proyectos/secciones debe ocurrir
+     * únicamente mediante la transición controlada por gesto.
+     *
+     * Si dejamos libres los bordes exteriores del primer/último proyecto,
+     * el scroll nativo puede avanzar unos píxeles antes de que el gesto
+     * dispare la transición y deja ver prematuramente la sección vecina.
+     *
+     * Durante una transición programática esta función ya sale arriba,
+     * por lo que fijar ambos límites aquí no interfiere con la animación.
+     */
     if (
-      hasPreviousProject &&
       scroller.scrollTop < bounds.start - FEATURED_PROJECT_EDGE_TOLERANCE_PX
     ) {
       pinnedScrollTop = bounds.start;
     } else if (
-      hasNextProject &&
       scroller.scrollTop > bounds.end + FEATURED_PROJECT_EDGE_TOLERANCE_PX
     ) {
       pinnedScrollTop = bounds.end;
