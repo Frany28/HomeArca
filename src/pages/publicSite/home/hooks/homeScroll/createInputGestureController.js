@@ -799,13 +799,18 @@ function createInputGestureController({
     if (
       !intent ||
       intent.triggered ||
+      !intent.intentional ||
+      !intent.direction ||
       coordination.featured.isExpansionEnabled()
     ) {
       return false;
     }
 
     if (intent.sourceSection === "process") {
-      return activeSectionRef.current === "process";
+      return (
+        intent.direction === HOME_SCROLL_DIRECTIONS.UP &&
+        activeSectionRef.current === "process"
+      );
     }
 
     return (
