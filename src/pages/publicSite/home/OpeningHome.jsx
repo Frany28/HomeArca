@@ -64,12 +64,11 @@ function OpeningHome() {
     navigateToSection("contact");
   }, [navigateToSection]);
 
-  const usesControlledTouchNavigation =
-    !contentScrollActive ||
-    (
-      activeSectionId === "featured-projects" &&
-      !reduceMotion
-    );
+  const touchNavigationClassName = !contentScrollActive
+    ? "touch-pan-x"
+    : activeSectionId === "featured-projects" && !reduceMotion
+      ? "touch-auto min-[1024px]:touch-pan-x"
+      : "touch-auto";
 
   useEffect(() => {
     if (
@@ -143,11 +142,7 @@ function OpeningHome() {
 
         <main
           ref={scrollerRef}
-          className={`dark relative h-dvh shrink-0 overflow-x-hidden overscroll-y-contain bg-[var(--color-neutral-950-uniform)] [scrollbar-gutter:stable] ${
-            usesControlledTouchNavigation
-              ? "touch-pan-x"
-              : "touch-auto"
-          } ${
+          className={`dark relative h-dvh shrink-0 overflow-x-hidden overscroll-y-contain bg-[var(--color-neutral-950-uniform)] [scrollbar-gutter:stable] ${touchNavigationClassName} ${
             initialScrollReady
               ? "overflow-y-auto"
               : "overflow-y-hidden"

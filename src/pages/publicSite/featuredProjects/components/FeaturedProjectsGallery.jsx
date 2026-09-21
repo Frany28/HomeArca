@@ -384,7 +384,7 @@ function FeaturedProjectsGallery({
           : undefined}
         style={sectionReveal ? undefined : { clipPath: "inset(0 0 0 0)" }}
         onAnimationComplete={() => onRevealComplete?.(visible ? 2 : 1)}
-        className={`relative ${containerClassName} max-[767px]:h-[596px] min-[768px]:max-[1023px]:h-[480px] overflow-hidden ${backgroundClassName}`}
+        className={`relative ${containerClassName} max-[767px]:h-[612px] min-[768px]:max-[1023px]:h-[480px] overflow-hidden ${backgroundClassName}`}
       >
         {stage}
         <div className="hidden h-full max-[1023px]:block">
