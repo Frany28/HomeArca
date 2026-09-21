@@ -67,6 +67,7 @@ test("Contact is the final Home section and participates in shared navigation", 
 test("the public CTA Footer presentation is additive and reuses the UI system", () => {
   assert.match(footerSource, /presentation = "default"/);
   assert.match(footerSource, /presentation === "publicCta"/);
+  assert.match(footerSource, /presentation !== "publicCta"/);
   assert.match(footerSource, /<PublicCtaFooter/);
   assert.match(footerSource, /<MainLogo/);
   assert.match(footerSource, /<HorizontalTabMenu/);

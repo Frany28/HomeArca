@@ -433,7 +433,7 @@ function FooterSection({
   };
 
   const handleNavChange = (index) => {
-    if (!isNavControlled) {
+    if (!isNavControlled && presentation !== "publicCta") {
       setInternalActiveNavIndex(index);
     }
 
