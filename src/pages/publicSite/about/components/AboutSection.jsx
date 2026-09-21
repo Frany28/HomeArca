@@ -23,6 +23,7 @@ function AboutSection({
         gap-[48px]
         bg-[var(--color-neutral-950-uniform)]
         pt-[56px]
+        max-[1023px]:pb-[56px]
       "
     >
       <SectionTitleReveal
@@ -38,12 +39,13 @@ function AboutSection({
           p-[48px]
           text-center
           text-[var(--color-neutral-100-uniform)]
-          max-[767px]:px-[16px]
+          max-[1023px]:px-[16px]
+          max-[1023px]:py-[48px]
         "
         data-node-id="5133:812440"
       >
         <p
-          className="text-heading-4 m-0 whitespace-nowrap"
+          className="text-heading-4 m-0 whitespace-nowrap max-[1023px]:text-[20px] max-[1023px]:leading-[24px] max-[1023px]:tracking-[-0.5px]"
           data-node-id="5133:812441"
         >
           {ABOUT_CONTENT.eyebrow}
@@ -56,9 +58,9 @@ function AboutSection({
             w-full
             max-w-[850px]
             text-center
-            max-[767px]:text-[38px]
-            max-[767px]:leading-[46px]
-            max-[767px]:tracking-[-1px]
+            max-[1023px]:text-[24px]
+            max-[1023px]:leading-[30px]
+            max-[1023px]:tracking-[-0.5px]
           "
           data-node-id="5133:812442"
         >
@@ -70,10 +72,35 @@ function AboutSection({
         </h2>
       </SectionTitleReveal>
 
-      <AboutStory
-        image={aboutHero}
-        progress={progress}
-      />
+      <div className="hidden w-full min-[1024px]:block">
+        <AboutStory
+          image={aboutHero}
+          progress={progress}
+        />
+      </div>
+
+      <div
+        className="flex w-full flex-col items-center gap-[48px] min-[1024px]:hidden"
+        data-node-id="5136:15322"
+      >
+        <div
+          className="relative aspect-[4096/2731] w-full shrink-0"
+          data-node-id="5136:15077"
+        >
+          <img
+            src={aboutHero}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 size-full object-cover object-bottom"
+          />
+        </div>
+
+        <div className="flex w-full max-w-[640px] items-center justify-center px-[16px] py-[48px]">
+          <p className="m-0 w-full text-center text-[20px] font-bold leading-[24px] tracking-[-0.5px] text-[var(--color-neutral-100-uniform)] opacity-60">
+            {ABOUT_CONTENT.description}
+          </p>
+        </div>
+      </div>
     </section>
   );
 }
