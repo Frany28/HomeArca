@@ -526,8 +526,9 @@ function createInputGestureController({
        * preserve the original native touch scrolling behavior.
        *
        * The browser owns the swipe while the user is still travelling
-       * through the current project. We only intercept once the current
-       * position is already at a valid project/section boundary.
+       * through the current project. We intercept immediately at an existing
+       * boundary, or finish the transition on touchend if native scrolling
+       * reaches that boundary during the gesture.
        *
        * This intentionally mirrors the pre-expansion touch behavior and
        * avoids simulating the whole scroll with pointermove + scrollTop.
@@ -573,10 +574,10 @@ function createInputGestureController({
         }
 
         /*
-         * Not at a transition boundary yet: stop tracking this pointer and
-         * leave the remainder of the physical swipe entirely to native scroll.
+         * Not at a transition boundary yet: leave scrolling to the browser,
+         * but retain the gesture until touchend. Native panning may dispatch
+         * pointercancel before scrollTop reaches the project boundary.
          */
-        touchGesture = null;
         return;
       }
 
@@ -753,7 +754,60 @@ function createInputGestureController({
   };
 
   const clearTouchGesture = (event) => {
-    if (touchGesture?.pointerId === event.pointerId) touchGesture = null;
+    if (
+      touchGesture?.pointerId === event.pointerId &&
+      !touchGesture.nativeFeaturedScroll
+    ) {
+      touchGesture = null;
+    }
+  };
+
+  const finishNativeFeaturedTouchGesture = (event) => {
+    const gesture = touchGesture;
+    if (!gesture?.nativeFeaturedScroll) return;
+
+    touchGesture = null;
+    if (gesture.consumed) return;
+
+    const touch = event.changedTouches?.[0];
+    if (!touch) return;
+
+    const direction = getSwipeDirection(
+      {
+        startX: gesture.startX,
+        startY: gesture.startY,
+        endX: touch.clientX,
+        endY: touch.clientY,
+      },
+      {
+        threshold: FEATURED_TOUCH_SWIPE_THRESHOLD_PX,
+        verticalDominance: TOUCH_VERTICAL_DOMINANCE,
+      },
+    );
+
+    if (direction === null) return;
+
+    /*
+     * Pointer Events are commonly cancelled once the browser takes ownership
+     * of a native vertical pan. At touchend, scrollTop reflects that pan, so
+     * project-edge detection can run without replacing native scrolling.
+     */
+    if (coordination.featured.transitionProject(direction, 0)) return;
+
+    const bounds = gesture.featuredBounds;
+    const endedAtBoundary = bounds && (
+      direction > 0
+        ? scroller.scrollTop >= bounds.end - FEATURED_PROJECT_EDGE_TOLERANCE_PX
+        : scroller.scrollTop <= bounds.start + FEATURED_PROJECT_EDGE_TOLERANCE_PX
+    );
+
+    if (!endedAtBoundary) return;
+
+    coordination.featured.getContentBoundary(direction)?.transition();
+  };
+
+  const cancelNativeFeaturedTouchGesture = () => {
+    if (touchGesture?.nativeFeaturedScroll) touchGesture = null;
   };
 
   const handleKeyDown = (event) => {
@@ -837,6 +891,11 @@ function createInputGestureController({
     });
     scroller.addEventListener("pointerup", clearTouchGesture);
     scroller.addEventListener("pointercancel", clearTouchGesture);
+    scroller.addEventListener("touchend", finishNativeFeaturedTouchGesture, {
+      passive: true,
+      capture: true,
+    });
+    scroller.addEventListener("touchcancel", cancelNativeFeaturedTouchGesture, true);
     scroller.addEventListener("keydown", handleKeyDown);
     scroller.addEventListener("scroll", coordination.content.handleNativeScroll, { passive: true });
     document.addEventListener(
@@ -865,6 +924,8 @@ function createInputGestureController({
     scroller.removeEventListener("pointermove", handlePointerMove, true);
     scroller.removeEventListener("pointerup", clearTouchGesture);
     scroller.removeEventListener("pointercancel", clearTouchGesture);
+    scroller.removeEventListener("touchend", finishNativeFeaturedTouchGesture, true);
+    scroller.removeEventListener("touchcancel", cancelNativeFeaturedTouchGesture, true);
     scroller.removeEventListener("keydown", handleKeyDown);
     scroller.removeEventListener("scroll", coordination.content.handleNativeScroll);
     if (runtime.supportsScrollEnd) {
