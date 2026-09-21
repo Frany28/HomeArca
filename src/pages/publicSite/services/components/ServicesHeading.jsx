@@ -20,14 +20,14 @@ function ServicesHeading({ eyebrow, title, description, visible = false }) {
         </p>
 
         <MovingGradientTitle
-          className="m-0 w-full pb-[0.08em] text-[24px] font-bold leading-[30px] tracking-[-0.5px] min-[768px]:text-[64px] min-[768px]:leading-[76px] min-[768px]:tracking-[-2px]"
+          className="m-0 w-full text-[24px] font-bold leading-[30px] tracking-[-0.5px] min-[768px]:text-[64px] min-[768px]:leading-[76px] min-[768px]:tracking-[-2px] min-[1024px]:pb-[0.08em]"
           data-node-id="4848:8083"
         >
           {title}
         </MovingGradientTitle>
 
         <p
-          className="text-heading-6 m-0 w-full break-words text-[18px] font-bold leading-[22px] tracking-[-0.5px] text-[var(--color-neutral-100-uniform)] opacity-60"
+          className="text-heading-6 m-0 w-full break-words text-[18px] font-bold leading-[22px] tracking-[-0.5px] text-[var(--color-neutral-100-uniform)] opacity-60 max-[767px]:w-[343px] max-[767px]:max-w-[calc(100vw-32px)]"
           data-node-id="4848:8084"
         >
           {description}
