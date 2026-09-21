@@ -44,11 +44,17 @@ test("image galleries keep their bento layout but are no longer interactive view
 });
 
 test("tablet and mobile galleries use a horizontal photo carousel", () => {
-  assert.match(gallerySource, /max-\[1023px\]:h-\[360px\]/);
+  assert.match(gallerySource, /max-\[767px\]:h-\[612px\]/);
+  assert.match(gallerySource, /min-\[768px\]:max-\[1023px\]:h-\[480px\]/);
   assert.match(gallerySource, /max-\[1023px\]:hidden/);
   assert.match(gallerySource, /FeaturedProjectsMobileCarousel/);
   assert.match(mobileCarouselSource, /overflow-x-auto/);
-  assert.match(mobileCarouselSource, /snap-x snap-mandatory/);\n  assert.match(mobileCarouselSource, /h-\\[500px\\] w-\\[300px\\]/);\n  assert.match(mobileCarouselSource, /gap-\\[24px\\]/);\n  assert.match(mobileCarouselSource, /data-featured-gallery-carousel-group/);\n  assert.match(mobileCarouselSource, /<MainLogo/);
+  assert.match(mobileCarouselSource, /touch-pan-y/);
+  assert.match(mobileCarouselSource, /h-\[500px\] w-\[300px\]/);
+  assert.match(mobileCarouselSource, /gap-\[24px\]/);
+  assert.match(mobileCarouselSource, /pb-\[var\(--spacing-gap-9\)\]/);
+  assert.match(mobileCarouselSource, /data-featured-gallery-carousel-group/);
+  assert.match(mobileCarouselSource, /<MainLogo/);
   assert.match(mobileCarouselSource, /data-featured-gallery-carousel/);
   assert.doesNotMatch(mobileCarouselSource, /onClick/);
 });
