@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
+import {
+  updateNativeTouchIntentFromScroll,
+} from "../src/pages/publicSite/home/hooks/homeScroll/createInputGestureController.js";
+
 const openingHomeSource = readFileSync(
   new URL("../src/pages/publicSite/home/OpeningHome.jsx", import.meta.url),
   "utf8",
@@ -56,5 +60,33 @@ test("mobile featured touch owns boundary transitions before content synchroniza
   assert.match(
     contentScrollSource,
     /coordination\.input\?\.shouldDeferNativeContentSync\?\.\(\)/,
+  );
+});
+
+test("native vertical scroll preserves touch intent after pointer cancellation", () => {
+  const downwardIntent = {
+    intentional: false,
+    lastScrollTop: 400,
+    triggered: false,
+  };
+  const upwardIntent = {
+    intentional: false,
+    lastScrollTop: 900,
+    triggered: false,
+  };
+
+  assert.equal(updateNativeTouchIntentFromScroll(downwardIntent, 424), true);
+  assert.equal(downwardIntent.direction, 1);
+  assert.equal(downwardIntent.intentional, true);
+
+  assert.equal(updateNativeTouchIntentFromScroll(upwardIntent, 876), true);
+  assert.equal(upwardIntent.direction, -1);
+  assert.equal(upwardIntent.intentional, true);
+});
+
+test("native scroll direction is recorded before trying a boundary transition", () => {
+  assert.match(
+    inputGestureSource,
+    /const handleNativeTouchScroll = \(\) => \{[\s\S]*updateNativeTouchIntentFromScroll\([\s\S]*if \(tryNativeTouchBoundaryTransition\(\)\) return;/,
   );
 });

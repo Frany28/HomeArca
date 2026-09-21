@@ -32,6 +32,23 @@ function isInteractiveTarget(target) {
 const FEATURED_TOUCH_SWIPE_THRESHOLD_PX = 18;
 const FEATURED_TOUCH_SCROLL_IDLE_MS = 64;
 
+function updateNativeTouchIntentFromScroll(intent, scrollTop) {
+  if (!intent || intent.triggered || !Number.isFinite(scrollTop)) return false;
+
+  const previousScrollTop = intent.lastScrollTop;
+  intent.lastScrollTop = scrollTop;
+
+  if (!Number.isFinite(previousScrollTop) || scrollTop === previousScrollTop) {
+    return false;
+  }
+
+  intent.direction = scrollTop > previousScrollTop
+    ? HOME_SCROLL_DIRECTIONS.DOWN
+    : HOME_SCROLL_DIRECTIONS.UP;
+  intent.intentional = true;
+  return true;
+}
+
 function createInputGestureController({
   titleRevealLockedRef,
   activeFeaturedProjectIndexRef,
@@ -498,6 +515,7 @@ function createInputGestureController({
           direction: null,
           ended: false,
           intentional: false,
+          lastScrollTop: scroller.scrollTop,
           projectIndex,
           startX: event.clientX,
           startY: event.clientY,
@@ -528,6 +546,7 @@ function createInputGestureController({
           direction: null,
           ended: false,
           intentional: false,
+          lastScrollTop: scroller.scrollTop,
           projectIndex: null,
           sourceSection: "process",
           startX: event.clientX,
@@ -947,6 +966,18 @@ function createInputGestureController({
   };
 
   const handleNativeTouchScroll = () => {
+    if (
+      nativeTouchIntent &&
+      !coordination.featured.isExpansionEnabled() &&
+      !runtime.activeTween &&
+      !runtime.isProgrammaticScroll
+    ) {
+      updateNativeTouchIntentFromScroll(
+        nativeTouchIntent,
+        scroller.scrollTop,
+      );
+    }
+
     if (tryNativeTouchBoundaryTransition()) return;
     scheduleNativeTouchSettlement();
   };
@@ -1140,4 +1171,8 @@ function createInputGestureController({
   };
 }
 
-export { createInputGestureController, isInteractiveTarget };
+export {
+  createInputGestureController,
+  isInteractiveTarget,
+  updateNativeTouchIntentFromScroll,
+};
