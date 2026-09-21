@@ -29,7 +29,7 @@ function createAboutStoryController({
 
   const getStory = () => {
     const usesStaticResponsiveStory =
-      window.matchMedia?.("(max-width: 1023px)").matches ?? false;
+      window.matchMedia?.("(max-width: 1024px)").matches ?? false;
 
     if (usesStaticResponsiveStory) return null;
 
