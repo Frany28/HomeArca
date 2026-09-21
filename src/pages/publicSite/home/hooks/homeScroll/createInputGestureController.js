@@ -523,63 +523,12 @@ function createInputGestureController({
     if (touchGesture.featuredProject) {
       /*
        * Mobile/tablet without the fullscreen expansion:
-       * preserve the original native touch scrolling behavior.
-       *
-       * The browser owns the swipe while the user is still travelling
-       * through the current project. We intercept immediately at an existing
-       * boundary, or finish the transition on touchend if native scrolling
-       * reaches that boundary during the gesture.
-       *
-       * This intentionally mirrors the pre-expansion touch behavior and
-       * avoids simulating the whole scroll with pointermove + scrollTop.
+       * leave the whole pointer sequence to native scrolling. Mixing an
+       * occasional preventDefault here with the touchend fallback made the
+       * same gesture follow two different paths depending on browser timing,
+       * which produced a short hitch over the horizontal gallery.
        */
-      if (touchGesture.nativeFeaturedScroll) {
-        const direction = getSwipeDirection(
-          {
-            startX: touchGesture.startX,
-            startY: touchGesture.startY,
-            endX: event.clientX,
-            endY: event.clientY,
-          },
-          {
-            threshold: FEATURED_TOUCH_SWIPE_THRESHOLD_PX,
-            verticalDominance: TOUCH_VERTICAL_DOMINANCE,
-          },
-        );
-
-        if (direction === null) return;
-
-        if (coordination.featured.getProjectTransition(direction, 0)) {
-          event.preventDefault();
-          touchGesture.consumed = true;
-          coordination.featured.transitionProject(direction, 0);
-          return;
-        }
-
-        const startedAtBoundary = direction > 0
-          ? touchGesture.featuredBoundaryAtStart?.down
-          : touchGesture.featuredBoundaryAtStart?.up;
-
-        if (startedAtBoundary) {
-          const boundary = coordination.featured.getContentBoundary(direction);
-
-          if (boundary) {
-            event.preventDefault();
-
-            if (boundary.transition()) {
-              touchGesture.consumed = true;
-              return;
-            }
-          }
-        }
-
-        /*
-         * Not at a transition boundary yet: leave scrolling to the browser,
-         * but retain the gesture until touchend. Native panning may dispatch
-         * pointercancel before scrollTop reaches the project boundary.
-         */
-        return;
-      }
+      if (touchGesture.nativeFeaturedScroll) return;
 
       const expansion = touchGesture.featuredExpansion;
       const absoluteVerticalDistance = Math.abs(verticalDistance);
