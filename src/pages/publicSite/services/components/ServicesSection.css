@@ -32,3 +32,63 @@
     width: clamp(128px, min(31.25vw, calc((100dvh - 400px) * 0.56)), 280px);
   }
 }
+
+
+/* Responsive de Servicios alineado con Figma:
+   tablet conserva composición horizontal y texto centrado;
+   teléfono apila selector + visual en el mismo orden del diseño. */
+@media (width >= 768px) and (width < 1024px) {
+  .services-section > section:first-child {
+    text-align: center;
+  }
+
+  .services-section .services-category-showcase__frame {
+    width: 240px;
+    max-width: 240px;
+  }
+}
+
+@media (width < 768px) {
+  .services-section {
+    gap: 0;
+  }
+
+  .services-section > section:first-child {
+    text-align: center;
+  }
+
+  .services-section .services-category-showcase__layout {
+    padding: 24px 48px;
+  }
+
+  .services-section .services-category-showcase__content {
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  .services-section .services-category-showcase__list {
+    width: 100%;
+    max-width: 514px;
+    flex: none;
+    gap: 24px;
+    padding: 48px 0 48px 16px;
+  }
+
+  .services-section .services-category-showcase__indicator {
+    top: 48px;
+  }
+
+  .services-section .services-category-showcase__tab {
+    font-size: 20px;
+    line-height: 24px;
+    letter-spacing: -0.5px;
+  }
+
+  .services-section .services-category-showcase__frame {
+    width: 100%;
+    min-width: 240px;
+    max-width: 279px;
+    padding: 18px;
+  }
+}
