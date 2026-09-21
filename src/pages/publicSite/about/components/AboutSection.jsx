@@ -23,7 +23,7 @@ function AboutSection({
         gap-[48px]
         bg-[var(--color-neutral-950-uniform)]
         pt-[56px]
-        max-[1023px]:pb-[56px]
+        max-[1024px]:pb-[56px]
       "
     >
       <SectionTitleReveal
@@ -39,13 +39,13 @@ function AboutSection({
           p-[48px]
           text-center
           text-[var(--color-neutral-100-uniform)]
-          max-[1023px]:px-[16px]
-          max-[1023px]:py-[48px]
+          max-[767px]:px-[16px]
+          max-[767px]:py-[48px]
         "
         data-node-id="5133:812440"
       >
         <p
-          className="text-heading-4 m-0 whitespace-nowrap max-[1023px]:text-[20px] max-[1023px]:leading-[24px] max-[1023px]:tracking-[-0.5px]"
+          className="text-heading-4 m-0 whitespace-nowrap max-[767px]:text-[20px] max-[767px]:leading-[24px] max-[767px]:tracking-[-0.5px]"
           data-node-id="5133:812441"
         >
           {ABOUT_CONTENT.eyebrow}
@@ -58,9 +58,9 @@ function AboutSection({
             w-full
             max-w-[850px]
             text-center
-            max-[1023px]:text-[24px]
-            max-[1023px]:leading-[30px]
-            max-[1023px]:tracking-[-0.5px]
+            max-[767px]:text-[24px]
+            max-[767px]:leading-[30px]
+            max-[767px]:tracking-[-0.5px]
           "
           data-node-id="5133:812442"
         >
@@ -72,7 +72,7 @@ function AboutSection({
         </h2>
       </SectionTitleReveal>
 
-      <div className="hidden w-full min-[1024px]:block">
+      <div className="hidden w-full min-[1025px]:block">
         <AboutStory
           image={aboutHero}
           progress={progress}
@@ -80,7 +80,7 @@ function AboutSection({
       </div>
 
       <div
-        className="flex w-full flex-col items-center gap-[48px] min-[1024px]:hidden"
+        className="flex w-full flex-col items-center gap-[48px] min-[1025px]:hidden"
         data-node-id="5136:15322"
       >
         <div
