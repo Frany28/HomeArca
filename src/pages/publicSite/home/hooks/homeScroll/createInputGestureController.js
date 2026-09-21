@@ -56,6 +56,15 @@ function createInputGestureController({
     coordination.about?.settleGesture();
 
     coordination.featured?.settleProcessReturnGesture();
+
+    /*
+     * Si una transición de panel terminó, solo liberamos la navegación
+     * después de una pausa real del gesto. De esta forma la cola/inercia
+     * del trackpad no cuenta como el segundo scroll que revela el título.
+     */
+    if (!runtime.activeTween && !runtime.isProgrammaticScroll) {
+      runtime.wheelTransitionLock = false;
+    }
   };
 
   const scheduleWheelGestureSettlement = () => {
