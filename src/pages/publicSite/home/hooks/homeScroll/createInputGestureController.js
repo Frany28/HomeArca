@@ -560,23 +560,50 @@ function createInputGestureController({
         ? touchGesture.featuredBoundaryAtStart?.down
         : touchGesture.featuredBoundaryAtStart?.up;
 
-      if (startedAtBoundary) {
-        if (coordination.featured.transitionProject(direction, 0)) {
-          touchGesture.consumed = true;
-          return;
-        }
-
-        const boundary = coordination.featured.getContentBoundary(direction);
-
-        if (boundary && boundary.transition()) {
-          touchGesture.consumed = true;
-          return;
-        }
-      }
-
       if (bounds) {
+        const projectedScrollTop =
+          touchGesture.startScrollTop + verticalDistance;
+        const boundaryScrollTop =
+          direction > 0 ? bounds.end : bounds.start;
+        const boundaryOvershoot =
+          direction > 0
+            ? projectedScrollTop - bounds.end
+            : bounds.start - projectedScrollTop;
+        const reachedBoundaryDuringGesture =
+          boundaryOvershoot >= FEATURED_TOUCH_SWIPE_THRESHOLD_PX;
+
+        /*
+         * Mobile/tablet: un solo gesto debe poder recorrer el contenido
+         * restante del proyecto y, si continúa más allá del borde,
+         * ejecutar la transición. Antes solo se permitía la transición
+         * cuando el gesto había comenzado exactamente en el límite, lo
+         * que dejaba el scroll "pegado" al llegar al final.
+         */
+        if (startedAtBoundary || reachedBoundaryDuringGesture) {
+          if (
+            Math.abs(scroller.scrollTop - boundaryScrollTop) >
+            FEATURED_PROJECT_EDGE_TOLERANCE_PX
+          ) {
+            scroller.scrollTop = boundaryScrollTop;
+            coordination.content.synchronizeContentScroll();
+          }
+
+          if (coordination.featured.transitionProject(direction, 0)) {
+            touchGesture.consumed = true;
+            return;
+          }
+
+          const boundary =
+            coordination.featured.getContentBoundary(direction);
+
+          if (boundary && boundary.transition()) {
+            touchGesture.consumed = true;
+            return;
+          }
+        }
+
         scroller.scrollTop = Math.min(
-          Math.max(touchGesture.startScrollTop + verticalDistance, bounds.start),
+          Math.max(projectedScrollTop, bounds.start),
           bounds.end,
         );
         coordination.content.synchronizeContentScroll();
