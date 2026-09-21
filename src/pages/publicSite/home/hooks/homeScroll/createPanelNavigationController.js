@@ -122,7 +122,19 @@ function createPanelNavigationController({
         return;
       }
       runtime.statementEnteringUp = false;
-      releaseTransitionLock();
+
+      if (panelChanged) {
+        /*
+         * Al entrar en un nuevo panel, la inercia restante del mismo
+         * gesto de wheel/trackpad no puede revelar su título.
+         * Esperamos a que exista una pausa real antes de desbloquear
+         * la siguiente intención.
+         */
+        coordination.input?.scheduleWheelGestureSettlement();
+      } else {
+        releaseTransitionLock();
+      }
+
       coordination.content?.synchronizeTitleVisibility();
     };
 
