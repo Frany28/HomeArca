@@ -16,6 +16,20 @@ const panelSource = readFileSync(
   ),
   "utf8",
 );
+const sectionsSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/home/components/HomeSections.jsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const statementPanelSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/home/components/HomeStatementPanel/HomeStatementPanel.jsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
 const inputControllerSource = readFileSync(
   new URL(
     "../src/pages/publicSite/home/hooks/homeScroll/createInputGestureController.js",
@@ -24,12 +38,30 @@ const inputControllerSource = readFileSync(
   "utf8",
 );
 
-test("the Construction scroll hint appears early and is bottom-centered on mobile", () => {
+test("the Construction scroll hint appears on panel arrival and is bottom-centered on mobile", () => {
   assert.match(
     hintSource,
     /bottom-\[51px\] left-1\/2[^"]*-translate-x-1\/2[^"]*min-\[768px\]:right-\[51px\]/,
   );
-  assert.match(panelSource, /scrollHintVariant === "edge" \|\| scrollHintVisible/);
+  assert.match(
+    panelSource,
+    /scrollHintVariant === "edge"\s*\? active\s*:\s*titleVisible && scrollHintVisible/,
+  );
+  assert.match(
+    sectionsSource,
+    /active=\{active && navigationState\.panelIndex === panelIndex\}/,
+  );
+});
+
+test("the final statement shows the same hint only after its phrase is fully revealed", () => {
+  assert.match(
+    statementPanelSource,
+    /statementVisible && <HomeScrollHint variant="edge" \/>/,
+  );
+  assert.match(
+    sectionsSource,
+    /statementVisible=\{[\s\S]*navigationState\.phase === HOME_SCROLL_PHASES\.TITLE/,
+  );
 });
 
 test("title reveal completion requires a fresh wheel gesture", () => {

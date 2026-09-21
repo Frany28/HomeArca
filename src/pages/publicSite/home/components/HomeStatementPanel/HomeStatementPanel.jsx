@@ -7,6 +7,7 @@ import {
 } from "react";
 import { useReducedMotion } from "motion/react";
 
+import HomeScrollHint from "../HomeScrollHint/HomeScrollHint.jsx";
 import { connectStatementPlayback } from "../../utils/statementVideoPlayback.js";
 import { getHomeStatementTransform } from "../../utils/homeScrollNavigation.js";
 
@@ -216,6 +217,8 @@ function HomeStatementPanel({
       <h2 className="sr-only" aria-hidden={!statementVisible}>
         {phrase}
       </h2>
+
+      {statementVisible && <HomeScrollHint variant="edge" />}
     </section>
   );
 }

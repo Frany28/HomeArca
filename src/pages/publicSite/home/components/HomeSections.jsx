@@ -20,6 +20,7 @@ function HomeSections({
         <HomeScrollPanel
           key={panel.title}
           {...panel}
+          active={active && navigationState.panelIndex === panelIndex}
           scrollHintVariant={SCROLL_HINT_VARIANTS[panelIndex]}
           onTitleRevealComplete={() => {
             onTitleRevealComplete?.(panelIndex);

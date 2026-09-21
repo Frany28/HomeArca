@@ -4,6 +4,7 @@ import HomeHeroTitle from "../HomeHeroTitle/HomeHeroTitle.jsx";
 import HomeScrollHint from "../HomeScrollHint/HomeScrollHint.jsx";
 
 function HomeScrollPanel({
+  active = false,
   captionDescriptionNodeId,
   captionNodeId,
   captionTitleNodeId,
@@ -31,8 +32,9 @@ function HomeScrollPanel({
 
   const showScrollHint =
     scrollHintVariant &&
-    titleVisible &&
-    (scrollHintVariant === "edge" || scrollHintVisible);
+    (scrollHintVariant === "edge"
+      ? active
+      : titleVisible && scrollHintVisible);
 
   return (
     <section
