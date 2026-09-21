@@ -34,7 +34,6 @@ const FEATURED_TOUCH_SCROLL_IDLE_MS = 64;
 
 function createInputGestureController({
   titleRevealLockedRef,
-  pendingPanelDirectionRef,
   activeFeaturedProjectIndexRef,
   activeSectionRef,
   coordination,
@@ -76,6 +75,14 @@ function createInputGestureController({
       settleWheelGesture,
       WHEEL_GESTURE_IDLE_MS,
     );
+  };
+
+  const requireFreshWheelGesture = () => {
+    runtime.wheelTransitionLock = true;
+    runtime.wheelGestureState = markWheelGestureIdle(
+      runtime.wheelGestureState,
+    );
+    scheduleWheelGestureSettlement();
   };
 
   const observeConsumedWheelGesture = (deltaY, eventTime) => {
@@ -355,14 +362,12 @@ function createInputGestureController({
       titleRevealLockedRef.current &&
       currentState.panelIndex < STATEMENT_PANEL_INDEX
     ) {
-      pendingPanelDirectionRef.current = triggeredDirection;
-
       debugWheel(
         event,
         normalizedDelta,
         progressDelta,
         triggeredDirection,
-        "QUEUED_TITLE_REVEAL",
+        "BLOCKED_TITLE_REVEAL",
       );
 
       return;
@@ -1018,6 +1023,7 @@ function createInputGestureController({
     attach,
     destroy,
     observeConsumedWheelGesture,
+    requireFreshWheelGesture,
     scheduleWheelGestureSettlement,
   };
 }

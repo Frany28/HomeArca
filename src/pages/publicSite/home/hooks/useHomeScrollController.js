@@ -51,8 +51,7 @@ function useHomeScrollController({
   const navigationStateRef = useRef(INITIAL_NAVIGATION_STATE);
 
   const titleRevealLockedRef = useRef(false);
-  const pendingPanelDirectionRef = useRef(null);
-  const panelNavigationRef = useRef(null);
+  const inputGestureControllerRef = useRef(null);
 
   /*
    * PROGRESO DE EFECTOS
@@ -152,17 +151,7 @@ function useHomeScrollController({
       }
 
       titleRevealLockedRef.current = false;
-
-      const pendingDirection =
-        pendingPanelDirectionRef.current;
-
-      pendingPanelDirectionRef.current = null;
-
-      if (pendingDirection !== null) {
-        panelNavigationRef.current?.moveByDirection(
-          pendingDirection,
-        );
-      }
+      inputGestureControllerRef.current?.requireFreshWheelGesture();
     },
     [],
   );
@@ -331,9 +320,6 @@ function useHomeScrollController({
         commitNavigationState,
       });
 
-    panelNavigationRef.current =
-      coordination.panel;
-
     /*
      * PROYECTOS DESTACADOS
      */
@@ -435,8 +421,6 @@ function useHomeScrollController({
 
         navigationStateRef,
 
-        pendingPanelDirectionRef,
-
         reduceMotion,
 
         runtime,
@@ -447,6 +431,8 @@ function useHomeScrollController({
 
         titleRevealLockedRef,
       });
+
+    inputGestureControllerRef.current = coordination.input;
 
     /*
      * Navegación directa desde navbar.
@@ -499,7 +485,7 @@ function useHomeScrollController({
 
       titleRevealLockedRef.current = false;
 
-      panelNavigationRef.current = null;
+      inputGestureControllerRef.current = null;
 
       statement.destroy();
     };

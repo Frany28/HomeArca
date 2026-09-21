@@ -39,7 +39,7 @@ const SCROLL_HINT_VARIANTS = {
   },
   edge: {
     className:
-      "right-[51px] bottom-[51px] size-[144px] p-[56px]",
+      "bottom-[51px] left-1/2 size-[144px] -translate-x-1/2 p-[56px] min-[768px]:left-auto min-[768px]:right-[51px] min-[768px]:translate-x-0",
     contentClassName: "items-end gap-[16px]",
     iconNodeId: "5169:16283",
     rootNodeId: "5169:16271",

@@ -29,6 +29,11 @@ function HomeScrollPanel({
     onTitleRevealComplete?.();
   };
 
+  const showScrollHint =
+    scrollHintVariant &&
+    titleVisible &&
+    (scrollHintVariant === "edge" || scrollHintVisible);
+
   return (
     <section
       className="relative h-dvh w-full shrink-0 overflow-hidden bg-[var(--color-neutral-950-uniform)]"
@@ -55,7 +60,7 @@ function HomeScrollPanel({
         visible={titleVisible}
         onRevealComplete={handleTitleRevealComplete}
       />
-      {scrollHintVariant && titleVisible && scrollHintVisible && (
+      {showScrollHint && (
         <HomeScrollHint variant={scrollHintVariant} />
       )}
     </section>
