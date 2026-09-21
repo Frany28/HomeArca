@@ -1,7 +1,7 @@
 import MovingGradientTitle from "./MovingGradientTitle.jsx";
 import SectionTitleReveal from "../../components/SectionTitleReveal.jsx";
 
-function ServicesHeading({ eyebrow, title, description, visible = false }) {
+function ServicesHeading({ eyebrow, title, titleMobile = [], description, visible = false }) {
   return (
     <section
       className="relative flex w-full shrink-0 justify-center overflow-hidden bg-[var(--color-neutral-950-uniform)] px-[24px] py-[48px] min-[768px]:px-[48px]"
@@ -23,7 +23,17 @@ function ServicesHeading({ eyebrow, title, description, visible = false }) {
           className="m-0 w-full text-[24px] font-bold leading-[30px] tracking-[-0.5px] min-[768px]:text-[64px] min-[768px]:leading-[76px] min-[768px]:tracking-[-2px] min-[1024px]:pb-[0.08em]"
           data-node-id="4848:8083"
         >
-          {title}
+          <span className="hidden min-[768px]:inline">
+            {title}
+          </span>
+
+          <span className="min-[768px]:hidden">
+            {titleMobile.map((line) => (
+              <span key={line} className="block">
+                {line}
+              </span>
+            ))}
+          </span>
         </MovingGradientTitle>
 
         <p
