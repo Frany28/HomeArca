@@ -27,8 +27,14 @@ function createAboutStoryController({
   let endpointLock = null;
   let gestureIdle = true;
 
-  const getStory = () =>
-    scroller.querySelector("[data-about-story]");
+  const getStory = () => {
+    const usesStaticResponsiveStory =
+      window.matchMedia?.("(max-width: 1023px)").matches ?? false;
+
+    if (usesStaticResponsiveStory) return null;
+
+    return scroller.querySelector("[data-about-story]");
+  };
 
   const getStoryAnchor = () => {
     const story = getStory();
