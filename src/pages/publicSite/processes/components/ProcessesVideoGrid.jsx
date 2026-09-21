@@ -1,16 +1,16 @@
 function ProcessesVideoGrid({ active, inert, onVideoOpen, videos }) {
   return (
     <div
-      className="mx-auto grid w-full max-w-[1152px] grid-cols-1 gap-[8px] px-[16px] min-[600px]:grid-cols-2 min-[768px]:gap-[24px] min-[768px]:px-[48px] min-[1024px]:grid-cols-3 min-[1248px]:px-0"
+      className="mx-auto grid w-full max-w-[1152px] grid-cols-2 gap-x-[16px] gap-y-[24px] px-[16px] min-[768px]:gap-[24px] min-[768px]:px-[48px] min-[1024px]:grid-cols-3 min-[1248px]:px-0"
       aria-label="Galería de videos de nuestros procesos"
       inert={inert ? "" : undefined}
       data-node-id="4845:5294"
     >
-      {videos.map((video) => (
+      {videos.map((video, index) => (
         <button
           key={video.id}
           type="button"
-          className="group relative aspect-[23/27] min-w-0 cursor-pointer overflow-hidden rounded-[var(--radius-2)] border-0 bg-[var(--color-neutral-200)] p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-950-uniform)]"
+          className={`group relative aspect-[23/27] min-w-0 cursor-pointer overflow-hidden rounded-[var(--radius-2)] border-0 bg-[var(--color-neutral-200)] p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-950-uniform)] ${index >= 6 ? "max-[767px]:hidden" : ""}`}
           aria-label={`Abrir video: ${video.title}`}
           onClick={(event) => {
           const rect = event.currentTarget.getBoundingClientRect();
