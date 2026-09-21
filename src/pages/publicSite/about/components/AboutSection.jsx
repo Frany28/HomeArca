@@ -13,7 +13,7 @@ function AboutSection({
       id="about"
       aria-label="Sobre nosotros"
       data-content-title-scope="about"
-      data-node-id="5133:813605"
+      data-node-id="5136:15322"
       className="
         dark
         flex
@@ -42,11 +42,11 @@ function AboutSection({
           max-[767px]:px-[16px]
           max-[767px]:py-[48px]
         "
-        data-node-id="5133:812440"
+        data-node-id="5136:15074"
       >
         <p
-          className="text-heading-4 m-0 whitespace-nowrap max-[767px]:text-[20px] max-[767px]:leading-[24px] max-[767px]:tracking-[-0.5px]"
-          data-node-id="5133:812441"
+          className="text-heading-4 m-0 whitespace-nowrap max-[767px]:!text-[20px] max-[767px]:!leading-[24px] max-[767px]:!tracking-[-0.5px]"
+          data-node-id="5136:15075"
         >
           {ABOUT_CONTENT.eyebrow}
         </p>
@@ -58,11 +58,11 @@ function AboutSection({
             w-full
             max-w-[850px]
             text-center
-            max-[767px]:text-[24px]
-            max-[767px]:leading-[30px]
-            max-[767px]:tracking-[-0.5px]
+            max-[767px]:!text-[24px]
+            max-[767px]:!leading-[30px]
+            max-[767px]:!tracking-[-0.5px]
           "
-          data-node-id="5133:812442"
+          data-node-id="5136:15076"
         >
           {ABOUT_CONTENT.title.map((line) => (
             <span key={line} className="block">
@@ -81,7 +81,7 @@ function AboutSection({
 
       <div
         className="flex w-full flex-col items-center gap-[48px] min-[1025px]:hidden"
-        data-node-id="5136:15322"
+        data-node-id="5136:15319"
       >
         <div
           className="relative aspect-[4096/2731] w-full shrink-0"
@@ -91,12 +91,12 @@ function AboutSection({
             src={aboutHero}
             alt=""
             aria-hidden="true"
-            className="absolute inset-0 size-full object-cover object-bottom"
+            className="pointer-events-none absolute inset-0 size-full max-w-none object-cover object-bottom"
           />
         </div>
 
-        <div className="flex w-full max-w-[640px] items-center justify-center px-[16px] py-[48px]">
-          <p className="m-0 w-full text-center text-[20px] font-bold leading-[24px] tracking-[-0.5px] text-[var(--color-neutral-100-uniform)] opacity-60">
+        <div className="flex w-full max-w-[640px] items-center justify-center px-[16px] py-[48px]" data-node-id="5136:15320">
+          <p className="m-0 w-full break-words text-center text-[20px] font-bold leading-[24px] tracking-[-0.5px] text-[var(--color-neutral-100-uniform)] opacity-60" data-node-id="5136:15318">
             {ABOUT_CONTENT.description}
           </p>
         </div>
