@@ -36,7 +36,7 @@ test("the featured carousel separates horizontal dragging from vertical page scr
   assert.match(mobileCarouselSource, /className="[^"]*touch-pan-y/);
   assert.match(mobileCarouselSource, /handlePointerMove/);
   assert.match(mobileCarouselSource, /Math\.abs\(deltaX\) <= Math\.abs\(deltaY\)/);
-  assert.match(mobileCarouselSource, /scrollLeft = drag\.startScrollLeft - deltaX/);
+  assert.match(mobileCarouselSource, /targetScrollLeft = drag\.startScrollLeft - deltaX/);
   assert.match(mobileCarouselSource, /onTouchCancel=\{resumeAutoScroll\}/);
 });
 
