@@ -24,6 +24,7 @@ const MOBILE_MENU_ID = "public-site-mobile-menu";
 function PublicSiteHeader({
   activeNavigationId,
   className,
+  contactHref,
   navigationItems = DEFAULT_NAVIGATION_ITEMS,
   onNavigate,
   onContact,
@@ -140,8 +141,11 @@ function PublicSiteHeader({
               showLeftIcon={false}
               showRightIcon={false}
               className="[&]:h-auto [&]:border-0"
-              onClick={onContact}
-              aria-disabled={!onContact || undefined}
+              href={contactHref}
+              target={contactHref ? "_blank" : undefined}
+              rel={contactHref ? "noopener noreferrer" : undefined}
+              onClick={contactHref ? undefined : onContact}
+              aria-disabled={!contactHref && !onContact ? true : undefined}
               data-node-id="4781:135050"
             >
               Contáctanos
@@ -187,7 +191,8 @@ function PublicSiteHeader({
           isOpen={isMobileMenuOpen}
           activeNavigationId={activeNavigationId}
           navigationItems={navigationItems}
-          contactDisabled={!onContact}
+          contactDisabled={!contactHref && !onContact}
+          contactHref={contactHref}
           onNavigate={handleMobileNavigate}
           onContact={handleMobileContact}
         />

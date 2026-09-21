@@ -59,8 +59,10 @@ test("Contact is the final Home section and participates in shared navigation", 
   assert.ok(contactPosition > aboutPosition);
   assert.match(contactSectionSource, /<section\s+[\s\S]*?id="contact"/);
   assert.match(openingHomeSource, /"#contact"/);
-  assert.match(openingHomeSource, /onContact=\{navigateToContact\}/);
-  assert.match(openingHomeSource, /navigateToSection\("contact"\)/);
+  assert.match(
+    openingHomeSource,
+    /contactHref=\{CONTACT_EXTERNAL_LINKS\.whatsapp\}/,
+  );
   assert.match(contactSectionSource, /onNavChange=\{handleFooterNavigation\}/);
 });
 

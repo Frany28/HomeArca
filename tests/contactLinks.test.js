@@ -21,6 +21,24 @@ const contactSectionSource = readFileSync(
   ),
   "utf8",
 );
+const headerSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/components/PublicSiteHeader/PublicSiteHeader.jsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const mobileMenuSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/components/PublicSiteHeader/PublicSiteMobileMenu.jsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const openingHomeSource = readFileSync(
+  new URL("../src/pages/publicSite/home/OpeningHome.jsx", import.meta.url),
+  "utf8",
+);
 
 test("contact and social buttons use direct secure external links", () => {
   assert.match(contactContentSource, /https:\/\/wa\.me\/584246674832/);
@@ -36,4 +54,15 @@ test("contact and social buttons use direct secure external links", () => {
   assert.match(footerSource, /href=\{item\.href\}/);
   assert.match(buttonSource, /tokens\.add\("noopener"\)/);
   assert.match(buttonSource, /tokens\.add\("noreferrer"\)/);
+});
+
+test("desktop and mobile navbar contact buttons use the WhatsApp link", () => {
+  assert.match(
+    openingHomeSource,
+    /contactHref=\{CONTACT_EXTERNAL_LINKS\.whatsapp\}/,
+  );
+  assert.match(headerSource, /href=\{contactHref\}/);
+  assert.match(mobileMenuSource, /href=\{contactHref\}/);
+  assert.match(headerSource, /target=\{contactHref \? "_blank" : undefined\}/);
+  assert.match(mobileMenuSource, /target=\{contactHref \? "_blank" : undefined\}/);
 });

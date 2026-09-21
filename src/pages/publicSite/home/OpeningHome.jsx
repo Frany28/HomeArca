@@ -1,5 +1,5 @@
 import { motion as Motion, useReducedMotion } from "motion/react";
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
 import ArcaOpeningMark, {
@@ -12,6 +12,7 @@ import FeaturedProjectsSection from "../featuredProjects/components/FeaturedProj
 import ProcessesSection from "../processes/components/ProcessesSection.jsx";
 import AboutSection from "../about/components/AboutSection.jsx";
 import ContactSection from "../contact/components/ContactSection.jsx";
+import { CONTACT_EXTERNAL_LINKS } from "../contact/contactContent.js";
 import useHomeOpeningSequence from "./hooks/useHomeOpeningSequence.js";
 import useHomeScrollController from "./hooks/useHomeScrollController.js";
 import { HOME_PRELOAD_IMAGES } from "./homeContent.js";
@@ -59,10 +60,6 @@ function OpeningHome() {
 
   const titleIsVisible = (id) =>
     visibleContentTitleIds.includes(id);
-
-  const navigateToContact = useCallback(() => {
-    navigateToSection("contact");
-  }, [navigateToSection]);
 
   const touchNavigationClassName = !contentScrollActive
     ? "touch-pan-x"
@@ -178,7 +175,7 @@ function OpeningHome() {
               onNavigate={
                 navigateToSection
               }
-              onContact={navigateToContact}
+              contactHref={CONTACT_EXTERNAL_LINKS.whatsapp}
             />
           </div>
 

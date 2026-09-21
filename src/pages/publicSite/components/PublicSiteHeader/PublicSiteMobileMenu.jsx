@@ -63,6 +63,7 @@ const itemVariants = {
 function PublicSiteMobileMenu({
   activeNavigationId,
   contactDisabled,
+  contactHref,
   id,
   isOpen,
   navigationItems,
@@ -114,6 +115,9 @@ function PublicSiteMobileMenu({
                   showLeftIcon={false}
                   showRightIcon={false}
                   className="public-site-mobile-contact"
+                  href={contactHref}
+                  target={contactHref ? "_blank" : undefined}
+                  rel={contactHref ? "noopener noreferrer" : undefined}
                   onClick={onContact}
                   aria-disabled={contactDisabled || undefined}
                 >
