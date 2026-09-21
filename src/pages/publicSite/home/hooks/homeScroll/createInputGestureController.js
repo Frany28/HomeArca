@@ -508,13 +508,33 @@ function createInputGestureController({
     }
 
     if (runtime.contentMode) {
+      const tracksFeaturedReturn =
+        activeSectionRef.current === "process" &&
+        !coordination.featured.isExpansionEnabled();
+
       touchGesture = {
         pointerId: event.pointerId,
         startX: event.clientX,
         startY: event.clientY,
         nativeContent: true,
+        tracksFeaturedReturn,
         consumed: false,
       };
+
+      if (tracksFeaturedReturn) {
+        window.clearTimeout(nativeTouchScrollTimer);
+        nativeTouchScrollTimer = null;
+        nativeTouchIntent = {
+          direction: null,
+          ended: false,
+          intentional: false,
+          projectIndex: null,
+          sourceSection: "process",
+          startX: event.clientX,
+          startY: event.clientY,
+          triggered: false,
+        };
+      }
       return;
     }
 
@@ -537,7 +557,28 @@ function createInputGestureController({
       touchGesture.pointerId !== event.pointerId ||
       touchGesture.consumed
     ) return;
-    if (touchGesture.nativeContent) return;
+    if (touchGesture.nativeContent) {
+      if (touchGesture.tracksFeaturedReturn && nativeTouchIntent) {
+        const direction = getSwipeDirection(
+          {
+            startX: touchGesture.startX,
+            startY: touchGesture.startY,
+            endX: event.clientX,
+            endY: event.clientY,
+          },
+          {
+            threshold: FEATURED_TOUCH_SWIPE_THRESHOLD_PX,
+            verticalDominance: TOUCH_VERTICAL_DOMINANCE,
+          },
+        );
+
+        if (direction === HOME_SCROLL_DIRECTIONS.UP) {
+          nativeTouchIntent.direction = direction;
+          nativeTouchIntent.intentional = true;
+        }
+      }
+      return;
+    }
 
     const horizontalDistance = event.clientX - touchGesture.startX;
     const verticalDistance = touchGesture.startY - event.clientY;
@@ -752,6 +793,32 @@ function createInputGestureController({
     nativeTouchIntent = null;
   };
 
+  const shouldDeferNativeContentSync = () => {
+    const intent = nativeTouchIntent;
+
+    if (
+      !intent ||
+      intent.triggered ||
+      !intent.intentional ||
+      !intent.direction ||
+      coordination.featured.isExpansionEnabled()
+    ) {
+      return false;
+    }
+
+    if (intent.sourceSection === "process") {
+      return (
+        intent.direction === HOME_SCROLL_DIRECTIONS.UP &&
+        activeSectionRef.current === "process"
+      );
+    }
+
+    return (
+      activeSectionRef.current === "featured-projects" &&
+      activeFeaturedProjectIndexRef.current === intent.projectIndex
+    );
+  };
+
   const tryNativeTouchBoundaryTransition = () => {
     const intent = nativeTouchIntent;
 
@@ -760,11 +827,39 @@ function createInputGestureController({
       intent.triggered ||
       !intent.intentional ||
       !intent.direction ||
-      activeSectionRef.current !== "featured-projects" ||
-      activeFeaturedProjectIndexRef.current !== intent.projectIndex ||
       coordination.featured.isExpansionEnabled() ||
       runtime.activeTween ||
       runtime.isProgrammaticScroll
+    ) {
+      return false;
+    }
+
+    if (
+      intent.sourceSection === "process" &&
+      intent.direction === HOME_SCROLL_DIRECTIONS.UP
+    ) {
+      if (activeSectionRef.current !== "process") return false;
+
+      const boundary = coordination.featured.getContentBoundary(
+        HOME_SCROLL_DIRECTIONS.UP,
+      );
+      if (!boundary) return false;
+
+      const reachedBoundary =
+        scroller.scrollTop <=
+        boundary.scrollTop + FEATURED_PROJECT_EDGE_TOLERANCE_PX;
+
+      if (!reachedBoundary) return false;
+
+      intent.triggered = true;
+      const transitioned = boundary.transition();
+      if (transitioned) nativeTouchIntent = null;
+      return transitioned;
+    }
+
+    if (
+      activeSectionRef.current !== "featured-projects" ||
+      activeFeaturedProjectIndexRef.current !== intent.projectIndex
     ) {
       return false;
     }
@@ -789,7 +884,11 @@ function createInputGestureController({
     );
 
     if (!transitioned) {
-      coordination.featured.getContentBoundary(intent.direction)?.transition();
+      const boundary = coordination.featured.getContentBoundary(intent.direction);
+      if (!boundary?.transition()) {
+        intent.triggered = false;
+        return false;
+      }
     }
 
     nativeTouchIntent = null;
@@ -944,8 +1043,13 @@ function createInputGestureController({
     });
     scroller.addEventListener("touchcancel", cancelNativeFeaturedTouchGesture, true);
     scroller.addEventListener("keydown", handleKeyDown);
-    scroller.addEventListener("scroll", coordination.content.handleNativeScroll, { passive: true });
+    /*
+     * Mobile touch navigation must get the first look at native scroll.
+     * Otherwise content synchronization can change the active section/project
+     * before the boundary transition has a chance to claim the gesture.
+     */
     scroller.addEventListener("scroll", handleNativeTouchScroll, { passive: true });
+    scroller.addEventListener("scroll", coordination.content.handleNativeScroll, { passive: true });
     document.addEventListener(
       "mousedown",
       handleScrollbarMouseDown,
@@ -1032,6 +1136,7 @@ function createInputGestureController({
     observeConsumedWheelGesture,
     requireFreshWheelGesture,
     scheduleWheelGestureSettlement,
+    shouldDeferNativeContentSync,
   };
 }
 
