@@ -14,7 +14,10 @@ import {
 import "./ContactTiltCard.css";
 
 const TILT_INTENSITY = 12;
+const TOUCH_TILT_INTENSITY = 10;
 const GLARE_INTENSITY = 0.08;
+const TOUCH_HOLD_DELAY_MS = 180;
+const TOUCH_HOLD_SLOP_PX = 10;
 const MOVING_GRADIENT_SHADER = {
   setup: setupMovingGradient,
   render: renderMovingGradient,
@@ -90,9 +93,15 @@ function ContactTiltCard() {
       ease: "power2.out",
     });
 
-    const handlePointerMove = (event) => {
-      if (event.pointerType === "touch") return;
+    const resetTilt = () => {
+      rotateXTo(0);
+      rotateYTo(0);
+      glareXTo(0);
+      glareYTo(0);
+      glareOpacityTo(0);
+    };
 
+    const applyDesktopTilt = (event) => {
       const rect = card.getBoundingClientRect();
       const offsetX = event.clientX - (rect.left + rect.width / 2);
       const offsetY = event.clientY - (rect.top + rect.height / 2);
@@ -118,22 +127,138 @@ function ContactTiltCard() {
       glareOpacityTo(GLARE_INTENSITY);
     };
 
+    const applyTouchTilt = (clientX, clientY) => {
+      const rect = card.getBoundingClientRect();
+      const normalizedX = gsap.utils.clamp(
+        -1,
+        1,
+        (clientX - (rect.left + rect.width / 2)) / Math.max(rect.width / 2, 1),
+      );
+      const normalizedY = gsap.utils.clamp(
+        -1,
+        1,
+        (clientY - (rect.top + rect.height / 2)) / Math.max(rect.height / 2, 1),
+      );
+      const offsetX = clientX - (rect.left + rect.width / 2);
+      const offsetY = clientY - (rect.top + rect.height / 2);
+
+      rotateXTo(-normalizedY * TOUCH_TILT_INTENSITY);
+      rotateYTo(normalizedX * TOUCH_TILT_INTENSITY);
+      glareXTo(offsetX * 0.47);
+      glareYTo(offsetY * 0.47);
+      glareOpacityTo(GLARE_INTENSITY);
+    };
+
+    let touchPointerId = null;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchActive = false;
+    let touchHoldTimer = null;
+
+    const clearTouchHoldTimer = () => {
+      if (touchHoldTimer !== null) {
+        window.clearTimeout(touchHoldTimer);
+        touchHoldTimer = null;
+      }
+    };
+
+    const finishTouchInteraction = (event) => {
+      if (
+        event?.pointerType === "touch" &&
+        touchPointerId !== null &&
+        event.pointerId !== touchPointerId
+      ) {
+        return;
+      }
+
+      clearTouchHoldTimer();
+
+      if (
+        touchPointerId !== null &&
+        card.hasPointerCapture?.(touchPointerId)
+      ) {
+        card.releasePointerCapture(touchPointerId);
+      }
+
+      touchPointerId = null;
+      touchActive = false;
+      resetTilt();
+    };
+
+    const handlePointerMove = (event) => {
+      if (event.pointerType === "touch") return;
+      applyDesktopTilt(event);
+    };
+
     const handleWindowPointerOut = (event) => {
       if (event.pointerType === "touch" || event.relatedTarget) return;
+      resetTilt();
+    };
 
-      rotateXTo(0);
-      rotateYTo(0);
-      glareXTo(0);
-      glareYTo(0);
-      glareOpacityTo(0);
+    const handleCardPointerDown = (event) => {
+      if (event.pointerType !== "touch" || touchPointerId !== null) return;
+
+      touchPointerId = event.pointerId;
+      touchStartX = event.clientX;
+      touchStartY = event.clientY;
+      touchActive = false;
+      clearTouchHoldTimer();
+
+      touchHoldTimer = window.setTimeout(() => {
+        if (touchPointerId !== event.pointerId) return;
+
+        touchActive = true;
+        card.setPointerCapture?.(event.pointerId);
+        applyTouchTilt(event.clientX, event.clientY);
+      }, TOUCH_HOLD_DELAY_MS);
+    };
+
+    const handleCardPointerMove = (event) => {
+      if (
+        event.pointerType !== "touch" ||
+        event.pointerId !== touchPointerId
+      ) {
+        return;
+      }
+
+      if (!touchActive) {
+        const distance = Math.hypot(
+          event.clientX - touchStartX,
+          event.clientY - touchStartY,
+        );
+
+        if (distance > TOUCH_HOLD_SLOP_PX) {
+          clearTouchHoldTimer();
+          touchPointerId = null;
+        }
+
+        return;
+      }
+
+      event.preventDefault();
+      applyTouchTilt(event.clientX, event.clientY);
+    };
+
+    const handleCardPointerUp = (event) => {
+      if (event.pointerType !== "touch") return;
+      finishTouchInteraction(event);
     };
 
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerout", handleWindowPointerOut);
+    card.addEventListener("pointerdown", handleCardPointerDown);
+    card.addEventListener("pointermove", handleCardPointerMove);
+    card.addEventListener("pointerup", handleCardPointerUp);
+    card.addEventListener("pointercancel", handleCardPointerUp);
 
     return () => {
+      clearTouchHoldTimer();
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerout", handleWindowPointerOut);
+      card.removeEventListener("pointerdown", handleCardPointerDown);
+      card.removeEventListener("pointermove", handleCardPointerMove);
+      card.removeEventListener("pointerup", handleCardPointerUp);
+      card.removeEventListener("pointercancel", handleCardPointerUp);
       gsap.killTweensOf(card);
       gsap.killTweensOf(glare);
     };
