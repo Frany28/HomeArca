@@ -14,7 +14,6 @@ import {
 import "./ContactTiltCard.css";
 
 const TILT_INTENSITY = 12;
-const TOUCH_TILT_INTENSITY = 10;
 const GLARE_INTENSITY = 0.08;
 const TOUCH_HOLD_DELAY_MS = 180;
 const TOUCH_HOLD_SLOP_PX = 10;
@@ -101,19 +100,19 @@ function ContactTiltCard() {
       glareOpacityTo(0);
     };
 
-    const applyDesktopTilt = (event) => {
+    const applyTiltFromPoint = (clientX, clientY) => {
       const rect = card.getBoundingClientRect();
-      const offsetX = event.clientX - (rect.left + rect.width / 2);
-      const offsetY = event.clientY - (rect.top + rect.height / 2);
+      const offsetX = clientX - (rect.left + rect.width / 2);
+      const offsetY = clientY - (rect.top + rect.height / 2);
       const viewportX = gsap.utils.clamp(
         0,
         1,
-        event.clientX / Math.max(window.innerWidth, 1),
+        clientX / Math.max(window.innerWidth, 1),
       );
       const viewportY = gsap.utils.clamp(
         0,
         1,
-        event.clientY / Math.max(window.innerHeight, 1),
+        clientY / Math.max(window.innerHeight, 1),
       );
 
       rotateXTo(
@@ -122,32 +121,6 @@ function ContactTiltCard() {
       rotateYTo(
         gsap.utils.interpolate(-TILT_INTENSITY, TILT_INTENSITY, viewportX),
       );
-      glareXTo(offsetX * 0.47);
-      glareYTo(offsetY * 0.47);
-      glareOpacityTo(GLARE_INTENSITY);
-    };
-
-    const applyTouchTilt = (clientX, clientY) => {
-      const rect = card.getBoundingClientRect();
-      const normalizedX = gsap.utils.clamp(
-        -1,
-        1,
-        (clientX - (rect.left + rect.width / 2)) / Math.max(rect.width / 2, 1),
-      );
-      const normalizedY = gsap.utils.clamp(
-        -1,
-        1,
-        (clientY - (rect.top + rect.height / 2)) / Math.max(rect.height / 2, 1),
-      );
-      const offsetX = clientX - (rect.left + rect.width / 2);
-      const offsetY = clientY - (rect.top + rect.height / 2);
-
-      card.style.setProperty("--contact-touch-x", `${((normalizedX + 1) / 2) * 100}%`);
-      card.style.setProperty("--contact-touch-y", `${((normalizedY + 1) / 2) * 100}%`);
-      card.dataset.touchActive = "true";
-
-      rotateXTo(-normalizedY * TOUCH_TILT_INTENSITY);
-      rotateYTo(normalizedX * TOUCH_TILT_INTENSITY);
       glareXTo(offsetX * 0.47);
       glareYTo(offsetY * 0.47);
       glareOpacityTo(GLARE_INTENSITY);
@@ -186,15 +159,12 @@ function ContactTiltCard() {
 
       touchPointerId = null;
       touchActive = false;
-      delete card.dataset.touchActive;
-      card.style.removeProperty("--contact-touch-x");
-      card.style.removeProperty("--contact-touch-y");
       resetTilt();
     };
 
     const handlePointerMove = (event) => {
       if (event.pointerType === "touch") return;
-      applyDesktopTilt(event);
+      applyTiltFromPoint(event.clientX, event.clientY);
     };
 
     const handleWindowPointerOut = (event) => {
@@ -216,7 +186,7 @@ function ContactTiltCard() {
 
         touchActive = true;
         card.setPointerCapture?.(event.pointerId);
-        applyTouchTilt(event.clientX, event.clientY);
+        applyTiltFromPoint(event.clientX, event.clientY);
       }, TOUCH_HOLD_DELAY_MS);
     };
 
@@ -243,7 +213,7 @@ function ContactTiltCard() {
       }
 
       event.preventDefault();
-      applyTouchTilt(event.clientX, event.clientY);
+      applyTiltFromPoint(event.clientX, event.clientY);
     };
 
     const handleCardPointerUp = (event) => {
@@ -279,10 +249,6 @@ function ContactTiltCard() {
         data-node-id="4856:5063"
         onContextMenu={(event) => event.preventDefault()}
       >
-        <div
-          className="contact-tilt-card__mobile-gradient pointer-events-none absolute inset-0"
-          aria-hidden="true"
-        />
         <ShaderFill
           className="contact-tilt-card__gradient pointer-events-none absolute inset-0"
           shader={MOVING_GRADIENT_SHADER}
