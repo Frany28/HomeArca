@@ -49,7 +49,7 @@ function ContactSection({ onNavigate }) {
                 color="currentColor"
               />
             }
-            className="rounded-[var(--radius-3)]"
+            className="rounded-[var(--radius-3)] max-[767px]:!h-[52px] max-[767px]:!w-full max-[767px]:max-w-[343px]"
           >
             {CONTACT_CONTENT.buttonLabel}
           </Button>
