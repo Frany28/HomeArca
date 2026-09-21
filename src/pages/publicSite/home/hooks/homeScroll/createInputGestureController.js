@@ -460,6 +460,7 @@ function createInputGestureController({
         startY: event.clientY,
         startScrollTop: scroller.scrollTop,
         featuredProject: true,
+        nativeFeaturedScroll: !coordination.featured.isExpansionEnabled(),
         featuredBounds: bounds,
         featuredBoundaryAtStart: bounds
           ? {
@@ -520,6 +521,65 @@ function createInputGestureController({
     const horizontalDistance = event.clientX - touchGesture.startX;
     const verticalDistance = touchGesture.startY - event.clientY;
     if (touchGesture.featuredProject) {
+      /*
+       * Mobile/tablet without the fullscreen expansion:
+       * preserve the original native touch scrolling behavior.
+       *
+       * The browser owns the swipe while the user is still travelling
+       * through the current project. We only intercept once the current
+       * position is already at a valid project/section boundary.
+       *
+       * This intentionally mirrors the pre-expansion touch behavior and
+       * avoids simulating the whole scroll with pointermove + scrollTop.
+       */
+      if (touchGesture.nativeFeaturedScroll) {
+        const direction = getSwipeDirection(
+          {
+            startX: touchGesture.startX,
+            startY: touchGesture.startY,
+            endX: event.clientX,
+            endY: event.clientY,
+          },
+          {
+            threshold: FEATURED_TOUCH_SWIPE_THRESHOLD_PX,
+            verticalDominance: TOUCH_VERTICAL_DOMINANCE,
+          },
+        );
+
+        if (direction === null) return;
+
+        if (coordination.featured.getProjectTransition(direction, 0)) {
+          event.preventDefault();
+          touchGesture.consumed = true;
+          coordination.featured.transitionProject(direction, 0);
+          return;
+        }
+
+        const startedAtBoundary = direction > 0
+          ? touchGesture.featuredBoundaryAtStart?.down
+          : touchGesture.featuredBoundaryAtStart?.up;
+
+        if (startedAtBoundary) {
+          const boundary = coordination.featured.getContentBoundary(direction);
+
+          if (boundary) {
+            event.preventDefault();
+
+            if (boundary.transition()) {
+              touchGesture.consumed = true;
+              return;
+            }
+          }
+        }
+
+        /*
+         * Not at a transition boundary yet: stop tracking this pointer and
+         * leave the remainder of the physical swipe entirely to native scroll.
+         */
+        touchGesture = null;
+        return;
+      }
+
       const expansion = touchGesture.featuredExpansion;
       const absoluteVerticalDistance = Math.abs(verticalDistance);
       const isVerticalGesture =
