@@ -747,44 +747,37 @@ function createInputGestureController({
     nativeTouchIntent = null;
   };
 
-  const settleNativeTouchIntent = () => {
-    window.clearTimeout(nativeTouchScrollTimer);
-    nativeTouchScrollTimer = null;
-
+  const tryNativeTouchBoundaryTransition = () => {
     const intent = nativeTouchIntent;
-    if (!intent?.ended) return;
 
     if (
+      !intent ||
       intent.triggered ||
       !intent.intentional ||
       !intent.direction ||
       activeSectionRef.current !== "featured-projects" ||
       activeFeaturedProjectIndexRef.current !== intent.projectIndex ||
-      coordination.featured.isExpansionEnabled()
+      coordination.featured.isExpansionEnabled() ||
+      runtime.activeTween ||
+      runtime.isProgrammaticScroll
     ) {
-      nativeTouchIntent = null;
-      return;
+      return false;
     }
 
     const panels = coordination.featured.getProjectPanels();
     const bounds = coordination.featured.getPanelScrollBounds(
       panels[intent.projectIndex],
     );
-    if (!bounds) {
-      nativeTouchIntent = null;
-      return;
-    }
+    if (!bounds) return false;
 
     const reachedBoundary = intent.direction > 0
       ? scroller.scrollTop >= bounds.end - FEATURED_PROJECT_EDGE_TOLERANCE_PX
       : scroller.scrollTop <= bounds.start + FEATURED_PROJECT_EDGE_TOLERANCE_PX;
 
-    if (!reachedBoundary) {
-      nativeTouchIntent = null;
-      return;
-    }
+    if (!reachedBoundary) return false;
 
     intent.triggered = true;
+
     const transitioned = coordination.featured.transitionProject(
       intent.direction,
       0,
@@ -795,6 +788,19 @@ function createInputGestureController({
     }
 
     nativeTouchIntent = null;
+    return true;
+  };
+
+  const settleNativeTouchIntent = () => {
+    window.clearTimeout(nativeTouchScrollTimer);
+    nativeTouchScrollTimer = null;
+
+    const intent = nativeTouchIntent;
+    if (!intent?.ended) return;
+
+    if (!tryNativeTouchBoundaryTransition()) {
+      nativeTouchIntent = null;
+    }
   };
 
   const scheduleNativeTouchSettlement = () => {
@@ -837,6 +843,7 @@ function createInputGestureController({
   };
 
   const handleNativeTouchScroll = () => {
+    if (tryNativeTouchBoundaryTransition()) return;
     scheduleNativeTouchSettlement();
   };
 
