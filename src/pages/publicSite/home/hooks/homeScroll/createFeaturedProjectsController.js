@@ -944,9 +944,9 @@ function createFeaturedProjectsController({
     pinMobileBoundaryScroll(boundary.scrollTop);
 
     /*
-     * Upward transitions must not start while a finger is still driving the
-     * native scroller. Hold at the boundary, then cancel residual momentum and
-     * start the controlled tween immediately after touch release.
+     * Upward transitions keep the release-frame handoff on every touch device.
+     * Android uses the same path downward to avoid the visible settle pause,
+     * while iOS keeps its existing delayed momentum-settle behavior unchanged.
      */
     const useImmediateRelease =
       shouldUseImmediateMobileBoundaryRelease({
