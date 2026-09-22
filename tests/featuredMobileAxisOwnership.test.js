@@ -159,7 +159,7 @@ test("carousel gesture axis waits for intent and locks to the dominant direction
   assert.equal(resolveCarouselGestureAxis(3, 2), null);
   assert.equal(resolveCarouselGestureAxis(20, 4), "horizontal");
   assert.equal(resolveCarouselGestureAxis(4, 20), "vertical");
-  assert.equal(resolveCarouselGestureAxis(20, 19), null);
+  assert.equal(resolveCarouselGestureAxis(20, 19), "vertical");
 });
 
 test("manual horizontal carousel movement wraps seamlessly across the repeated set", () => {

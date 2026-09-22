@@ -86,7 +86,14 @@ test("Contact preserves the Home phases and owns no scroll interception", () => 
     EFFECT: "effect",
   });
   assert.doesNotMatch(contactSectionSource, /ScrollTrigger|data-home-panel|data-about-story/);
-  assert.doesNotMatch(contactTiltCardSource, /ScrollTrigger|addEventListener\("wheel"|preventDefault|stopPropagation/);
+  assert.doesNotMatch(
+    contactTiltCardSource,
+    /ScrollTrigger|addEventListener\("wheel"|stopPropagation/,
+  );
+  assert.match(
+    contactTiltCardSource,
+    /if \(!touchActive\) \{[\s\S]*?return;\s*\}\s*event\.preventDefault\(\);/,
+  );
 });
 
 test("the card disables tilt and gradient motion for reduced motion", () => {
