@@ -64,6 +64,7 @@ function createFeaturedProjectsController({
   let processReturnGestureLocked = false;
   let processReturnGestureBecameIdle = false;
   let previousMobileScrollTop = scroller.scrollTop;
+  let mobileBoundaryTransitionPending = false;
     const expansionTweens = new Map();
     const expansionTargets = expansionProgress.map((progress) => progress.get());
     const beginProcessReturnGestureLock = () => {
@@ -335,7 +336,10 @@ function createFeaturedProjectsController({
           commitProjectIndex(transition.index);
         }
         if (direction < 0) setPreparationOffset(transition.index, 0);
-        if (deferStateCommit) previousMobileScrollTop = scroller.scrollTop;
+        if (deferStateCommit) {
+          previousMobileScrollTop = scroller.scrollTop;
+          mobileBoundaryTransitionPending = false;
+        }
         coordination.content.synchronizeContentScroll();
       },
     });
@@ -411,7 +415,10 @@ function createFeaturedProjectsController({
         setPreparationOffset(featuredProjectIndex, 0);
       }
 
-      if (deferStateCommit) previousMobileScrollTop = scroller.scrollTop;
+      if (deferStateCommit) {
+        previousMobileScrollTop = scroller.scrollTop;
+        mobileBoundaryTransitionPending = false;
+      }
       coordination.content.synchronizeContentScroll();
 
       if (entersAptoFromProcess && !deferStateCommit) {
@@ -589,11 +596,13 @@ function createFeaturedProjectsController({
     const previousScrollTop = previousMobileScrollTop;
     previousMobileScrollTop = scrollTop;
 
-    if (
-      !isMobileTouchLayout() ||
-      runtime.activeTween ||
-      runtime.isProgrammaticScroll
-    ) {
+    if (!isMobileTouchLayout()) return false;
+
+    if (mobileBoundaryTransitionPending) {
+      return true;
+    }
+
+    if (runtime.activeTween || runtime.isProgrammaticScroll) {
       return false;
     }
 
@@ -629,7 +638,21 @@ function createFeaturedProjectsController({
       },
     );
 
-    return crossingDirection ? boundary.transition() : false;
+    if (!crossingDirection) return false;
+
+    /*
+     * Finish the browser's current native-scroll frame before GSAP takes
+     * ownership of scrollTop. Starting ScrollTo synchronously inside the
+     * scroll event can cause a one-frame tug-of-war with touch momentum.
+     */
+    mobileBoundaryTransitionPending = true;
+    runtime.requestAnimationFrame(() => {
+      if (!boundary.transition()) {
+        mobileBoundaryTransitionPending = false;
+      }
+    });
+
+    return true;
   };
 
   const handleExpansionInput = (
