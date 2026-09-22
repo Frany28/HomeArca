@@ -62,10 +62,10 @@ test("tablet and mobile galleries use a horizontal photo carousel", () => {
   assert.match(gallerySource, /min-\[768px\]:max-\[1023px\]:h-\[480px\]/);
   assert.match(gallerySource, /max-\[1023px\]:hidden/);
   assert.match(gallerySource, /FeaturedProjectsMobileCarousel/);
-  assert.match(mobileCarouselSource, /overflow-x-auto/);
-  assert.match(mobileCarouselSource, /touch-auto/);
-  assert.match(mobileCarouselSource, /data-native-horizontal-scroll/);
-  assert.doesNotMatch(mobileCarouselSource, /handlePointerMove/);
+  assert.match(mobileCarouselSource, /overflow-x-hidden/);
+  assert.match(mobileCarouselSource, /touch-pan-y/);
+  assert.doesNotMatch(mobileCarouselSource, /data-native-horizontal-scroll/);
+  assert.match(mobileCarouselSource, /handlePointerMove/);
   assert.match(mobileCarouselSource, /h-\[500px\] w-\[300px\]/);
   assert.match(
     mobileCarouselSource,
