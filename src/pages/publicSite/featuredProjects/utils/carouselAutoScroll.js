@@ -5,20 +5,6 @@ function canWriteCarouselAutoScroll({
   return !interactionActive && !paused;
 }
 
-function shouldPauseCarouselAutoScroll({
-  currentScrollLeft,
-  expectedScrollLeft,
-  interactionActive = false,
-  paused = false,
-  tolerance = 1,
-}) {
-  return (
-    interactionActive ||
-    paused ||
-    Math.abs(currentScrollLeft - expectedScrollLeft) > tolerance
-  );
-}
-
 function canResumeCarouselAutoScroll({
   interactionActive = false,
   scrollSettled = false,
@@ -26,8 +12,34 @@ function canResumeCarouselAutoScroll({
   return !interactionActive && scrollSettled;
 }
 
+function advanceCarouselAutoPosition(
+  currentPosition,
+  elapsedSeconds,
+  loopDistance,
+  speedPxPerSecond,
+) {
+  const safePosition = Number.isFinite(currentPosition)
+    ? currentPosition
+    : 0;
+  const safeElapsed = Number.isFinite(elapsedSeconds)
+    ? Math.max(0, elapsedSeconds)
+    : 0;
+  const safeSpeed = Number.isFinite(speedPxPerSecond)
+    ? Math.max(0, speedPxPerSecond)
+    : 0;
+
+  let nextPosition =
+    safePosition + safeSpeed * safeElapsed;
+
+  if (Number.isFinite(loopDistance) && loopDistance > 0) {
+    nextPosition %= loopDistance;
+  }
+
+  return nextPosition;
+}
+
 export {
+  advanceCarouselAutoPosition,
   canResumeCarouselAutoScroll,
   canWriteCarouselAutoScroll,
-  shouldPauseCarouselAutoScroll,
 };
