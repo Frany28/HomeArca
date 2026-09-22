@@ -192,10 +192,19 @@ test("mobile boundary handoff waits for native scroll settlement before GSAP tak
     contentScrollSource,
     /handleScrollEnd[\s\S]*flushMobileNativeBoundaryTransition\(\)/,
   );
-  assert.doesNotMatch(
-    featuredControllerSource,
-    /requestAnimationFrame\(\(\) => \{[\s\S]*boundary\.transition\(\)/,
+  const observerStart = featuredControllerSource.indexOf(
+    "const observeMobileNativeBoundaryScroll",
   );
+  const observerEnd = featuredControllerSource.indexOf(
+    "const handleExpansionInput",
+    observerStart,
+  );
+  const observerSource = featuredControllerSource.slice(
+    observerStart,
+    observerEnd,
+  );
+
+  assert.doesNotMatch(observerSource, /requestAnimationFrame/);
 });
 
 
