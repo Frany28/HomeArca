@@ -4,7 +4,9 @@ import test from "node:test";
 
 import {
   getNativeBoundaryCrossingDirection,
+  isAndroidTouchPlatform,
   isTouchCapableMobileLayout,
+  shouldUseImmediateMobileBoundaryRelease,
   shouldActivateIncomingFeaturedBeforeTransition,
   shouldActivateIncomingProjectBeforeTransition,
 } from "../src/pages/publicSite/home/hooks/homeScroll/createFeaturedProjectsController.js";
@@ -300,6 +302,67 @@ test("Android touch layouts are recognized even when the primary pointer is not 
   );
 });
 
+
+test("Android uses an immediate boundary handoff while iPhone keeps the settled path", () => {
+  assert.equal(
+    isAndroidTouchPlatform({
+      platform: "Linux armv8l",
+      userAgent:
+        "Mozilla/5.0 (Linux; Android 16; Pixel) AppleWebKit/537.36 Chrome/151 Mobile Safari/537.36",
+    }),
+    true,
+  );
+  assert.equal(
+    isAndroidTouchPlatform({
+      platform: "iPhone",
+      userAgent:
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 19_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1",
+    }),
+    false,
+  );
+
+  assert.equal(
+    shouldUseImmediateMobileBoundaryRelease({
+      direction: 1,
+      isAndroidTouchLayout: true,
+    }),
+    true,
+  );
+  assert.equal(
+    shouldUseImmediateMobileBoundaryRelease({
+      direction: 1,
+      isAndroidTouchLayout: false,
+    }),
+    false,
+  );
+  assert.equal(
+    shouldUseImmediateMobileBoundaryRelease({
+      direction: -1,
+      isAndroidTouchLayout: false,
+    }),
+    true,
+  );
+});
+
+test("Android downward Featured handoff reuses the release-frame path without changing iPhone timing", () => {
+  assert.match(
+    featuredControllerSource,
+    /allowDownward:\s*isAndroidMobileTouchLayout\(\)/,
+  );
+  assert.match(
+    featuredControllerSource,
+    /shouldUseImmediateMobileBoundaryRelease\([\s\S]*isAndroidTouchLayout:\s*isAndroidMobileTouchLayout\(\)/,
+  );
+  assert.match(
+    featuredControllerSource,
+    /scheduleMobileBoundaryTransition\(\)/,
+  );
+  assert.match(
+    featuredControllerSource,
+    /runtime\.requestAnimationFrame\([\s\S]*flushMobileNativeBoundaryTransition\(\)/,
+  );
+});
+
 test("mobile touch project identity is committed by transitions, not most-visible scroll math", () => {
   const syncStart = featuredControllerSource.indexOf(
     "const synchronizeProject",
@@ -466,7 +529,7 @@ test("mobile upward boundary handoff waits for touch release before starting the
   );
   assert.match(
     featuredControllerSource,
-    /const endMobileTouchGesture = \(\) =>[\s\S]*mobileTouchGestureActive = false[\s\S]*flushMobileBoundaryAfterTouchRelease\(\)/,
+    /const endMobileTouchGesture = \(\) =>[\s\S]*mobileTouchGestureActive = false[\s\S]*flushMobileBoundaryAfterTouchRelease\(\{[\s\S]*allowDownward:/,
   );
   assert.match(
     observerSource,
@@ -474,7 +537,7 @@ test("mobile upward boundary handoff waits for touch release before starting the
   );
   assert.match(
     observerSource,
-    /crossingDirection < 0[\s\S]*mobileTouchGestureActive[\s\S]*flushMobileBoundaryAfterTouchRelease\(\)/,
+    /shouldUseImmediateMobileBoundaryRelease\([\s\S]*direction: crossingDirection[\s\S]*mobileTouchGestureActive[\s\S]*flushMobileBoundaryAfterTouchRelease/,
   );
   assert.match(
     featuredControllerSource,
@@ -506,7 +569,7 @@ test("input controller reports native touch lifecycle without preventing the bro
 });
 
 
-test("mobile downward boundary handoff still waits for native momentum to settle", () => {
+test("iPhone downward boundary handoff still keeps the native momentum settle path", () => {
   assert.match(
     featuredControllerSource,
     /scheduleMobileBoundaryTransition\(\)/,
@@ -529,7 +592,14 @@ test("mobile downward boundary handoff still waits for native momentum to settle
     observerEnd,
   );
 
-  assert.doesNotMatch(observerSource, /requestAnimationFrame/);
+  assert.match(
+    observerSource,
+    /scheduleMobileBoundaryTransition\(\)/,
+  );
+  assert.match(
+    featuredControllerSource,
+    /shouldUseImmediateMobileBoundaryRelease\([\s\S]*direction > 0 && isAndroidTouchLayout/,
+  );
 });
 
 test("native handoff preserves the standard section speed", () => {
