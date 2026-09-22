@@ -112,3 +112,30 @@ test("mobile boundary transitions observe scroll before content synchronization"
   assert.match(featuredControllerSource, /deferStateCommit: true/);
   assert.doesNotMatch(inputGestureSource, /nativeTouchIntent/);
 });
+
+
+test("services and Quinta keep native mobile scrolling without a forced section transition", () => {
+  assert.doesNotMatch(
+    featuredControllerSource,
+    /activeSectionRef\.current === "services"[\s\S]*transitionBetweenSections\("featured-projects"/,
+  );
+  assert.match(
+    featuredControllerSource,
+    /activeFeaturedProjectIndexRef\.current === 0[\s\S]*direction < 0[\s\S]*return false/,
+  );
+});
+
+test("mobile boundary transitions use a faster out easing without changing desktop defaults", () => {
+  assert.match(
+    featuredControllerSource,
+    /MOBILE_BOUNDARY_TRANSITION_DURATION_SECONDS = 0\.38/,
+  );
+  assert.match(
+    featuredControllerSource,
+    /MOBILE_BOUNDARY_TRANSITION_EASE = "power2\.out"/,
+  );
+  assert.match(
+    featuredControllerSource,
+    /duration: deferStateCommit[\s\S]*MOBILE_BOUNDARY_TRANSITION_DURATION_SECONDS/,
+  );
+});
