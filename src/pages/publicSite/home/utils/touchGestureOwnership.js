@@ -27,7 +27,7 @@ function getTouchGestureOwner({
     return TOUCH_GESTURE_OWNERS.CONTROLLED_VERTICAL;
   }
 
-  if (featuredProjectReady) {
+  if (featuredProjectReady && featuredExpansionEnabled) {
     return TOUCH_GESTURE_OWNERS.CONTROLLED_VERTICAL;
   }
 
