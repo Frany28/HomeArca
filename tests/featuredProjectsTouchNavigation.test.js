@@ -48,7 +48,7 @@ const panelControllerSource = readFileSync(
   "utf8",
 );
 
-test("the featured carousel delegates touch-axis arbitration to native scrolling", () => {
+test("the featured carousel delegates locks direct carousel gestures to the horizontal axis", () => {
   assert.match(openingHomeSource, /touch-none/);
   assert.match(mobileCarouselSource, /className="[^"]*touch-auto/);
   assert.match(mobileCarouselSource, /overflow-x-auto/);
