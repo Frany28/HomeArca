@@ -386,7 +386,7 @@ test("mobile upward boundary handoff starts immediately while downward waits for
   assert.doesNotMatch(observerSource, /requestAnimationFrame/);
 });
 
-test("mobile boundary handoff waits for native momentum to settle", () => {
+test("mobile downward boundary handoff still waits for native momentum to settle", () => {
   assert.match(
     featuredControllerSource,
     /scheduleMobileBoundaryTransition\(\)/,
