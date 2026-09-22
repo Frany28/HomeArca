@@ -2,7 +2,7 @@ import { useState } from "react";
 import * as IconsaxIcons from "iconsax-react";
 import clsx from "clsx";
 
-import Loader from "../Loader/Loader.jsx";
+import MediaLoader from "../MediaLoader/MediaLoader.jsx";
 
 const IMAGE_STATUS = { ERROR: "error", LOADED: "loaded", LOADING: "loading" };
 
@@ -37,8 +37,7 @@ function ProjectImage({
       data-image-status={status}
     >
       {status === IMAGE_STATUS.LOADING && showLoader ? (
-        <Loader
-          preset="media"
+        <MediaLoader
           label={`Cargando ${alt || "imagen"}`}
           className="absolute inset-0 z-[1]"
         />
