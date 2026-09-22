@@ -21,6 +21,7 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
   const pausedRef = useRef(false);
   const interactionActiveRef = useRef(false);
   const autoPositionRef = useRef(0);
+  const renderedPositionRef = useRef(0);
   const dragRef = useRef(null);
   const dragTargetPositionRef = useRef(null);
   const dragSettlingRef = useRef(false);
@@ -71,6 +72,7 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
       getLoopDistance(),
     );
 
+    renderedPositionRef.current = position;
     autoPositionRef.current = normalized;
     track.style.transform = `translate3d(${-normalized}px, 0, 0)`;
   };
@@ -112,7 +114,7 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
 
       if (smoothingHorizontalDrag) {
         const nextPosition = smoothCarouselDragPosition(
-          autoPositionRef.current,
+          renderedPositionRef.current,
           dragTarget,
           elapsedSeconds,
         );
@@ -186,11 +188,11 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
     dragSettlingRef.current = false;
     pauseAutoScroll();
 
-    dragTargetPositionRef.current = autoPositionRef.current;
+    dragTargetPositionRef.current = renderedPositionRef.current;
     dragRef.current = {
       axis: null,
       pointerId: event.pointerId,
-      startPosition: autoPositionRef.current,
+      startPosition: renderedPositionRef.current,
       startX: event.clientX,
       startY: event.clientY,
     };
