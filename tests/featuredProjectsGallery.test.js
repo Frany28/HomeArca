@@ -85,6 +85,21 @@ test("tablet and mobile galleries use a horizontal photo carousel", () => {
   assert.doesNotMatch(mobileCarouselSource, /onClick/);
 });
 
+test("mobile Featured uses gap 7 between every adjacent image", () => {
+  assert.match(
+    mobileCarouselSource,
+    /className="flex h-full touch-pan-x items-start gap-\[var\(--spacing-gap-7\)\][^"]*px-\[var\(--spacing-gap-5\)\]/,
+  );
+  assert.match(
+    mobileCarouselSource,
+    /className="flex shrink-0 gap-\[var\(--spacing-gap-7\)\] min-\[768px\]:gap-\[16px\]"/,
+  );
+  assert.match(
+    mobileCarouselSource,
+    /className="flex shrink-0 gap-\[var\(--spacing-gap-7\)\] min-\[768px\]:gap-\[16px\]"/,
+  );
+});
+
 test("mobile Featured matches the two-level Figma spacing model", () => {
   assert.match(
     featuredSectionSource,
