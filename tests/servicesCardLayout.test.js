@@ -85,13 +85,11 @@ test("service images keep their proportions and use a focal point per category",
     showcaseCss,
     /\.services-category-showcase__image\s*\{[\s\S]*object-fit:\s*cover/,
   );
+  assert.doesNotMatch(showcaseSource, /category\.id === "commercial"/);
+  assert.doesNotMatch(showcaseCss, /services-category-showcase__commercial-image/);
   assert.match(
-    showcaseSource,
-    /category\.id === "commercial"[\s\S]*backgroundImage:[\s\S]*backgroundPosition:/,
-  );
-  assert.match(
-    showcaseCss,
-    /\.services-category-showcase__commercial-image\s*\{[\s\S]*background-size:\s*cover/,
+    servicesContentSource,
+    /commercial-design-portrait-v2\.webp/,
   );
   assert.equal(
     servicesContentSource.match(/imagePosition:\s*"\d+% \d+%"/g)?.length,

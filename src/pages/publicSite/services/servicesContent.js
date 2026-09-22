@@ -1,5 +1,5 @@
 import residentialDesignImage from "../../../assets/services/residential-design.webp";
-import commercialDesignImage from "../../../assets/services/commercial-design.webp";
+import commercialDesignImage from "../../../assets/services/commercial-design-portrait-v2.webp";
 import institutionalDesignImage from "../../../assets/services/institutional-design.webp";
 import industrialDesignImage from "../../../assets/services/industrial-design.webp";
 import remodelingDesignImage from "../../../assets/services/remodeling-design.webp";

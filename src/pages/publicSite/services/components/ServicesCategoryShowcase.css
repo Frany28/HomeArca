@@ -48,11 +48,6 @@
   object-fit: cover;
 }
 
-.services-category-showcase__commercial-image {
-  background-repeat: no-repeat;
-  background-size: cover;
-}
-
 .services-category-showcase__tab {
   color: var(--color-neutral-100-uniform);
 }
