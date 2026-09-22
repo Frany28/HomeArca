@@ -521,6 +521,7 @@ function createFeaturedProjectsController({
     {
       deferStateCommit = false,
       featuredProjectIndex = null,
+      lockProcessReturnGesture = true,
       targetAlignment = "start",
     } = {},
   ) => {
@@ -540,7 +541,11 @@ function createFeaturedProjectsController({
         targetAlignment,
         targetSectionId,
       });
-    if (entersAptoFromProcess && !deferStateCommit) {
+    if (
+      entersAptoFromProcess &&
+      lockProcessReturnGesture &&
+      !deferStateCommit
+    ) {
       beginProcessReturnGestureLock();
     }
     if (entersQuintaFromServices) {
@@ -607,7 +612,11 @@ function createFeaturedProjectsController({
       }
       coordination.content.synchronizeContentScroll();
 
-      if (entersAptoFromProcess && !deferStateCommit) {
+      if (
+        entersAptoFromProcess &&
+        lockProcessReturnGesture &&
+        !deferStateCommit
+      ) {
         completeProcessReturnGesture();
       }
     },
