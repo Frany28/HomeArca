@@ -62,10 +62,13 @@ test("tablet and mobile galleries use a horizontal photo carousel", () => {
   assert.match(gallerySource, /min-\[768px\]:max-\[1023px\]:h-\[480px\]/);
   assert.match(gallerySource, /max-\[1023px\]:hidden/);
   assert.match(gallerySource, /FeaturedProjectsMobileCarousel/);
-  assert.match(mobileCarouselSource, /overflow-x-hidden/);
+  assert.match(mobileCarouselSource, /overflow-clip/);
   assert.match(mobileCarouselSource, /touch-pan-y/);
   assert.doesNotMatch(mobileCarouselSource, /data-native-horizontal-scroll/);
   assert.match(mobileCarouselSource, /handlePointerMove/);
+  assert.match(mobileCarouselSource, /data-featured-gallery-carousel-track/);
+  assert.match(mobileCarouselSource, /translate3d/);
+  assert.doesNotMatch(mobileCarouselSource, /scrollLeft/);
   assert.match(mobileCarouselSource, /h-\[500px\] w-\[300px\]/);
   assert.match(
     mobileCarouselSource,
@@ -88,7 +91,7 @@ test("tablet and mobile galleries use a horizontal photo carousel", () => {
 test("mobile Featured uses one uniform gap between every adjacent image", () => {
   assert.match(
     mobileCarouselSource,
-    /className="flex h-full touch-pan-y items-start gap-\[var\(--spacing-gap-7\)\][^"]*px-\[var\(--spacing-gap-5\)\]/,
+    /className="flex h-full w-max items-start gap-\[var\(--spacing-gap-7\)\][^"]*min-\[768px\]:gap-\[16px\]"/,
   );
   assert.match(
     mobileCarouselSource,

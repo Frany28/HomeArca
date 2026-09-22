@@ -15,6 +15,7 @@ const AUTO_SCROLL_RESUME_DELAY_MS = 700;
 
 function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
   const carouselRef = useRef(null);
+  const trackRef = useRef(null);
   const resumeTimerRef = useRef(null);
   const pausedRef = useRef(false);
   const interactionActiveRef = useRef(false);
@@ -41,29 +42,36 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
   };
 
   const writeCarouselPosition = (position) => {
-    const carousel = carouselRef.current;
+    const track = trackRef.current;
 
-    if (!carousel) return;
+    if (!track) return;
 
     const normalized = normalizeCarouselLoopPosition(
       position,
       getLoopDistance(),
     );
 
-    carousel.scrollLeft = normalized;
     autoPositionRef.current = normalized;
+    track.style.transform = `translate3d(${-normalized}px, 0, 0)`;
   };
 
   useEffect(() => {
     const carousel = carouselRef.current;
+    const track = trackRef.current;
 
-    if (!carousel || !firstSetRef.current || !secondSetRef.current) {
+    if (
+      !carousel ||
+      !track ||
+      !firstSetRef.current ||
+      !secondSetRef.current
+    ) {
       return undefined;
     }
 
     let animationFrame = 0;
     let previousTimestamp = null;
-    autoPositionRef.current = carousel.scrollLeft;
+    autoPositionRef.current = 0;
+    writeCarouselPosition(0);
 
     const animate = (timestamp) => {
       if (previousTimestamp === null) {
@@ -85,14 +93,14 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
         const loopDistance = getLoopDistance();
 
         if (loopDistance > 0) {
-          autoPositionRef.current = advanceCarouselAutoPosition(
-            autoPositionRef.current,
-            elapsedSeconds,
-            loopDistance,
-            AUTO_SCROLL_SPEED_PX_PER_SECOND,
+          writeCarouselPosition(
+            advanceCarouselAutoPosition(
+              autoPositionRef.current,
+              elapsedSeconds,
+              loopDistance,
+              AUTO_SCROLL_SPEED_PX_PER_SECOND,
+            ),
           );
-
-          carousel.scrollLeft = autoPositionRef.current;
         }
       }
 
@@ -108,22 +116,15 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
   }, [columns]);
 
   const pauseAutoScroll = () => {
-    const carousel = carouselRef.current;
-
     pausedRef.current = true;
-    if (carousel) {
-      autoPositionRef.current = carousel.scrollLeft;
-    }
     window.clearTimeout(resumeTimerRef.current);
   };
 
   const scheduleAutoScrollResume = () => {
     window.clearTimeout(resumeTimerRef.current);
     resumeTimerRef.current = window.setTimeout(() => {
-      const carousel = carouselRef.current;
-
       if (
-        !carousel ||
+        !carouselRef.current ||
         !canResumeCarouselAutoScroll({
           interactionActive: interactionActiveRef.current,
           scrollSettled: true,
@@ -132,29 +133,19 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
         return;
       }
 
-      autoPositionRef.current = carousel.scrollLeft;
       pausedRef.current = false;
     }, AUTO_SCROLL_RESUME_DELAY_MS);
   };
 
   const finishUserInteraction = () => {
-    const carousel = carouselRef.current;
-
     interactionActiveRef.current = false;
     dragRef.current = null;
-
-    if (carousel) {
-      autoPositionRef.current = carousel.scrollLeft;
-    }
-
     scheduleAutoScrollResume();
   };
 
   const handlePointerDown = (event) => {
-    const carousel = carouselRef.current;
-
     if (
-      !carousel ||
+      !carouselRef.current ||
       event.pointerType === "mouse" ||
       !event.isPrimary
     ) {
@@ -167,7 +158,7 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
     dragRef.current = {
       axis: null,
       pointerId: event.pointerId,
-      startScrollLeft: carousel.scrollLeft,
+      startPosition: autoPositionRef.current,
       startX: event.clientX,
       startY: event.clientY,
     };
@@ -186,13 +177,13 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
     }
 
     /*
-     * The carousel never owns vertical movement. touch-pan-y leaves Y to the
-     * Home scroller, while X is updated only after horizontal intent is clear.
+     * This element is not a scroll container. Vertical pan belongs to the
+     * Home scroller; only a clearly horizontal gesture translates the track.
      */
     if (drag.axis !== "horizontal") return;
 
     writeCarouselPosition(
-      drag.startScrollLeft - deltaX,
+      drag.startPosition - deltaX,
     );
   };
 
@@ -208,7 +199,7 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
     <div
       ref={carouselRef}
       aria-label={galleryLabel}
-      className="flex h-full touch-pan-y items-start gap-[var(--spacing-gap-7)] overflow-x-hidden overflow-y-hidden px-[var(--spacing-gap-5)] py-[var(--spacing-gap-8)] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-[768px]:gap-[16px] min-[768px]:px-[24px] min-[768px]:py-[32px]"
+      className="h-full touch-pan-y overflow-clip px-[var(--spacing-gap-5)] py-[var(--spacing-gap-8)] min-[768px]:px-[24px] min-[768px]:py-[32px]"
       data-featured-gallery-carousel
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -216,44 +207,50 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
       onPointerCancel={handlePointerEnd}
       role="region"
     >
-      {repeatedColumns.map((set, setIndex) => (
-        <div
-          ref={setIndex === 0 ? firstSetRef : secondSetRef}
-          aria-hidden={set.ariaHidden ? "true" : undefined}
-          className="flex shrink-0 gap-[var(--spacing-gap-7)] min-[768px]:gap-[16px]"
-          data-featured-gallery-carousel-set
-          key={set.key}
-        >
-          {set.columns.map((cards, columnIndex) => (
-            <div
-              className="flex shrink-0 gap-[var(--spacing-gap-7)] min-[768px]:gap-[16px]"
-              data-featured-gallery-carousel-group
-              key={columnIndex}
-            >
-              {cards.map((image, imageIndex) => (
-                <div
-                  className="relative h-[500px] w-[300px] shrink-0 overflow-hidden rounded-[var(--radius-2)] min-[768px]:h-[416px] min-[768px]:w-[42vw]"
-                  data-featured-gallery-carousel-card
-                  key={`${image.src}-${imageIndex}`}
-                >
-                  <ProjectImage
-                    {...image}
-                    revealOnLoad={false}
-                    showLoader={false}
-                    className="pointer-events-none flex h-full w-full items-center justify-center"
-                  />
-                  <MainLogo
-                    size="20px"
-                    appearance="dark"
-                    alt=""
-                    className="pointer-events-none absolute left-[16px] top-[16px]"
-                  />
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-      ))}
+      <div
+        ref={trackRef}
+        className="flex h-full w-max items-start gap-[var(--spacing-gap-7)] will-change-transform min-[768px]:gap-[16px]"
+        data-featured-gallery-carousel-track
+      >
+        {repeatedColumns.map((set, setIndex) => (
+          <div
+            ref={setIndex === 0 ? firstSetRef : secondSetRef}
+            aria-hidden={set.ariaHidden ? "true" : undefined}
+            className="flex shrink-0 gap-[var(--spacing-gap-7)] min-[768px]:gap-[16px]"
+            data-featured-gallery-carousel-set
+            key={set.key}
+          >
+            {set.columns.map((cards, columnIndex) => (
+              <div
+                className="flex shrink-0 gap-[var(--spacing-gap-7)] min-[768px]:gap-[16px]"
+                data-featured-gallery-carousel-group
+                key={columnIndex}
+              >
+                {cards.map((image, imageIndex) => (
+                  <div
+                    className="relative h-[500px] w-[300px] shrink-0 overflow-hidden rounded-[var(--radius-2)] min-[768px]:h-[416px] min-[768px]:w-[42vw]"
+                    data-featured-gallery-carousel-card
+                    key={`${image.src}-${imageIndex}`}
+                  >
+                    <ProjectImage
+                      {...image}
+                      revealOnLoad={false}
+                      showLoader={false}
+                      className="pointer-events-none flex h-full w-full items-center justify-center"
+                    />
+                    <MainLogo
+                      size="20px"
+                      appearance="dark"
+                      alt=""
+                      className="pointer-events-none absolute left-[16px] top-[16px]"
+                    />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
