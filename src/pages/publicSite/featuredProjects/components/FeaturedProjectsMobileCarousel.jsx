@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef } from "react";
 import MainLogo from "../../../../assets/logos/MainLogo.jsx";
 import ProjectImage from "../../../../components/ui/ProjectImage/ProjectImage.jsx";
 import {
+  advanceCarouselAutoPosition,
   canResumeCarouselAutoScroll,
   canWriteCarouselAutoScroll,
 } from "../utils/carouselAutoScroll.js";
@@ -72,12 +73,12 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
            * accumulating from the DOM value every frame can therefore turn
            * ~0.4px/frame into 0px forever on high-refresh iPhones.
            */
-          autoPositionRef.current +=
-            AUTO_SCROLL_SPEED_PX_PER_SECOND * elapsedSeconds;
-
-          if (autoPositionRef.current >= loopDistance) {
-            autoPositionRef.current %= loopDistance;
-          }
+          autoPositionRef.current = advanceCarouselAutoPosition(
+            autoPositionRef.current,
+            elapsedSeconds,
+            loopDistance,
+            AUTO_SCROLL_SPEED_PX_PER_SECOND,
+          );
 
           carousel.scrollLeft = autoPositionRef.current;
         }
