@@ -53,7 +53,18 @@ test("tablet and mobile galleries use a horizontal photo carousel", () => {
   assert.match(mobileCarouselSource, /data-native-horizontal-scroll/);
   assert.doesNotMatch(mobileCarouselSource, /handlePointerMove/);
   assert.match(mobileCarouselSource, /h-\[500px\] w-\[300px\]/);
-  assert.match(mobileCarouselSource, /gap-\[24px\]/);
+  assert.match(
+    mobileCarouselSource,
+    /items-start gap-\[24px\][^\n]+min-\[768px\]:gap-\[16px\]/,
+  );
+  assert.match(
+    mobileCarouselSource,
+    /className="flex shrink-0 gap-\[24px\] min-\[768px\]:gap-\[16px\]"[\s\S]*data-featured-gallery-carousel-set/,
+  );
+  assert.match(
+    mobileCarouselSource,
+    /className="flex shrink-0 gap-\[24px\] min-\[768px\]:gap-\[16px\]"[\s\S]*data-featured-gallery-carousel-group/,
+  );
   assert.match(mobileCarouselSource, /pb-\[var\(--spacing-gap-9\)\]/);
   assert.match(mobileCarouselSource, /data-featured-gallery-carousel-group/);
   assert.match(mobileCarouselSource, /<MainLogo/);

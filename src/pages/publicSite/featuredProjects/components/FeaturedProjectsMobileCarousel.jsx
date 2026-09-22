@@ -160,7 +160,7 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
     <div
       ref={carouselRef}
       aria-label={galleryLabel}
-      className="flex h-full touch-pan-x items-start gap-[16px] overflow-x-auto overscroll-x-contain px-[16px] pt-[48px] pb-[var(--spacing-gap-9)] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-[768px]:gap-[16px] min-[768px]:px-[24px] min-[768px]:py-[32px]"
+      className="flex h-full touch-pan-x items-start gap-[24px] overflow-x-auto overscroll-x-contain px-[16px] pt-[48px] pb-[var(--spacing-gap-9)] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-[768px]:gap-[16px] min-[768px]:px-[24px] min-[768px]:py-[32px]"
       data-featured-gallery-carousel
       data-native-horizontal-scroll
       onPointerDown={beginUserInteraction}
@@ -175,7 +175,7 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
         <div
           ref={setIndex === 0 ? firstSetRef : secondSetRef}
           aria-hidden={set.ariaHidden ? "true" : undefined}
-          className="flex shrink-0 gap-[16px]"
+          className="flex shrink-0 gap-[24px] min-[768px]:gap-[16px]"
           data-featured-gallery-carousel-set
           key={set.key}
         >
