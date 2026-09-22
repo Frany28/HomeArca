@@ -447,7 +447,14 @@ function createInputGestureController({
   };
 
   const handlePointerDown = (event) => {
-    if (event.pointerType !== "touch" || !event.isPrimary || touchGesture) return;
+    if (
+      event.pointerType !== "touch" ||
+      !event.isPrimary ||
+      touchGesture ||
+      isInteractiveTarget(event.target)
+    ) {
+      return;
+    }
 
     const featuredProjectReady =
       runtime.contentMode &&
@@ -696,6 +703,14 @@ function createInputGestureController({
     if (touchGesture?.pointerId === event.pointerId) touchGesture = null;
   };
 
+  const resetTouchGesture = () => {
+    touchGesture = null;
+  };
+
+  const handleVisibilityChange = () => {
+    if (document.hidden) resetTouchGesture();
+  };
+
   const handleKeyDown = (event) => {
     const direction = getKeyboardDirection(event);
     if (direction === null || isInteractiveTarget(event.target)) return;
@@ -777,6 +792,9 @@ function createInputGestureController({
     });
     scroller.addEventListener("pointerup", clearTouchGesture);
     scroller.addEventListener("pointercancel", clearTouchGesture);
+    scroller.addEventListener("lostpointercapture", resetTouchGesture);
+    window.addEventListener("blur", resetTouchGesture);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     scroller.addEventListener("keydown", handleKeyDown);
     scroller.addEventListener("scroll", coordination.content.handleNativeScroll, { passive: true });
     document.addEventListener(
@@ -805,6 +823,9 @@ function createInputGestureController({
     scroller.removeEventListener("pointermove", handlePointerMove, true);
     scroller.removeEventListener("pointerup", clearTouchGesture);
     scroller.removeEventListener("pointercancel", clearTouchGesture);
+    scroller.removeEventListener("lostpointercapture", resetTouchGesture);
+    window.removeEventListener("blur", resetTouchGesture);
+    document.removeEventListener("visibilitychange", handleVisibilityChange);
     scroller.removeEventListener("keydown", handleKeyDown);
     scroller.removeEventListener("scroll", coordination.content.handleNativeScroll);
     if (runtime.supportsScrollEnd) {
