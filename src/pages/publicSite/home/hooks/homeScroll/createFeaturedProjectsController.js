@@ -5,8 +5,6 @@ import {
   advanceWheelGesture,
   consumeWheelGesture,
 } from "../../utils/homeScrollNavigation.js";
-const MOBILE_BOUNDARY_TRANSITION_DURATION_SECONDS = 0.38;
-const MOBILE_BOUNDARY_TRANSITION_EASE = "power2.out";
 
 import {
   FEATURED_EXPANSION_SMOOTH_MAX_SECONDS,
@@ -16,6 +14,9 @@ import {
   FEATURED_PROJECT_SELECTOR,
   WHEEL_GESTURE_THRESHOLD_PX,
 } from "./homeScrollConstants.js";
+
+const MOBILE_BOUNDARY_TRANSITION_DURATION_SECONDS = 0.38;
+const MOBILE_BOUNDARY_TRANSITION_EASE = "power2.out";
 
 function getNativeBoundaryCrossingDirection(
   previousScrollTop,
@@ -634,7 +635,7 @@ function createFeaturedProjectsController({
     );
     if (!boundary) return false;
 
-    const direction = getNativeBoundaryCrossingDirection(
+    const crossingDirection = getNativeBoundaryCrossingDirection(
       previousScrollTop,
       scrollTop,
       {
@@ -643,7 +644,7 @@ function createFeaturedProjectsController({
       },
     );
 
-    return direction ? boundary.transition() : false;
+    return crossingDirection ? boundary.transition() : false;
   };
 
   const handleExpansionInput = (
