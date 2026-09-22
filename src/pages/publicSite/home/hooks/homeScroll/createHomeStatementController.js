@@ -60,6 +60,8 @@ const STATEMENT_PROGRESS_EPSILON = 0.0015;
 const STATEMENT_MAX_FRAME_DELTA_MS = 32;
 
 function createHomeStatementController({
+  animation = gsap,
+  cancelFrame = (frameId) => window.cancelAnimationFrame(frameId),
   commitNavigationState,
   getNavigationState,
   getViewportHeight,
@@ -67,9 +69,11 @@ function createHomeStatementController({
   panelIndex,
   progress,
   reduceMotion,
+  requestFrame = (callback) => window.requestAnimationFrame(callback),
 }) {
   let wheelInputFrame;
   let scrubFrame;
+  let automaticStartFrame;
 
   let pendingDelta = 0;
   let previousScrubTimestamp = 0;
@@ -152,6 +156,11 @@ function createHomeStatementController({
   };
 
   const stopAnimation = () => {
+    if (automaticStartFrame) {
+      cancelFrame(automaticStartFrame);
+      automaticStartFrame = undefined;
+    }
+
     progressTween?.kill();
 
     progressTween = undefined;
@@ -418,7 +427,7 @@ function createHomeStatementController({
     });
 
     progressTween =
-      gsap.to(
+      animation.to(
         animatedProgress,
         {
           value:
@@ -453,8 +462,16 @@ function createHomeStatementController({
   const animateAutomatically = (
     target,
     onComplete,
+    {
+      deferStart = false,
+      startAt,
+    } = {},
   ) => {
     stopAnimation();
+
+    if (Number.isFinite(startAt)) {
+      progress.set(clamp(startAt));
+    }
 
     targetProgress =
       clamp(target);
@@ -487,46 +504,57 @@ function createHomeStatementController({
     const reversing =
       targetProgress <= 0;
 
-    progressTween =
-      gsap.to(
-        animatedProgress,
-        {
-          value:
-            targetProgress,
-
-          duration:
-            reversing
-              ? STATEMENT_AUTO_REVERSE_DURATION_SECONDS
-              : STATEMENT_AUTO_REVEAL_DURATION_SECONDS,
-
-          ease:
-            reversing
-              ? "power2.out"
-              : "power1.inOut",
-
-          overwrite: true,
-
-          onUpdate: () => {
-            progress.set(
-              animatedProgress.value,
-            );
-          },
-
-          onComplete: () => {
-            progressTween =
-              undefined;
-
-            autoRevealing =
-              false;
-
-            commitProgress(
+    const startTween = () => {
+      automaticStartFrame = undefined;
+      progressTween =
+        animation.to(
+          animatedProgress,
+          {
+            value:
               targetProgress,
-            );
 
-            onComplete?.();
+            duration:
+              reversing
+                ? STATEMENT_AUTO_REVERSE_DURATION_SECONDS
+                : STATEMENT_AUTO_REVEAL_DURATION_SECONDS,
+
+            ease:
+              reversing
+                ? "power2.out"
+                : "power1.inOut",
+
+            overwrite: true,
+
+            onUpdate: () => {
+              progress.set(
+                animatedProgress.value,
+              );
+            },
+
+            onComplete: () => {
+              progressTween =
+                undefined;
+
+              autoRevealing =
+                false;
+
+              commitProgress(
+                targetProgress,
+              );
+
+              onComplete?.();
+            },
           },
-        },
-      );
+        );
+    };
+
+    if (deferStart) {
+      automaticStartFrame = requestFrame(() => {
+        automaticStartFrame = requestFrame(startTween);
+      });
+    } else {
+      startTween();
+    }
 
     return true;
   };
@@ -537,6 +565,10 @@ function createHomeStatementController({
     animateAutomatically(
       1,
       onComplete,
+      {
+        deferStart: true,
+        startAt: 0,
+      },
     );
 
   const startAutoReverse = (
@@ -631,12 +663,7 @@ function createHomeStatementController({
         );
       }
 
-      stopScrubLoop();
-
-      progressTween?.kill();
-
-      progressTween =
-        undefined;
+      stopAnimation();
 
       pendingDelta = 0;
     },
