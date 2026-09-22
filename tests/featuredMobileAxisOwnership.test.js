@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  CAROUSEL_ACTIVE_DRAG_RESPONSE,
+  CAROUSEL_SETTLE_DRAG_RESPONSE,
   advanceCarouselAutoPosition,
   canResumeCarouselAutoScroll,
   canWriteCarouselAutoScroll,
@@ -94,6 +96,27 @@ test("carousel autoplay wraps continuously at the duplicated-set boundary", () =
     advanceCarouselAutoPosition(999, 1, 1000, 24),
     23,
   );
+});
+
+test("carousel follows the finger more closely than its release settle", () => {
+  assert.ok(CAROUSEL_ACTIVE_DRAG_RESPONSE > CAROUSEL_SETTLE_DRAG_RESPONSE);
+
+  const activeDrag = smoothCarouselDragPosition(
+    0,
+    100,
+    1 / 60,
+    CAROUSEL_ACTIVE_DRAG_RESPONSE,
+  );
+  const settling = smoothCarouselDragPosition(
+    0,
+    100,
+    1 / 60,
+    CAROUSEL_SETTLE_DRAG_RESPONSE,
+  );
+
+  assert.ok(activeDrag > 65 && activeDrag < 70);
+  assert.ok(settling > 30 && settling < 38);
+  assert.ok(activeDrag > settling);
 });
 
 test("carousel horizontal drag smoothing is frame-rate independent", () => {
