@@ -3,6 +3,8 @@ import { useEffect, useMemo, useRef } from "react";
 import MainLogo from "../../../../assets/logos/MainLogo.jsx";
 import ProjectImage from "../../../../components/ui/ProjectImage/ProjectImage.jsx";
 import {
+  CAROUSEL_ACTIVE_DRAG_RESPONSE,
+  CAROUSEL_SETTLE_DRAG_RESPONSE,
   advanceCarouselAutoPosition,
   canResumeCarouselAutoScroll,
   canWriteCarouselAutoScroll,
@@ -117,6 +119,9 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
           renderedPositionRef.current,
           dragTarget,
           elapsedSeconds,
+          dragSettlingRef.current
+            ? CAROUSEL_SETTLE_DRAG_RESPONSE
+            : CAROUSEL_ACTIVE_DRAG_RESPONSE,
         );
 
         if (
