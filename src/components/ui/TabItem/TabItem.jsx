@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import clsx from "clsx";
-import * as IconsaxIcons from "iconsax-react";
+import { Box2 } from "iconsax-react";
 import {
   TAB_ITEM_DEFAULT_PROPS,
   TAB_ITEM_SIZES,
@@ -56,8 +56,6 @@ function getDocumentDarkMode() {
 }
 
 function Box2Icon({ className }) {
-  const Box2 = IconsaxIcons.Box2;
-
   if (Box2) {
     return (
       <Box2

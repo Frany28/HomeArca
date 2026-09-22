@@ -1,5 +1,5 @@
 import { useState } from "react";
-import * as IconsaxIcons from "iconsax-react";
+import { Image as ImageIcon } from "iconsax-react";
 import clsx from "clsx";
 
 import MediaLoader from "../MediaLoader/MediaLoader.jsx";
@@ -21,7 +21,6 @@ function ProjectImage({
     src,
     status: src ? IMAGE_STATUS.LOADING : IMAGE_STATUS.ERROR,
   });
-  const ImageIcon = IconsaxIcons.Image;
   const status = !src
     ? IMAGE_STATUS.ERROR
     : imageState.src === src
