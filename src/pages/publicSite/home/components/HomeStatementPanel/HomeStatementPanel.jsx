@@ -1,5 +1,4 @@
 import {
-  useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -9,16 +8,11 @@ import { useReducedMotion } from "motion/react";
 
 import HomeScrollHint from "../HomeScrollHint/HomeScrollHint.jsx";
 import { connectStatementPlayback } from "../../utils/statementVideoPlayback.js";
-import { getHomeStatementTransform } from "../../utils/homeScrollNavigation.js";
-import { classifyViewportResize } from "../../utils/viewportResize.js";
 import {
-  createStatementGeometryRefreshQueue,
-  getStatementFocusBounds,
-  isStatementGeometrySettled,
-  shouldDeferStatementGeometryResize,
-} from "../../utils/statementGeometry.js";
+  drawStatementCanvasMask,
+  getStatementCanvasPixelRatio,
+} from "../../utils/statementCanvasMask.js";
 
-const STATEMENT_MASK_ID = "home-statement-video-mask";
 const STATEMENT_FOCUS_LETTER = "c";
 
 function HomeStatementPanel({
@@ -35,173 +29,131 @@ function HomeStatementPanel({
   const reduceMotion = useReducedMotion();
   const videoPlaying = !reduceMotion;
   const videoRef = useRef(null);
-  const svgRef = useRef(null);
-  const maskGroupRef = useRef(null);
-  const maskTextRef = useRef(null);
-  const focusGlyphRef = useRef(null);
-  const geometryRef = useRef({
-    ready: false,
-    anchorX: 0,
-    anchorY: 0,
-  });
-  const measureGeometryRef = useRef(null);
-  const effectStartedRef = useRef(effectStarted);
-  const statementVisibleRef = useRef(statementVisible);
+  const canvasRef = useRef(null);
+  const renderMaskRef = useRef(null);
   const [videoFailed, setVideoFailed] = useState(false);
-
-  effectStartedRef.current = effectStarted;
-  statementVisibleRef.current = statementVisible;
 
   const focusLetterIndex = phrase
     .toLocaleLowerCase("es")
     .indexOf(STATEMENT_FOCUS_LETTER);
 
-  const renderMaskTransform = useCallback((value) => {
-    const maskGroup = maskGroupRef.current;
-    const geometry = geometryRef.current;
-
-    if (!maskGroup || !geometry.ready) return;
-
-    const { scale, translateX, translateY } = getHomeStatementTransform(
-      value,
-      geometry.anchorX,
-      geometry.anchorY,
-    );
-
-    maskGroup.setAttribute(
-      "transform",
-      `matrix(${scale} 0 0 ${scale} ${translateX} ${translateY})`,
-    );
-  }, []);
-
   useLayoutEffect(() => {
-    const svg = svgRef.current;
-    const maskGroup = maskGroupRef.current;
-    const maskText = maskTextRef.current;
-    const focusGlyph = focusGlyphRef.current;
+    const canvas = canvasRef.current;
+    if (!canvas) return undefined;
 
-    if (!svg || !maskGroup || !maskText) return undefined;
-
-    let cancelled = false;
-    let animationHasProgressed = false;
-    let previousViewportSize = {
-      width: svg.clientWidth,
-      height: svg.clientHeight,
-    };
-
-    const geometryIsSettled = () =>
-      isStatementGeometrySettled({
-        animationHasProgressed,
-        effectStarted: effectStartedRef.current,
-        progress: progress.get(),
-        statementVisible: statementVisibleRef.current,
-      });
-
-    let measureGeometry;
-    const geometryRefreshQueue = createStatementGeometryRefreshQueue({
-      cancelFrame: (frameId) => window.cancelAnimationFrame(frameId),
-      clearTimer: (timerId) => window.clearTimeout(timerId),
-      measure: () => measureGeometry({ force: true }),
-      requestFrame: (callback) => window.requestAnimationFrame(callback),
-      setTimer: (callback, delay) => window.setTimeout(callback, delay),
+    let context = canvas.getContext("2d", {
+      alpha: true,
+      desynchronized: true,
     });
 
-    measureGeometry = ({ force = false } = {}) => {
+    if (!context) return undefined;
+
+    let cancelled = false;
+    let resizeFrame = 0;
+
+    const renderMask = () => {
       if (cancelled) return;
 
-      const width = svg.clientWidth;
-      const height = svg.clientHeight;
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
 
       if (!width || !height) return;
 
-      const resizeKind = classifyViewportResize({
-        previousWidth: previousViewportSize.width,
-        previousHeight: previousViewportSize.height,
-        nextWidth: width,
-        nextHeight: height,
-        hasVisualViewport: Boolean(window.visualViewport),
-        coarsePointer:
-          window.matchMedia?.("(pointer: coarse)").matches ?? false,
-      });
+      const pixelRatio = getStatementCanvasPixelRatio(
+        window.devicePixelRatio,
+      );
+      const pixelWidth = Math.max(1, Math.round(width * pixelRatio));
+      const pixelHeight = Math.max(1, Math.round(height * pixelRatio));
 
-      previousViewportSize = { width, height };
+      if (
+        canvas.width !== pixelWidth ||
+        canvas.height !== pixelHeight
+      ) {
+        canvas.width = pixelWidth;
+        canvas.height = pixelHeight;
+        context = canvas.getContext("2d", {
+          alpha: true,
+          desynchronized: true,
+        });
 
-      if (!force && shouldDeferStatementGeometryResize(resizeKind)) {
-        geometryRefreshQueue.defer(geometryIsSettled);
-        renderMaskTransform(progress.get());
-        return;
+        if (!context) return;
       }
 
-      maskGroup.removeAttribute("transform");
-      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      const styles = window.getComputedStyle(canvas);
+      const overlayColor =
+        styles
+          .getPropertyValue("--color-neutral-950-uniform")
+          .trim() || "#111111";
+      const fontFamily = styles.fontFamily || "sans-serif";
+      const fontWeight = styles.fontWeight || "700";
 
-      const focusBounds = getStatementFocusBounds({
-        focusGlyph,
+      context.setTransform(
+        pixelRatio,
+        0,
+        0,
+        pixelRatio,
+        0,
+        0,
+      );
+
+      drawStatementCanvasMask({
+        context,
         focusLetterIndex,
-        maskText,
+        fontFamily,
+        fontWeight,
+        height,
+        overlayColor,
+        phrase,
+        progress: progress.get(),
+        width,
       });
-      if (!focusBounds) {
-        geometryRef.current = {
-          ready: false,
-          anchorX: width / 2,
-          anchorY: height / 2,
-        };
-        return;
-      }
-
-      geometryRef.current = {
-        ready: true,
-        anchorX: focusBounds.x + focusBounds.width / 2,
-        anchorY: focusBounds.y + focusBounds.height / 2,
-      };
-      geometryRefreshQueue.complete();
-
-      renderMaskTransform(progress.get());
     };
 
-    measureGeometryRef.current = measureGeometry;
-    measureGeometry({ force: true });
+    const scheduleRender = () => {
+      if (resizeFrame || cancelled) return;
+
+      resizeFrame = window.requestAnimationFrame(() => {
+        resizeFrame = 0;
+        renderMask();
+      });
+    };
+
+    renderMaskRef.current = renderMask;
+    renderMask();
+
+    const unsubscribeProgress = progress.on("change", renderMask);
+    const resizeObserver = new ResizeObserver(scheduleRender);
+    resizeObserver.observe(canvas);
+
+    const visualViewport = window.visualViewport;
+    visualViewport?.addEventListener("resize", scheduleRender, {
+      passive: true,
+    });
+
     document.fonts?.ready
       .then(() => {
-        geometryRefreshQueue.markPending();
-        geometryRefreshQueue.flushIfSettled(geometryIsSettled);
+        if (!cancelled) scheduleRender();
       })
       .catch(() => undefined);
 
-    const handleProgress = (value) => {
-      if (value > 0 && value < 1) animationHasProgressed = true;
-      if (!geometryRef.current.ready) {
-        measureGeometry({ force: true });
-      }
-      renderMaskTransform(value);
-      geometryRefreshQueue.flushIfSettled(geometryIsSettled);
-    };
-    const unsubscribeProgress = progress.on("change", handleProgress);
-    const resizeObserver = new ResizeObserver(() => measureGeometry());
-    resizeObserver.observe(svg);
-
     return () => {
       cancelled = true;
-      if (measureGeometryRef.current === measureGeometry) {
-        measureGeometryRef.current = null;
+      if (renderMaskRef.current === renderMask) {
+        renderMaskRef.current = null;
       }
-      geometryRefreshQueue.destroy();
+      if (resizeFrame) {
+        window.cancelAnimationFrame(resizeFrame);
+      }
       unsubscribeProgress();
       resizeObserver.disconnect();
+      visualViewport?.removeEventListener("resize", scheduleRender);
     };
-  }, [phrase, progress, renderMaskTransform]);
+  }, [focusLetterIndex, phrase, progress]);
 
   useLayoutEffect(() => {
     if (!effectStarted) return;
-
-    /*
-     * Re-measure after EFFECT makes the SVG visible. This avoids relying on
-     * hidden-SVG text metrics, which are not consistent between Blink and
-     * WebKit.
-     */
-    measureGeometryRef.current?.({ force: true });
-    renderMaskTransform(progress.get());
-  }, [effectStarted, progress, renderMaskTransform]);
+    renderMaskRef.current?.();
+  }, [effectStarted]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -252,59 +204,14 @@ function HomeStatementPanel({
         aria-hidden="true"
       />
 
-      <svg
-        ref={svgRef}
-        viewBox="0 0 1 1"
-        preserveAspectRatio="none"
-        className={`pointer-events-none absolute inset-0 h-full w-full ${
+      <canvas
+        ref={canvasRef}
+        className={`pointer-events-none absolute inset-0 h-full w-full font-[var(--font-sans)] font-bold ${
           effectStarted ? "visible" : "invisible"
         }`}
         aria-hidden="true"
-        focusable="false"
-      >
-        <defs>
-          <mask
-            id={STATEMENT_MASK_ID}
-            x="0"
-            y="0"
-            width="100%"
-            height="100%"
-            maskUnits="userSpaceOnUse"
-            maskContentUnits="userSpaceOnUse"
-            className="[mask-type:luminance]"
-          >
-            <rect width="100%" height="100%" fill="white" />
-            <g ref={maskGroupRef}>
-              <text
-                ref={maskTextRef}
-                x="50%"
-                y="50%"
-                dy="0.35em"
-                textAnchor="middle"
-                fill="black"
-                className="font-[var(--font-sans)] text-[clamp(24px,3.2vw,46px)] font-bold tracking-[-1px]"
-              >
-                {focusLetterIndex < 0 ? (
-                  phrase
-                ) : (
-                  <>
-                    {phrase.slice(0, focusLetterIndex)}
-                    <tspan ref={focusGlyphRef}>{phrase[focusLetterIndex]}</tspan>
-                    {phrase.slice(focusLetterIndex + 1)}
-                  </>
-                )}
-              </text>
-            </g>
-          </mask>
-        </defs>
-
-        <rect
-          width="100%"
-          height="100%"
-          fill="var(--color-neutral-950-uniform)"
-          mask={`url(#${STATEMENT_MASK_ID})`}
-        />
-      </svg>
+        data-home-statement-mask-canvas
+      />
 
       <h2 className="sr-only" aria-hidden={!statementVisible}>
         {phrase}
