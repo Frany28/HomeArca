@@ -232,6 +232,7 @@ function createContentScrollController({
           "featured-projects",
           {
             featuredProjectIndex: lastProjectIndex,
+            lockProcessReturnGesture: false,
             targetAlignment: "end",
           },
         );
