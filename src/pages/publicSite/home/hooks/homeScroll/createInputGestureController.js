@@ -42,6 +42,52 @@ function isNativeHorizontalTarget(target) {
 }
 
 const FEATURED_TOUCH_SWIPE_THRESHOLD_PX = 18;
+const FEATURED_TOUCH_UP_BOUNDARY_THRESHOLD_PX = 10;
+
+function shouldClaimTouchUpBoundary({
+  boundaryScrollTop,
+  currentX,
+  currentY,
+  startScrollTop,
+  startX,
+  startY,
+  threshold = FEATURED_TOUCH_UP_BOUNDARY_THRESHOLD_PX,
+  verticalDominance = TOUCH_VERTICAL_DOMINANCE,
+}) {
+  if (
+    !Number.isFinite(boundaryScrollTop) ||
+    !Number.isFinite(startScrollTop)
+  ) {
+    return false;
+  }
+
+  const horizontalDistance = currentX - startX;
+  const verticalDistance = startY - currentY;
+  const absoluteVerticalDistance = Math.abs(verticalDistance);
+
+  /*
+   * Previous-section navigation means the finger moves down, so the intended
+   * scroll delta is negative. Diagonal/horizontal gestures stay untouched.
+   */
+  if (verticalDistance >= -threshold) return false;
+  if (
+    absoluteVerticalDistance <
+    Math.abs(horizontalDistance) * verticalDominance
+  ) {
+    return false;
+  }
+
+  const projectedScrollTop =
+    startScrollTop + verticalDistance;
+  const startedAtBoundary =
+    startScrollTop <=
+    boundaryScrollTop + FEATURED_PROJECT_EDGE_TOLERANCE_PX;
+
+  return (
+    startedAtBoundary ||
+    projectedScrollTop <= boundaryScrollTop - threshold
+  );
+}
 
 function createInputGestureController({
   titleRevealLockedRef,
@@ -55,6 +101,7 @@ function createInputGestureController({
   statement,
 }) {
   let touchGesture = null;
+  let upwardBoundaryTouch = null;
 
  const settleWheelGesture = () => {
     runtime.wheelGestureState =
@@ -458,6 +505,116 @@ function createInputGestureController({
     );
   };
 
+  const canWatchUpwardTouchBoundary = () => {
+    if (
+      !runtime.contentMode ||
+      !(window.matchMedia?.("(max-width: 1023px)").matches ?? false)
+    ) {
+      return false;
+    }
+
+    if (activeSectionRef.current === "process") {
+      return true;
+    }
+
+    return (
+      activeSectionRef.current === "featured-projects" &&
+      activeFeaturedProjectIndexRef.current > 0
+    );
+  };
+
+  const handleBoundaryTouchStart = (event) => {
+    if (
+      upwardBoundaryTouch ||
+      event.touches.length !== 1 ||
+      !canWatchUpwardTouchBoundary()
+    ) {
+      return;
+    }
+
+    const touch = event.touches[0];
+    upwardBoundaryTouch = {
+      consumed: false,
+      identifier: touch.identifier,
+      startProjectIndex: activeFeaturedProjectIndexRef.current,
+      startScrollTop: scroller.scrollTop,
+      startSectionId: activeSectionRef.current,
+      startX: touch.clientX,
+      startY: touch.clientY,
+    };
+  };
+
+  const handleBoundaryTouchMove = (event) => {
+    const gesture = upwardBoundaryTouch;
+    if (!gesture) return;
+
+    const touch = Array.from(event.touches).find(
+      (candidate) => candidate.identifier === gesture.identifier,
+    );
+    if (!touch) return;
+
+    if (gesture.consumed) {
+      event.preventDefault();
+      return;
+    }
+
+    const navigationChanged =
+      activeSectionRef.current !== gesture.startSectionId ||
+      (
+        gesture.startSectionId === "featured-projects" &&
+        activeFeaturedProjectIndexRef.current !== gesture.startProjectIndex
+      );
+
+    /*
+     * The native-scroll fallback may have claimed the boundary first. Once
+     * that happens, suppress the rest of the same physical touch so native
+     * momentum cannot overwrite the already-running GSAP transition.
+     */
+    if (
+      navigationChanged &&
+      (runtime.activeTween || runtime.isProgrammaticScroll)
+    ) {
+      event.preventDefault();
+      gesture.consumed = true;
+      return;
+    }
+
+    if (navigationChanged) return;
+
+    const boundary = coordination.featured.getContentBoundary(
+      HOME_SCROLL_DIRECTIONS.UP,
+      { deferStateCommit: true },
+    );
+    if (!boundary) return;
+
+    if (!shouldClaimTouchUpBoundary({
+      boundaryScrollTop: boundary.scrollTop,
+      currentX: touch.clientX,
+      currentY: touch.clientY,
+      startScrollTop: gesture.startScrollTop,
+      startX: gesture.startX,
+      startY: gesture.startY,
+    })) {
+      return;
+    }
+
+    /*
+     * Native scrolling remains untouched inside the project. Only the part of
+     * the same gesture that would cross the upward boundary is claimed. This
+     * stops iOS/Android from continuing to write scrollTop over the GSAP tween.
+     */
+    event.preventDefault();
+    gesture.consumed = true;
+
+    coordination.featured.claimMobileTouchBoundary(
+      HOME_SCROLL_DIRECTIONS.UP,
+    );
+  };
+
+  const clearBoundaryTouchGesture = () => {
+    upwardBoundaryTouch = null;
+  };
+
   const handlePointerDown = (event) => {
     if (
       event.pointerType !== "touch" ||
@@ -737,6 +894,7 @@ function createInputGestureController({
 
   const resetTouchGesture = () => {
     touchGesture = null;
+    upwardBoundaryTouch = null;
   };
 
   const handleVisibilityChange = () => {
@@ -817,6 +975,16 @@ function createInputGestureController({
 
   const attach = () => {
     scroller.addEventListener("wheel", handleWheel, { passive: false, capture: true });
+    scroller.addEventListener("touchstart", handleBoundaryTouchStart, {
+      passive: true,
+      capture: true,
+    });
+    scroller.addEventListener("touchmove", handleBoundaryTouchMove, {
+      passive: false,
+      capture: true,
+    });
+    scroller.addEventListener("touchend", clearBoundaryTouchGesture, true);
+    scroller.addEventListener("touchcancel", clearBoundaryTouchGesture, true);
     scroller.addEventListener("pointerdown", handlePointerDown, true);
     scroller.addEventListener("pointermove", handlePointerMove, {
       passive: false,
@@ -858,7 +1026,12 @@ function createInputGestureController({
   const destroy = () => {
     window.clearTimeout(runtime.wheelIdleTimer);
     touchGesture = null;
+    upwardBoundaryTouch = null;
     scroller.removeEventListener("wheel", handleWheel, true);
+    scroller.removeEventListener("touchstart", handleBoundaryTouchStart, true);
+    scroller.removeEventListener("touchmove", handleBoundaryTouchMove, true);
+    scroller.removeEventListener("touchend", clearBoundaryTouchGesture, true);
+    scroller.removeEventListener("touchcancel", clearBoundaryTouchGesture, true);
     scroller.removeEventListener("pointerdown", handlePointerDown, true);
     scroller.removeEventListener("pointermove", handlePointerMove, true);
     scroller.removeEventListener("pointerup", clearTouchGesture);
@@ -930,4 +1103,8 @@ function createInputGestureController({
   };
 }
 
-export { createInputGestureController, isInteractiveTarget };
+export {
+  createInputGestureController,
+  isInteractiveTarget,
+  shouldClaimTouchUpBoundary,
+};

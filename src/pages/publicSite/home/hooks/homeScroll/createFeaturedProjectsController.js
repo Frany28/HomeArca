@@ -914,6 +914,33 @@ function createFeaturedProjectsController({
     return true;
   };
 
+  const claimMobileTouchBoundary = (direction) => {
+    const boundary = getContentBoundary(
+      direction,
+      { deferStateCommit: true },
+    );
+
+    if (!boundary) return false;
+
+    clearMobileBoundaryTransition();
+
+    /*
+     * Touch ownership is claimed before the browser applies the remaining
+     * pan delta. Do not snap scrollTop to the boundary here: starting the
+     * tween from the currently rendered position preserves finger continuity
+     * and removes the small hitch that was visible on iOS/Android.
+     *
+     * If the native-scroll fallback already started the same transition,
+     * claiming the rest of the active touch still matters: the input layer
+     * suppresses subsequent touchmove writes so the tween can finish.
+     */
+    if (runtime.activeTween || runtime.isProgrammaticScroll) {
+      return true;
+    }
+
+    return boundary.transition();
+  };
+
   const handleExpansionInput = (
     event,
     deltaY,
@@ -1102,6 +1129,7 @@ function createFeaturedProjectsController({
  return {
   beginMobileTouchGesture,
   cancelExpansionTweens,
+  claimMobileTouchBoundary,
   commitProjectIndex,
   destroy,
   endMobileTouchGesture,
