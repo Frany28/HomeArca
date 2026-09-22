@@ -8,6 +8,7 @@ import {
   canWriteCarouselAutoScroll,
   normalizeCarouselLoopPosition,
   resolveCarouselGestureAxis,
+  smoothCarouselDragPosition,
 } from "../utils/carouselAutoScroll.js";
 
 const AUTO_SCROLL_SPEED_PX_PER_SECOND = 24;
@@ -20,9 +21,29 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
   const pausedRef = useRef(false);
   const interactionActiveRef = useRef(false);
   const autoPositionRef = useRef(0);
+  const renderedPositionRef = useRef(0);
   const dragRef = useRef(null);
+  const dragTargetPositionRef = useRef(null);
+  const dragSettlingRef = useRef(false);
   const firstSetRef = useRef(null);
   const secondSetRef = useRef(null);
+
+  const scheduleAutoScrollResume = () => {
+    window.clearTimeout(resumeTimerRef.current);
+    resumeTimerRef.current = window.setTimeout(() => {
+      if (
+        !carouselRef.current ||
+        !canResumeCarouselAutoScroll({
+          interactionActive: interactionActiveRef.current,
+          scrollSettled: true,
+        })
+      ) {
+        return;
+      }
+
+      pausedRef.current = false;
+    }, AUTO_SCROLL_RESUME_DELAY_MS);
+  };
 
   const repeatedColumns = useMemo(
     () => [
@@ -51,6 +72,7 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
       getLoopDistance(),
     );
 
+    renderedPositionRef.current = position;
     autoPositionRef.current = normalized;
     track.style.transform = `translate3d(${-normalized}px, 0, 0)`;
   };
@@ -84,7 +106,32 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
       );
       previousTimestamp = timestamp;
 
-      if (
+      const drag = dragRef.current;
+      const dragTarget = dragTargetPositionRef.current;
+      const smoothingHorizontalDrag =
+        Number.isFinite(dragTarget) &&
+        (drag?.axis === "horizontal" || dragSettlingRef.current);
+
+      if (smoothingHorizontalDrag) {
+        const nextPosition = smoothCarouselDragPosition(
+          renderedPositionRef.current,
+          dragTarget,
+          elapsedSeconds,
+        );
+
+        if (
+          dragSettlingRef.current &&
+          Math.abs(dragTarget - nextPosition) <= 0.35
+        ) {
+          writeCarouselPosition(dragTarget);
+          dragSettlingRef.current = false;
+          dragTargetPositionRef.current = null;
+          interactionActiveRef.current = false;
+          scheduleAutoScrollResume();
+        } else {
+          writeCarouselPosition(nextPosition);
+        }
+      } else if (
         canWriteCarouselAutoScroll({
           interactionActive: interactionActiveRef.current,
           paused: pausedRef.current,
@@ -120,26 +167,11 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
     window.clearTimeout(resumeTimerRef.current);
   };
 
-  const scheduleAutoScrollResume = () => {
-    window.clearTimeout(resumeTimerRef.current);
-    resumeTimerRef.current = window.setTimeout(() => {
-      if (
-        !carouselRef.current ||
-        !canResumeCarouselAutoScroll({
-          interactionActive: interactionActiveRef.current,
-          scrollSettled: true,
-        })
-      ) {
-        return;
-      }
-
-      pausedRef.current = false;
-    }, AUTO_SCROLL_RESUME_DELAY_MS);
-  };
-
   const finishUserInteraction = () => {
     interactionActiveRef.current = false;
     dragRef.current = null;
+    dragSettlingRef.current = false;
+    dragTargetPositionRef.current = null;
     scheduleAutoScrollResume();
   };
 
@@ -153,12 +185,14 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
     }
 
     interactionActiveRef.current = true;
+    dragSettlingRef.current = false;
     pauseAutoScroll();
 
+    dragTargetPositionRef.current = renderedPositionRef.current;
     dragRef.current = {
       axis: null,
       pointerId: event.pointerId,
-      startPosition: autoPositionRef.current,
+      startPosition: renderedPositionRef.current,
       startX: event.clientX,
       startY: event.clientY,
     };
@@ -182,15 +216,23 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
      */
     if (drag.axis !== "horizontal") return;
 
-    writeCarouselPosition(
-      drag.startPosition - deltaX,
-    );
+    dragTargetPositionRef.current =
+      drag.startPosition - deltaX;
   };
 
   const handlePointerEnd = (event) => {
     const drag = dragRef.current;
 
     if (drag && drag.pointerId !== event.pointerId) return;
+
+    if (
+      drag?.axis === "horizontal" &&
+      Number.isFinite(dragTargetPositionRef.current)
+    ) {
+      dragRef.current = null;
+      dragSettlingRef.current = true;
+      return;
+    }
 
     finishUserInteraction();
   };
