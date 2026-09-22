@@ -36,7 +36,7 @@ test("Featured expansion remains controlled only where the expansion effect exis
   );
 });
 
-test("the mobile carousel remains a browser-owned horizontal region", () => {
+test("native horizontal ownership remains available for other browser-owned regions", () => {
   assert.equal(
     getTouchGestureOwner({
       contentMode: true,

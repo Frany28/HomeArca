@@ -49,23 +49,19 @@ const panelControllerSource = readFileSync(
   "utf8",
 );
 
-test("the featured carousel restores the known-good native touch behavior", () => {
+test("the featured carousel never owns vertical movement", () => {
   assert.match(openingHomeSource, /touch-none/);
-  assert.match(mobileCarouselSource, /className="[^"]*touch-auto/);
-  assert.doesNotMatch(
-    mobileCarouselSource,
-    /className="[^"]*touch-pan-[xy]/,
-  );
-  assert.match(mobileCarouselSource, /overflow-x-auto/);
-  assert.match(mobileCarouselSource, /data-native-horizontal-scroll/);
-  assert.doesNotMatch(mobileCarouselSource, /resolveCarouselGestureAxis/);
-  assert.doesNotMatch(mobileCarouselSource, /onPointerMove=/);
-  assert.doesNotMatch(mobileCarouselSource, /writeCarouselPosition/);
-  assert.doesNotMatch(mobileCarouselSource, /startHorizontalInertia/);
-  assert.match(mobileCarouselSource, /onTouchStart=\{beginUserInteraction\}/);
-  assert.match(mobileCarouselSource, /onTouchCancel=\{endUserInteraction\}/);
+  assert.match(mobileCarouselSource, /className="[^"]*touch-pan-y/);
+  assert.match(mobileCarouselSource, /overflow-x-hidden/);
+  assert.match(mobileCarouselSource, /overflow-y-hidden/);
+  assert.doesNotMatch(mobileCarouselSource, /data-native-horizontal-scroll/);
+  assert.match(mobileCarouselSource, /resolveCarouselGestureAxis/);
+  assert.match(mobileCarouselSource, /onPointerMove=\{handlePointerMove\}/);
+  assert.match(mobileCarouselSource, /drag\.axis !== "horizontal"/);
+  assert.match(mobileCarouselSource, /writeCarouselPosition/);
   assert.doesNotMatch(mobileCarouselSource, /event\.preventDefault\(\)/);
   assert.doesNotMatch(mobileCarouselSource, /setPointerCapture/);
+  assert.doesNotMatch(mobileCarouselSource, /-webkit-overflow-scrolling:touch/);
 });
 
 test("mobile Featured vertical movement is no longer simulated with pointermove", () => {
