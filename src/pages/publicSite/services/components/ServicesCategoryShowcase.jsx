@@ -90,14 +90,14 @@ function ServicesCategoryShowcase({
           </div>
 
           <div
-            className="services-category-showcase__frame relative aspect-[16/25] w-[320px] max-w-[320px] shrink-0 rounded-[var(--radius-4)] p-[24px]"
+            className="services-category-showcase__frame relative aspect-[16/25] w-[320px] max-w-[320px] shrink-0 rounded-[var(--radius-4)]"
           role="tabpanel"
           id="services-category-panel"
           aria-labelledby={`service-tab-${activeCategory.id}`}
           tabIndex={0}
           data-node-id="4571:111481"
         >
-          <div className="relative size-full overflow-hidden rounded-[var(--radius-3)] bg-[var(--color-primary-300)]">
+          <div className="services-category-showcase__viewport absolute overflow-hidden rounded-[var(--radius-3)] bg-[var(--color-primary-300)]">
             {categories.map((category, index) => (
               <div
                 key={category.id}

@@ -86,9 +86,9 @@
   }
 
   .services-section .services-category-showcase__frame {
+    --services-frame-inset: 18px;
     width: 100%;
     min-width: 240px;
     max-width: 279px;
-    padding: 18px;
   }
 }
