@@ -210,6 +210,7 @@ function createContentScrollController({
       replace: true,
       onComplete: () => {
         statement.commitProgress(0);
+        coordination.about?.synchronizeForExternalNavigation();
 
         if (sectionId === "home") {
           setContentMode(false);
@@ -453,6 +454,7 @@ function createContentScrollController({
     statement.commitProgress(0);
 
     setContentMode(true);
+    coordination.about?.synchronizeForExternalNavigation();
     synchronizeContentScroll();
 
     return;

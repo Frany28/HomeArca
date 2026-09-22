@@ -326,25 +326,45 @@ function createAboutStoryController({
     return true;
   };
 
-  const synchronizeForNativeScroll = () => {
+  const synchronizeForExternalNavigation = () => {
     const anchor = getStoryAnchor();
 
-    if (anchor === null) return;
+    if (anchor === null) return false;
+
+    const scrollTop = scroller.scrollTop;
+    let nextProgress = null;
 
     if (
-      scroller.scrollTop <
+      scrollTop <
       anchor - ABOUT_EDGE_TOLERANCE_PX
     ) {
-      setProgress(0);
-      return;
-    }
-
-    if (
-      scroller.scrollTop >
+      nextProgress = 0;
+    } else if (
+      scrollTop >
       anchor + ABOUT_EDGE_TOLERANCE_PX
     ) {
-      setProgress(1);
+      nextProgress = 1;
     }
+
+    if (nextProgress === null) return false;
+
+    /*
+     * Navbar, hash and scrollbar navigation can bypass the controlled About
+     * narrative entirely. Once that external movement finishes, progress must
+     * describe the physical side of the story we landed on:
+     *
+     *   before About story -> 0
+     *   after About story  -> 1
+     *
+     * Clear transient gesture state as well, otherwise an endpoint lock or a
+     * tween from a previous visit can make the reverse story intermittently
+     * fail when returning from Contact.
+     */
+    gestureIdle = true;
+    endpointLock = null;
+    setProgress(nextProgress);
+
+    return true;
   };
 
   const destroy = () => {
@@ -357,7 +377,7 @@ function createAboutStoryController({
     handleInput,
     pinStory,
     settleGesture,
-    synchronizeForNativeScroll,
+    synchronizeForExternalNavigation,
   };
 }
 
