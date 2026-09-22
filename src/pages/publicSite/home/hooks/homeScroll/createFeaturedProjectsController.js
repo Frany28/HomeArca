@@ -862,6 +862,29 @@ function createFeaturedProjectsController({
     return true;
   };
 
+  const claimMobileTouchBoundary = (direction) => {
+    const boundary = getContentBoundary(
+      direction,
+      { deferStateCommit: true },
+    );
+
+    if (!boundary) return false;
+
+    clearMobileBoundaryTransition();
+    pinMobileBoundaryScroll(boundary.scrollTop);
+
+    /*
+     * If the native-scroll fallback already started the same transition,
+     * claiming the rest of the active touch still matters: the input layer
+     * will suppress subsequent touchmove writes so the tween can finish.
+     */
+    if (runtime.activeTween || runtime.isProgrammaticScroll) {
+      return true;
+    }
+
+    return boundary.transition();
+  };
+
   const handleExpansionInput = (
     event,
     deltaY,
@@ -1049,6 +1072,7 @@ function createFeaturedProjectsController({
 
  return {
   cancelExpansionTweens,
+  claimMobileTouchBoundary,
   commitProjectIndex,
   destroy,
   getContentBoundary,
