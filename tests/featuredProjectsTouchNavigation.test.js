@@ -46,45 +46,81 @@ const panelControllerSource = readFileSync(
   "utf8",
 );
 
-test("the featured carousel keeps horizontal scrolling native", () => {
-  assert.match(
-    openingHomeSource,
-    /touch-none/,
-  );
-  assert.match(mobileCarouselSource, /className="[^"]*touch-pan-x/);
+test("the featured carousel delegates touch-axis arbitration to native scrolling", () => {
+  assert.match(openingHomeSource, /touch-none/);
+  assert.match(mobileCarouselSource, /className="[^"]*touch-auto/);
   assert.match(mobileCarouselSource, /overflow-x-auto/);
   assert.match(mobileCarouselSource, /data-native-horizontal-scroll/);
   assert.match(mobileCarouselSource, /onTouchStart=\{beginUserInteraction\}/);
   assert.match(mobileCarouselSource, /onTouchCancel=\{endUserInteraction\}/);
-  assert.match(mobileCarouselSource, /addEventListener\("scroll", handleCarouselScroll/);
-  assert.match(mobileCarouselSource, /addEventListener\("scrollend", handleCarouselScrollEnd\)/);
+  assert.match(
+    mobileCarouselSource,
+    /addEventListener\("scroll", handleCarouselScroll/,
+  );
+  assert.match(
+    mobileCarouselSource,
+    /addEventListener\("scrollend", handleCarouselScrollEnd\)/,
+  );
   assert.doesNotMatch(mobileCarouselSource, /handlePointerMove/);
   assert.doesNotMatch(mobileCarouselSource, /setPointerCapture/);
-  assert.doesNotMatch(mobileCarouselSource, /DRAG_MOMENTUM/);
   assert.doesNotMatch(mobileCarouselSource, /event\.preventDefault\(\)/);
 });
 
-
-test("mobile Featured vertical scrolling is controlled without manual carousel dragging", () => {
-  assert.match(
-    inputGestureSource,
-    /featuredControlledMobile: !featuredExpansionEnabled/,
-  );
-  assert.match(
+test("mobile Featured vertical movement is no longer simulated with pointermove", () => {
+  assert.doesNotMatch(inputGestureSource, /featuredControlledMobile/);
+  assert.doesNotMatch(
     inputGestureSource,
     /advanceControlledFeaturedTouchGesture\(/,
   );
-  assert.match(inputGestureSource, /scroller\.scrollTop = update\.scrollTop/);
+  assert.doesNotMatch(
+    inputGestureSource,
+    /pendingFeaturedAxis/,
+  );
+  assert.doesNotMatch(
+    inputGestureSource,
+    /scroller\.scrollTop = update\.scrollTop/,
+  );
   assert.doesNotMatch(inputGestureSource, /scrollLeft\s*=/);
   assert.doesNotMatch(inputGestureSource, /setPointerCapture/);
-  assert.doesNotMatch(inputGestureSource, /nativeTouchIntent/);
-  assert.doesNotMatch(inputGestureSource, /handleNativeTouchScroll/);
-  assert.doesNotMatch(inputGestureSource, /finishNativeFeaturedTouchGesture/);
-  assert.doesNotMatch(contentScrollSource, /pinMobileProjectBoundary\(\)/);
-  assert.doesNotMatch(contentScrollSource, /shouldDeferNativeContentSync/);
 });
 
-test("native boundary observation exits while Featured owns vertical movement", () => {
+test("native scroll starts one transition only when it crosses a real boundary", () => {
+  const bounds = { start: 400, end: 900 };
+
+  assert.equal(getNativeBoundaryCrossingDirection(700, 760, bounds), 0);
+  assert.equal(getNativeBoundaryCrossingDirection(880, 900, bounds), 1);
+  assert.equal(getNativeBoundaryCrossingDirection(900, 920, bounds), 1);
+  assert.equal(getNativeBoundaryCrossingDirection(440, 400, bounds), -1);
+  assert.equal(getNativeBoundaryCrossingDirection(400, 380, bounds), -1);
+  assert.equal(getNativeBoundaryCrossingDirection(700, 650, bounds), 0);
+});
+
+test("mobile native boundary observation covers Featured and Process", () => {
+  const observerStart = featuredControllerSource.indexOf(
+    "const observeMobileNativeBoundaryScroll",
+  );
+  const observerEnd = featuredControllerSource.indexOf(
+    "const handleExpansionInput",
+    observerStart,
+  );
+  const observerSource = featuredControllerSource.slice(
+    observerStart,
+    observerEnd,
+  );
+
+  assert.notEqual(observerStart, -1);
+  assert.notEqual(observerEnd, -1);
+  assert.match(
+    observerSource,
+    /activeSectionRef\.current !== "featured-projects"[\s\S]*activeSectionRef\.current !== "process"/,
+  );
+  assert.doesNotMatch(
+    observerSource,
+    /activeSectionRef\.current === "featured-projects"[\s\S]*clearMobileBoundaryTransition\(\)[\s\S]*return false/,
+  );
+});
+
+test("Safari momentum is pinned only after a real Featured boundary is crossed", () => {
   const observerStart = featuredControllerSource.indexOf(
     "const observeMobileNativeBoundaryScroll",
   );
@@ -98,32 +134,21 @@ test("native boundary observation exits while Featured owns vertical movement", 
   );
 
   assert.match(
+    featuredControllerSource,
+    /const pinMobileBoundaryScroll = \(scrollTop\) =>/,
+  );
+  assert.match(
     observerSource,
-    /activeSectionRef\.current === "featured-projects"[\s\S]*return false/,
-  );
-  assert.ok(
-    observerSource.indexOf('activeSectionRef.current === "featured-projects"') <
-      observerSource.indexOf("getContentBoundary("),
+    /mobileBoundaryTransitionPending = \{[\s\S]*scrollTop: boundary\.scrollTop,[\s\S]*transition: boundary\.transition/,
   );
   assert.match(
-    inputGestureSource,
-    /addEventListener\("scroll", coordination\.content\.handleNativeScroll/,
+    observerSource,
+    /pinMobileBoundaryScroll\(boundary\.scrollTop\)/,
   );
   assert.match(
-    contentScrollSource,
-    /selectSection\(activeContentSection\?\.id \?\? "services"\)/,
+    observerSource,
+    /mobileBoundaryTransitionPending\.scrollTop/,
   );
-});
-
-test("native scroll starts one transition only when it crosses a real boundary", () => {
-  const bounds = { start: 400, end: 900 };
-
-  assert.equal(getNativeBoundaryCrossingDirection(700, 760, bounds), 0);
-  assert.equal(getNativeBoundaryCrossingDirection(880, 900, bounds), 1);
-  assert.equal(getNativeBoundaryCrossingDirection(900, 920, bounds), 1);
-  assert.equal(getNativeBoundaryCrossingDirection(440, 400, bounds), -1);
-  assert.equal(getNativeBoundaryCrossingDirection(400, 380, bounds), -1);
-  assert.equal(getNativeBoundaryCrossingDirection(700, 650, bounds), 0);
 });
 
 test("mobile boundary transitions observe scroll before content synchronization", () => {
@@ -145,13 +170,10 @@ test("mobile boundary transitions observe scroll before content synchronization"
     featuredControllerSource,
     /\(max-width: 1023px\) and \(pointer: coarse\)/,
   );
-  assert.match(featuredControllerSource, /runtime\.activeTween \|\|/);
   assert.match(featuredControllerSource, /deferStateCommit: true/);
-  assert.doesNotMatch(inputGestureSource, /nativeTouchIntent/);
 });
 
-
-test("native mobile boundary handoff is scoped to Process returning into Featured", () => {
+test("the first Featured project can still flow naturally back into Services", () => {
   const observerStart = featuredControllerSource.indexOf(
     "const observeMobileNativeBoundaryScroll",
   );
@@ -164,13 +186,10 @@ test("native mobile boundary handoff is scoped to Process returning into Feature
     observerEnd,
   );
 
-  assert.notEqual(observerStart, -1);
-  assert.notEqual(observerEnd, -1);
   assert.match(
     observerSource,
-    /activeSectionRef\.current !== "process"\) return false/,
+    /activeFeaturedProjectIndexRef\.current === 0[\s\S]*direction < 0[\s\S]*return false/,
   );
-  assert.doesNotMatch(observerSource, /activeSectionRef\.current === "services"/);
 });
 
 test("mobile boundary transitions reuse the standard section navigation motion", () => {
@@ -182,34 +201,20 @@ test("mobile boundary transitions reuse the standard section navigation motion",
     panelControllerSource,
     /duration = SCROLL_STEP_DURATION_SECONDS/,
   );
-  assert.match(
-    panelControllerSource,
-    /duration,/,
-  );
-  assert.match(
-    panelControllerSource,
-    /ease: SECTION_NAVIGATION_EASE/,
-  );
+  assert.match(panelControllerSource, /ease: SECTION_NAVIGATION_EASE/);
 });
 
-
-test("mobile boundary handoff waits for native scroll settlement before GSAP takes ownership", () => {
-  assert.match(
-    featuredControllerSource,
-    /mobileBoundaryTransitionPending = \{[\s\S]*transition: boundary\.transition/,
-  );
+test("mobile boundary handoff waits for native momentum to settle", () => {
   assert.match(
     featuredControllerSource,
     /scheduleMobileBoundaryTransition\(\)/,
   );
-  assert.match(
-    featuredControllerSource,
-    /SCROLL_SETTLE_DELAY_MS/,
-  );
+  assert.match(featuredControllerSource, /SCROLL_SETTLE_DELAY_MS/);
   assert.match(
     contentScrollSource,
     /handleScrollEnd[\s\S]*flushMobileNativeBoundaryTransition\(\)/,
   );
+
   const observerStart = featuredControllerSource.indexOf(
     "const observeMobileNativeBoundaryScroll",
   );
@@ -225,8 +230,7 @@ test("mobile boundary handoff waits for native scroll settlement before GSAP tak
   assert.doesNotMatch(observerSource, /requestAnimationFrame/);
 });
 
-
-test("Process native handoff preserves the standard section speed after overshoot", () => {
+test("native handoff preserves the standard section speed", () => {
   assert.match(
     featuredControllerSource,
     /const getMobileTransitionDuration = \(targetScrollTop\) =>/,
@@ -240,37 +244,25 @@ test("Process native handoff preserves the standard section speed after overshoo
     /duration: deferStateCommit[\s\S]*getMobileTransitionDuration\(transition\.scrollTop\)/,
   );
   assert.match(
-    featuredControllerSource,
-    /duration: deferStateCommit[\s\S]*getMobileTransitionDuration\(targetScrollTop\)/,
-  );
-  assert.match(
     panelControllerSource,
     /duration = SCROLL_STEP_DURATION_SECONDS/,
   );
-  assert.match(
-    panelControllerSource,
-    /ease: SECTION_NAVIGATION_EASE/,
-  );
+  assert.match(panelControllerSource, /ease: SECTION_NAVIGATION_EASE/);
 });
 
-
-test("controlled Home panels fully own touch gestures before native content scrolling", () => {
+test("controlled intro panels stay controlled while Featured mobile stays native", () => {
   assert.match(
     openingHomeSource,
     /!contentScrollActive\s*\? "touch-none"/,
   );
   assert.match(
     openingHomeSource,
-    /activeSectionId === "featured-projects"[\s\S]*"touch-pan-x min-\[1024px\]:touch-auto"[\s\S]*"touch-pan-x"/,
+    /activeSectionId === "featured-projects" && !reduceMotion[\s\S]*"touch-auto min-\[1024px\]:touch-pan-x"/,
   );
 });
 
-
 test("controlled touch ignores browser-owned targets and resets stale gestures", () => {
-  assert.match(
-    inputGestureSource,
-    /getTouchGestureOwner\(\{/,
-  );
+  assert.match(inputGestureSource, /getTouchGestureOwner\(\{/);
   assert.match(
     inputGestureSource,
     /nativeHorizontalTarget: isNativeHorizontalTarget\(event\.target\)/,
