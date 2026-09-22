@@ -8,9 +8,6 @@ import {
   shouldActivateIncomingFeaturedBeforeTransition,
   shouldActivateIncomingProjectBeforeTransition,
 } from "../src/pages/publicSite/home/hooks/homeScroll/createFeaturedProjectsController.js";
-import {
-  resolveCarouselGestureAxis,
-} from "../src/pages/publicSite/featuredProjects/utils/carouselAutoScroll.js";
 
 const openingHomeSource = readFileSync(
   new URL("../src/pages/publicSite/home/OpeningHome.jsx", import.meta.url),
@@ -52,32 +49,23 @@ const panelControllerSource = readFileSync(
   "utf8",
 );
 
-test("the featured carousel gives vertical movement priority over horizontal drag", () => {
+test("the featured carousel restores the known-good native touch behavior", () => {
   assert.match(openingHomeSource, /touch-none/);
-  assert.match(mobileCarouselSource, /className="[^"]*touch-pan-y/);
+  assert.match(mobileCarouselSource, /className="[^"]*touch-auto/);
   assert.doesNotMatch(
     mobileCarouselSource,
-    /className="[^"]*touch-auto/,
+    /className="[^"]*touch-pan-[xy]/,
   );
   assert.match(mobileCarouselSource, /overflow-x-auto/);
   assert.match(mobileCarouselSource, /data-native-horizontal-scroll/);
-  assert.match(mobileCarouselSource, /resolveCarouselGestureAxis/);
-  assert.match(mobileCarouselSource, /onPointerMove=\{handlePointerMove\}/);
-  assert.match(mobileCarouselSource, /drag\.axis !== "horizontal"/);
-  assert.match(mobileCarouselSource, /writeCarouselPosition/);
+  assert.doesNotMatch(mobileCarouselSource, /resolveCarouselGestureAxis/);
+  assert.doesNotMatch(mobileCarouselSource, /onPointerMove=/);
+  assert.doesNotMatch(mobileCarouselSource, /writeCarouselPosition/);
   assert.doesNotMatch(mobileCarouselSource, /startHorizontalInertia/);
-  assert.doesNotMatch(mobileCarouselSource, /-webkit-overflow-scrolling:touch/);
+  assert.match(mobileCarouselSource, /onTouchStart=\{beginUserInteraction\}/);
+  assert.match(mobileCarouselSource, /onTouchCancel=\{endUserInteraction\}/);
   assert.doesNotMatch(mobileCarouselSource, /event\.preventDefault\(\)/);
   assert.doesNotMatch(mobileCarouselSource, /setPointerCapture/);
-});
-
-test("Featured carousel only claims clearly horizontal touch movement", () => {
-  assert.equal(resolveCarouselGestureAxis(24, 6), "horizontal");
-  assert.equal(resolveCarouselGestureAxis(-24, 6), "horizontal");
-  assert.equal(resolveCarouselGestureAxis(18, 14), "vertical");
-  assert.equal(resolveCarouselGestureAxis(14, 14), "vertical");
-  assert.equal(resolveCarouselGestureAxis(6, 18), "vertical");
-  assert.equal(resolveCarouselGestureAxis(8, 5), null);
 });
 
 test("mobile Featured vertical movement is no longer simulated with pointermove", () => {
