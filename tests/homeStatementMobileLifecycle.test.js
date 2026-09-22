@@ -9,6 +9,7 @@ import {
 } from "../src/pages/publicSite/home/utils/viewportResize.js";
 import {
   createStatementGeometryRefreshQueue,
+  getStatementFocusBounds,
   isStatementGeometrySettled,
   shouldDeferStatementGeometryResize,
 } from "../src/pages/publicSite/home/utils/statementGeometry.js";
@@ -16,6 +17,7 @@ import {
   createHomeStatementController,
 } from "../src/pages/publicSite/home/hooks/homeScroll/createHomeStatementController.js";
 import {
+  isAutomaticStatementScrollOwned,
   isContentNavigationReady,
 } from "../src/pages/publicSite/home/hooks/homeScroll/createContentScrollController.js";
 
@@ -137,6 +139,83 @@ test("statement cannot open Services before progress reaches one", () => {
     }),
     true,
   );
+});
+
+test("automatic statement reveal keeps ownership across delayed native scroll events", () => {
+  assert.equal(
+    isAutomaticStatementScrollOwned({
+      currentState: {
+        panelIndex: 3,
+        phase: HOME_SCROLL_PHASES.EFFECT,
+      },
+      autoRevealing: true,
+    }),
+    true,
+  );
+
+  assert.equal(
+    isAutomaticStatementScrollOwned({
+      currentState: {
+        panelIndex: 3,
+        phase: HOME_SCROLL_PHASES.TITLE,
+      },
+      autoRevealing: false,
+    }),
+    false,
+  );
+});
+
+test("statement focus geometry prefers per-character SVG metrics for WebKit", () => {
+  const bounds = getStatementFocusBounds({
+    focusGlyph: {
+      getBBox() {
+        return { x: 0, y: 0, width: 0, height: 0 };
+      },
+    },
+    focusLetterIndex: 7,
+    maskText: {
+      getBBox() {
+        return { x: 10, y: 20, width: 300, height: 40 };
+      },
+      getExtentOfChar(index) {
+        assert.equal(index, 7);
+        return { x: 155, y: 20, width: 18, height: 40 };
+      },
+    },
+  });
+
+  assert.deepEqual(bounds, {
+    x: 155,
+    y: 20,
+    width: 18,
+    height: 40,
+  });
+});
+
+test("statement focus geometry falls back to full text when glyph metrics are unavailable", () => {
+  const bounds = getStatementFocusBounds({
+    focusGlyph: {
+      getBBox() {
+        throw new Error("hidden tspan");
+      },
+    },
+    focusLetterIndex: 7,
+    maskText: {
+      getBBox() {
+        return { x: 10, y: 20, width: 300, height: 40 };
+      },
+      getExtentOfChar() {
+        throw new Error("character metrics unavailable");
+      },
+    },
+  });
+
+  assert.deepEqual(bounds, {
+    x: 10,
+    y: 20,
+    width: 300,
+    height: 40,
+  });
 });
 
 test("transient viewport resize is deferred while statement geometry animates", () => {

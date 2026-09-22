@@ -40,6 +40,16 @@ function isContentNavigationReady({
   );
 }
 
+function isAutomaticStatementScrollOwned({
+  currentState,
+  autoRevealing = false,
+}) {
+  return Boolean(
+    autoRevealing &&
+      currentState?.panelIndex === STATEMENT_PANEL_INDEX
+  );
+}
+
 function createContentScrollController({
   activeSectionRef,
   contentModeRef,
@@ -270,9 +280,31 @@ function createContentScrollController({
     }
 
     synchronizeTitleVisibility();
+
+    const currentState = navigationStateRef.current;
     const statementTop = panels[STATEMENT_PANEL_INDEX]?.offsetTop ?? 0;
+    const automaticStatementOwnsScroll =
+      isAutomaticStatementScrollOwned({
+        currentState,
+        autoRevealing: statement.isAutoRevealing(),
+      });
+
+    /*
+     * A programmatic panel alignment can still emit one or more delayed
+     * scroll events after GSAP has reported completion, especially in WebKit.
+     * Once the automatic statement reveal owns the transition, those residual
+     * events must not be reclassified as native user scrolling or they reset
+     * the statement back to IMAGE and cancel the reveal.
+     */
+    if (automaticStatementOwnsScroll) {
+      if (Math.abs(scroller.scrollTop - statementTop) > 1) {
+        scroller.scrollTop = statementTop;
+      }
+      runtime.nativeScrollOriginState = null;
+      return;
+    }
+
     if (scroller.scrollTop > statementTop + 1) {
-      const currentState = navigationStateRef.current;
       if (
         currentState.panelIndex === STATEMENT_PANEL_INDEX &&
         currentState.phase === HOME_SCROLL_PHASES.TITLE &&
@@ -286,7 +318,6 @@ function createContentScrollController({
     }
 
     runtime.ignoreNextScrollEnd = false;
-    const currentState = navigationStateRef.current;
     runtime.nativeScrollOriginState ??= currentState;
     if (currentState.panelIndex === STATEMENT_PANEL_INDEX) {
       statement.resetForNativeScroll();
@@ -464,6 +495,7 @@ function createContentScrollController({
 
 export {
   createContentScrollController,
+  isAutomaticStatementScrollOwned,
   isContentNavigationReady,
   isVisibleWithinViewport,
 };
