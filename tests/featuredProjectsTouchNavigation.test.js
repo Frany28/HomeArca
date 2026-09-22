@@ -13,6 +13,9 @@ import {
 import {
   shouldClaimTouchUpBoundary,
 } from "../src/pages/publicSite/home/hooks/homeScroll/createInputGestureController.js";
+import {
+  shouldReturnToLastFeaturedProject,
+} from "../src/pages/publicSite/home/hooks/homeScroll/createContentScrollController.js";
 
 const openingHomeSource = readFileSync(
   new URL("../src/pages/publicSite/home/OpeningHome.jsx", import.meta.url),
@@ -447,6 +450,68 @@ test("mobile upward project transitions activate the incoming project before the
   assert.ok(activateIncoming >= 0);
   assert.ok(startScrollTransition >= 0);
   assert.ok(activateIncoming < startScrollTransition);
+});
+
+test("direct Process -> Featured navigation returns through Apto JC instead of Quinta", () => {
+  assert.equal(
+    shouldReturnToLastFeaturedProject({
+      activeSectionId: "process",
+      targetSectionId: "featured-projects",
+    }),
+    true,
+  );
+
+  assert.equal(
+    shouldReturnToLastFeaturedProject({
+      activeSectionId: "about",
+      targetSectionId: "featured-projects",
+    }),
+    false,
+  );
+
+  assert.equal(
+    shouldReturnToLastFeaturedProject({
+      activeSectionId: "process",
+      targetSectionId: "services",
+    }),
+    false,
+  );
+
+  const directNavigationStart = contentScrollSource.indexOf(
+    "const navigateSection",
+  );
+  const directNavigationEnd = contentScrollSource.indexOf(
+    "const settleNativeScroll",
+    directNavigationStart,
+  );
+  const directNavigationSource = contentScrollSource.slice(
+    directNavigationStart,
+    directNavigationEnd,
+  );
+
+  assert.match(
+    directNavigationSource,
+    /shouldReturnToLastFeaturedProject/,
+  );
+  assert.match(
+    directNavigationSource,
+    /const lastProjectIndex = projectPanels\.length - 1/,
+  );
+  assert.match(
+    directNavigationSource,
+    /transitionBetweenSections\([\s\S]*"featured-projects"[\s\S]*featuredProjectIndex: lastProjectIndex[\s\S]*targetAlignment: "end"/,
+  );
+
+  const specialReturn = directNavigationSource.indexOf(
+    "returnsToLastFeaturedProject",
+  );
+  const genericReset = directNavigationSource.indexOf(
+    "coordination.featured.resetNavigationState()",
+  );
+
+  assert.ok(specialReturn >= 0);
+  assert.ok(genericReset >= 0);
+  assert.ok(specialReturn < genericReset);
 });
 
 test("Process -> Apto activates Featured when the controlled return transition starts", () => {
