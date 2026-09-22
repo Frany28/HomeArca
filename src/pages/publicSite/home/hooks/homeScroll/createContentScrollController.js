@@ -195,7 +195,13 @@ function createContentScrollController({
   };
 
   const handleNativeScroll = () => {
-    coordination.featured.observeMobileNativeBoundaryScroll();
+    const mobileBoundaryTransitionClaimed =
+      coordination.featured.observeMobileNativeBoundaryScroll();
+
+    if (mobileBoundaryTransitionClaimed) {
+      synchronizeTitleVisibility();
+      return;
+    }
 
     if (runtime.isProgrammaticScroll) {
       synchronizeTitleVisibility();

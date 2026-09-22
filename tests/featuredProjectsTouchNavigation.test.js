@@ -38,6 +38,13 @@ const featuredControllerSource = readFileSync(
   ),
   "utf8",
 );
+const panelControllerSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/home/hooks/homeScroll/createPanelNavigationController.js",
+    import.meta.url,
+  ),
+  "utf8",
+);
 
 test("the featured carousel separates horizontal dragging from vertical page scrolling", () => {
   assert.match(
@@ -111,4 +118,58 @@ test("mobile boundary transitions observe scroll before content synchronization"
   assert.match(featuredControllerSource, /runtime\.activeTween \|\|/);
   assert.match(featuredControllerSource, /deferStateCommit: true/);
   assert.doesNotMatch(inputGestureSource, /nativeTouchIntent/);
+});
+
+
+test("services and Quinta keep native mobile scrolling without a forced section transition", () => {
+  const observerStart = featuredControllerSource.indexOf(
+    "const observeMobileNativeBoundaryScroll",
+  );
+  const observerEnd = featuredControllerSource.indexOf(
+    "const handleExpansionInput",
+    observerStart,
+  );
+  const observerSource = featuredControllerSource.slice(
+    observerStart,
+    observerEnd,
+  );
+
+  assert.notEqual(observerStart, -1);
+  assert.notEqual(observerEnd, -1);
+  assert.doesNotMatch(observerSource, /activeSectionRef\.current === "services"/);
+  assert.doesNotMatch(
+    observerSource,
+    /transitionBetweenSections\("featured-projects"/,
+  );
+  assert.match(
+    observerSource,
+    /activeFeaturedProjectIndexRef\.current === 0[\s\S]*direction < 0[\s\S]*return false/,
+  );
+});
+
+test("mobile boundary transitions reuse the standard section navigation motion", () => {
+  assert.doesNotMatch(
+    featuredControllerSource,
+    /MOBILE_BOUNDARY_TRANSITION_(DURATION|EASE)/,
+  );
+  assert.match(
+    panelControllerSource,
+    /duration: SCROLL_STEP_DURATION_SECONDS/,
+  );
+  assert.match(
+    panelControllerSource,
+    /ease: SECTION_NAVIGATION_EASE/,
+  );
+});
+
+
+test("mobile boundary handoff waits one animation frame before GSAP takes scroll ownership", () => {
+  assert.match(
+    featuredControllerSource,
+    /mobileBoundaryTransitionPending = true;[\s\S]*runtime\.requestAnimationFrame\(\(\) => \{[\s\S]*boundary\.transition\(\)/,
+  );
+  assert.match(
+    contentScrollSource,
+    /const mobileBoundaryTransitionClaimed =[\s\S]*observeMobileNativeBoundaryScroll\(\);[\s\S]*if \(mobileBoundaryTransitionClaimed\)[\s\S]*synchronizeTitleVisibility\(\);[\s\S]*return;/,
+  );
 });
