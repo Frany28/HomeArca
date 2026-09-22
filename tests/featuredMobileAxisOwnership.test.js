@@ -7,6 +7,7 @@ import {
   canWriteCarouselAutoScroll,
   normalizeCarouselLoopPosition,
   resolveCarouselGestureAxis,
+  smoothCarouselDragPosition,
 } from "../src/pages/publicSite/featuredProjects/utils/carouselAutoScroll.js";
 import {
   TOUCH_GESTURE_OWNERS,
@@ -93,6 +94,42 @@ test("carousel autoplay wraps continuously at the duplicated-set boundary", () =
     advanceCarouselAutoPosition(999, 1, 1000, 24),
     23,
   );
+});
+
+test("carousel horizontal drag smoothing is frame-rate independent", () => {
+  const oneFrame = smoothCarouselDragPosition(
+    0,
+    100,
+    1 / 60,
+  );
+  const halfFrameA = smoothCarouselDragPosition(
+    0,
+    100,
+    1 / 120,
+  );
+  const halfFrameB = smoothCarouselDragPosition(
+    halfFrameA,
+    100,
+    1 / 120,
+  );
+
+  assert.ok(oneFrame > 40 && oneFrame < 44);
+  assert.ok(Math.abs(oneFrame - halfFrameB) < 0.0001);
+});
+
+test("carousel drag smoothing never adds momentum beyond the finger target", () => {
+  assert.equal(
+    smoothCarouselDragPosition(20, 80, 0, 0.42),
+    20,
+  );
+  assert.equal(
+    smoothCarouselDragPosition(20, 80, 1 / 60, 1),
+    80,
+  );
+
+  const next = smoothCarouselDragPosition(20, 80, 1 / 60, 0.42);
+  assert.ok(next > 20);
+  assert.ok(next < 80);
 });
 
 test("carousel gesture axis waits for intent and locks to the dominant direction", () => {
