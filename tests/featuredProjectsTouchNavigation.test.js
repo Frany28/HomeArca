@@ -38,6 +38,13 @@ const featuredControllerSource = readFileSync(
   ),
   "utf8",
 );
+const panelControllerSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/home/hooks/homeScroll/createPanelNavigationController.js",
+    import.meta.url,
+  ),
+  "utf8",
+);
 
 test("the featured carousel separates horizontal dragging from vertical page scrolling", () => {
   assert.match(
@@ -140,17 +147,17 @@ test("services and Quinta keep native mobile scrolling without a forced section 
   );
 });
 
-test("mobile boundary transitions use a faster out easing without changing desktop defaults", () => {
-  assert.match(
+test("mobile boundary transitions reuse the standard section navigation motion", () => {
+  assert.doesNotMatch(
     featuredControllerSource,
-    /MOBILE_BOUNDARY_TRANSITION_DURATION_SECONDS = 0\.38/,
+    /MOBILE_BOUNDARY_TRANSITION_(DURATION|EASE)/,
   );
   assert.match(
-    featuredControllerSource,
-    /MOBILE_BOUNDARY_TRANSITION_EASE = "power2\.out"/,
+    panelControllerSource,
+    /duration: SCROLL_STEP_DURATION_SECONDS/,
   );
   assert.match(
-    featuredControllerSource,
-    /duration: deferStateCommit[\s\S]*MOBILE_BOUNDARY_TRANSITION_DURATION_SECONDS/,
+    panelControllerSource,
+    /ease: SECTION_NAVIGATION_EASE/,
   );
 });
