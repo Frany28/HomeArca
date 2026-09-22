@@ -100,6 +100,11 @@ function createFeaturedProjectsController({
     mobileBoundaryTransitionPending = null;
   };
 
+  const beginControlledTouchGesture = () => {
+    clearMobileBoundaryTransition();
+    previousMobileScrollTop = scroller.scrollTop;
+  };
+
   const flushMobileNativeBoundaryTransition = () => {
     const pendingTransition = mobileBoundaryTransitionPending;
 
@@ -475,7 +480,7 @@ function createFeaturedProjectsController({
 
       if (deferStateCommit) {
         previousMobileScrollTop = scroller.scrollTop;
-        mobileBoundaryTransitionPending = false;
+        clearMobileBoundaryTransition();
       }
       coordination.content.synchronizeContentScroll();
 
@@ -656,6 +661,16 @@ function createFeaturedProjectsController({
 
     if (!isMobileTouchLayout()) return false;
 
+    /*
+     * Featured mobile owns vertical movement before scrollTop crosses a panel
+     * boundary. Native boundary observation remains only for the handoff from
+     * Processes back into Featured, where the gesture began outside Featured.
+     */
+    if (activeSectionRef.current === "featured-projects") {
+      clearMobileBoundaryTransition();
+      return false;
+    }
+
     if (mobileBoundaryTransitionPending) {
       if (!mobileBoundaryTransitionPending.started) {
         scheduleMobileBoundaryTransition();
@@ -667,22 +682,9 @@ function createFeaturedProjectsController({
       return false;
     }
 
-    if (
-      activeSectionRef.current !== "featured-projects" &&
-      activeSectionRef.current !== "process"
-    ) {
-      return false;
-    }
+    if (activeSectionRef.current !== "process") return false;
 
     const direction = Math.sign(scrollTop - previousScrollTop);
-
-    if (
-      activeSectionRef.current === "featured-projects" &&
-      activeFeaturedProjectIndexRef.current === 0 &&
-      direction < 0
-    ) {
-      return false;
-    }
 
     const boundary = getContentBoundary(
       direction,
@@ -901,6 +903,7 @@ function createFeaturedProjectsController({
   };
 
  return {
+  beginControlledTouchGesture,
   cancelExpansionTweens,
   commitProjectIndex,
   destroy,

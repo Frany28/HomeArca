@@ -10,10 +10,12 @@ import { useReducedMotion } from "motion/react";
 import HomeScrollHint from "../HomeScrollHint/HomeScrollHint.jsx";
 import { connectStatementPlayback } from "../../utils/statementVideoPlayback.js";
 import { getHomeStatementTransform } from "../../utils/homeScrollNavigation.js";
+import { classifyViewportResize } from "../../utils/viewportResize.js";
 import {
-  VIEWPORT_RESIZE_KINDS,
-  classifyViewportResize,
-} from "../../utils/viewportResize.js";
+  createStatementGeometryRefreshQueue,
+  isStatementGeometrySettled,
+  shouldDeferStatementGeometryResize,
+} from "../../utils/statementGeometry.js";
 
 const STATEMENT_MASK_ID = "home-statement-video-mask";
 const STATEMENT_FOCUS_LETTER = "c";
@@ -41,7 +43,12 @@ function HomeStatementPanel({
     anchorX: 0,
     anchorY: 0,
   });
+  const effectStartedRef = useRef(effectStarted);
+  const statementVisibleRef = useRef(statementVisible);
   const [videoFailed, setVideoFailed] = useState(false);
+
+  effectStartedRef.current = effectStarted;
+  statementVisibleRef.current = statementVisible;
 
   const focusLetterIndex = phrase
     .toLocaleLowerCase("es")
@@ -74,12 +81,30 @@ function HomeStatementPanel({
     if (!svg || !maskGroup || !maskText) return undefined;
 
     let cancelled = false;
+    let animationHasProgressed = false;
     let previousViewportSize = {
       width: svg.clientWidth,
       height: svg.clientHeight,
     };
 
-    const measureGeometry = ({ force = false } = {}) => {
+    const geometryIsSettled = () =>
+      isStatementGeometrySettled({
+        animationHasProgressed,
+        effectStarted: effectStartedRef.current,
+        progress: progress.get(),
+        statementVisible: statementVisibleRef.current,
+      });
+
+    let measureGeometry;
+    const geometryRefreshQueue = createStatementGeometryRefreshQueue({
+      cancelFrame: (frameId) => window.cancelAnimationFrame(frameId),
+      clearTimer: (timerId) => window.clearTimeout(timerId),
+      measure: () => measureGeometry({ force: true }),
+      requestFrame: (callback) => window.requestAnimationFrame(callback),
+      setTimer: (callback, delay) => window.setTimeout(callback, delay),
+    });
+
+    measureGeometry = ({ force = false } = {}) => {
       if (cancelled) return;
 
       const width = svg.clientWidth;
@@ -99,10 +124,8 @@ function HomeStatementPanel({
 
       previousViewportSize = { width, height };
 
-      if (
-        !force &&
-        resizeKind === VIEWPORT_RESIZE_KINDS.TRANSIENT_MOBILE_HEIGHT
-      ) {
+      if (!force && shouldDeferStatementGeometryResize(resizeKind)) {
+        geometryRefreshQueue.defer(geometryIsSettled);
         renderMaskTransform(progress.get());
         return;
       }
@@ -118,28 +141,35 @@ function HomeStatementPanel({
         anchorX: focusBounds.x + focusBounds.width / 2,
         anchorY: focusBounds.y + focusBounds.height / 2,
       };
+      geometryRefreshQueue.complete();
 
       renderMaskTransform(progress.get());
     };
 
     measureGeometry({ force: true });
     document.fonts?.ready
-      .then(() => measureGeometry({ force: true }))
+      .then(() => {
+        geometryRefreshQueue.markPending();
+        geometryRefreshQueue.flushIfSettled(geometryIsSettled);
+      })
       .catch(() => undefined);
 
+    const handleProgress = (value) => {
+      if (value > 0 && value < 1) animationHasProgressed = true;
+      renderMaskTransform(value);
+      geometryRefreshQueue.flushIfSettled(geometryIsSettled);
+    };
+    const unsubscribeProgress = progress.on("change", handleProgress);
     const resizeObserver = new ResizeObserver(() => measureGeometry());
     resizeObserver.observe(svg);
 
     return () => {
       cancelled = true;
+      geometryRefreshQueue.destroy();
+      unsubscribeProgress();
       resizeObserver.disconnect();
     };
   }, [phrase, progress, renderMaskTransform]);
-
-  useEffect(() => {
-    renderMaskTransform(progress.get());
-    return progress.on("change", renderMaskTransform);
-  }, [progress, renderMaskTransform]);
 
   useEffect(() => {
     const video = videoRef.current;

@@ -4,6 +4,10 @@ const TOUCH_GESTURE_OWNERS = Object.freeze({
   NATIVE_HORIZONTAL: "NATIVE_HORIZONTAL",
 });
 
+function clearTouchGestureForPointer(gesture, pointerId) {
+  return gesture?.pointerId === pointerId ? null : gesture;
+}
+
 function getTouchGestureOwner({
   contentMode,
   featuredProjectReady = false,
@@ -23,7 +27,7 @@ function getTouchGestureOwner({
     return TOUCH_GESTURE_OWNERS.CONTROLLED_VERTICAL;
   }
 
-  if (featuredProjectReady && featuredExpansionEnabled) {
+  if (featuredProjectReady) {
     return TOUCH_GESTURE_OWNERS.CONTROLLED_VERTICAL;
   }
 
@@ -32,5 +36,6 @@ function getTouchGestureOwner({
 
 export {
   TOUCH_GESTURE_OWNERS,
+  clearTouchGestureForPointer,
   getTouchGestureOwner,
 };

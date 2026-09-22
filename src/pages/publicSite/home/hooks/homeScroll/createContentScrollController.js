@@ -22,6 +22,24 @@ function isVisibleWithinViewport(elementRect, viewportRect) {
   );
 }
 
+function isContentNavigationReady({
+  contentMode,
+  currentState,
+  statementProgress,
+  titleRevealLocked,
+}) {
+  if (contentMode) return true;
+
+  return (
+    currentState.phase === HOME_SCROLL_PHASES.TITLE &&
+    (
+      currentState.panelIndex === STATEMENT_PANEL_INDEX
+        ? statementProgress >= 1
+        : !titleRevealLocked
+    )
+  );
+}
+
 function createContentScrollController({
   activeSectionRef,
   contentModeRef,
@@ -137,14 +155,12 @@ function createContentScrollController({
  const navigateSection = (sectionId, { direct = false } = {}) => {
   const currentState = navigationStateRef.current;
 
-    const currentSectionComplete = runtime.contentMode
-      ? true
-      : currentState.phase === HOME_SCROLL_PHASES.TITLE &&
-        (
-          currentState.panelIndex === STATEMENT_PANEL_INDEX
-            ? statement.getProgress() >= 1
-            : !titleRevealLockedRef.current
-        );
+    const currentSectionComplete = isContentNavigationReady({
+      contentMode: runtime.contentMode,
+      currentState,
+      statementProgress: statement.getProgress(),
+      titleRevealLocked: titleRevealLockedRef.current,
+    });
 
     if (
       !direct &&
@@ -446,4 +462,8 @@ function createContentScrollController({
   };
 }
 
-export { createContentScrollController, isVisibleWithinViewport };
+export {
+  createContentScrollController,
+  isContentNavigationReady,
+  isVisibleWithinViewport,
+};

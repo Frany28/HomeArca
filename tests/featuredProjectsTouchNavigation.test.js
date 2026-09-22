@@ -46,16 +46,18 @@ const panelControllerSource = readFileSync(
   "utf8",
 );
 
-test("the featured carousel delegates horizontal and vertical arbitration to native scrolling", () => {
+test("the featured carousel keeps horizontal scrolling native", () => {
   assert.match(
     openingHomeSource,
     /touch-none/,
   );
-  assert.match(mobileCarouselSource, /className="[^"]*touch-auto/);
+  assert.match(mobileCarouselSource, /className="[^"]*touch-pan-x/);
   assert.match(mobileCarouselSource, /overflow-x-auto/);
   assert.match(mobileCarouselSource, /data-native-horizontal-scroll/);
-  assert.match(mobileCarouselSource, /onTouchStart=\{pauseAutoScroll\}/);
-  assert.match(mobileCarouselSource, /onTouchCancel=\{resumeAutoScroll\}/);
+  assert.match(mobileCarouselSource, /onTouchStart=\{beginUserInteraction\}/);
+  assert.match(mobileCarouselSource, /onTouchCancel=\{endUserInteraction\}/);
+  assert.match(mobileCarouselSource, /addEventListener\("scroll", handleCarouselScroll/);
+  assert.match(mobileCarouselSource, /addEventListener\("scrollend", handleCarouselScrollEnd\)/);
   assert.doesNotMatch(mobileCarouselSource, /handlePointerMove/);
   assert.doesNotMatch(mobileCarouselSource, /setPointerCapture/);
   assert.doesNotMatch(mobileCarouselSource, /DRAG_MOMENTUM/);
@@ -63,15 +65,18 @@ test("the featured carousel delegates horizontal and vertical arbitration to nat
 });
 
 
-test("mobile scrolling inside a featured project remains natively owned", () => {
+test("mobile Featured vertical scrolling is controlled without manual carousel dragging", () => {
   assert.match(
     inputGestureSource,
-    /featuredExpansionEnabled:[\s\S]*coordination\.featured\.isExpansionEnabled\(\)/,
+    /featuredControlledMobile: !featuredExpansionEnabled/,
   );
   assert.match(
     inputGestureSource,
-    /gestureOwner !== TOUCH_GESTURE_OWNERS\.CONTROLLED_VERTICAL/,
+    /advanceControlledFeaturedTouchGesture\(/,
   );
+  assert.match(inputGestureSource, /scroller\.scrollTop = update\.scrollTop/);
+  assert.doesNotMatch(inputGestureSource, /scrollLeft\s*=/);
+  assert.doesNotMatch(inputGestureSource, /setPointerCapture/);
   assert.doesNotMatch(inputGestureSource, /nativeTouchIntent/);
   assert.doesNotMatch(inputGestureSource, /handleNativeTouchScroll/);
   assert.doesNotMatch(inputGestureSource, /finishNativeFeaturedTouchGesture/);
@@ -79,10 +84,27 @@ test("mobile scrolling inside a featured project remains natively owned", () => 
   assert.doesNotMatch(contentScrollSource, /shouldDeferNativeContentSync/);
 });
 
-test("mobile native scroll observes the most visible project", () => {
-  assert.match(featuredControllerSource, /if \(!isExpansionEnabled\(\)\)/);
-  assert.match(featuredControllerSource, /const visibleHeight = Math\.max\(/);
-  assert.match(featuredControllerSource, /commitProjectIndex\(mostVisibleIndex\)/);
+test("native boundary observation exits while Featured owns vertical movement", () => {
+  const observerStart = featuredControllerSource.indexOf(
+    "const observeMobileNativeBoundaryScroll",
+  );
+  const observerEnd = featuredControllerSource.indexOf(
+    "const handleExpansionInput",
+    observerStart,
+  );
+  const observerSource = featuredControllerSource.slice(
+    observerStart,
+    observerEnd,
+  );
+
+  assert.match(
+    observerSource,
+    /activeSectionRef\.current === "featured-projects"[\s\S]*return false/,
+  );
+  assert.ok(
+    observerSource.indexOf('activeSectionRef.current === "featured-projects"') <
+      observerSource.indexOf("getContentBoundary("),
+  );
   assert.match(
     inputGestureSource,
     /addEventListener\("scroll", coordination\.content\.handleNativeScroll/,
@@ -129,7 +151,7 @@ test("mobile boundary transitions observe scroll before content synchronization"
 });
 
 
-test("services and Quinta keep native mobile scrolling without a forced section transition", () => {
+test("native mobile boundary handoff is scoped to Process returning into Featured", () => {
   const observerStart = featuredControllerSource.indexOf(
     "const observeMobileNativeBoundaryScroll",
   );
@@ -144,15 +166,11 @@ test("services and Quinta keep native mobile scrolling without a forced section 
 
   assert.notEqual(observerStart, -1);
   assert.notEqual(observerEnd, -1);
-  assert.doesNotMatch(observerSource, /activeSectionRef\.current === "services"/);
-  assert.doesNotMatch(
-    observerSource,
-    /transitionBetweenSections\("featured-projects"/,
-  );
   assert.match(
     observerSource,
-    /activeFeaturedProjectIndexRef\.current === 0[\s\S]*direction < 0[\s\S]*return false/,
+    /activeSectionRef\.current !== "process"\) return false/,
   );
+  assert.doesNotMatch(observerSource, /activeSectionRef\.current === "services"/);
 });
 
 test("mobile boundary transitions reuse the standard section navigation motion", () => {
@@ -208,7 +226,7 @@ test("mobile boundary handoff waits for native scroll settlement before GSAP tak
 });
 
 
-test("mobile boundary transitions preserve the standard section speed after native overshoot", () => {
+test("Process native handoff preserves the standard section speed after overshoot", () => {
   assert.match(
     featuredControllerSource,
     /const getMobileTransitionDuration = \(targetScrollTop\) =>/,
@@ -243,7 +261,7 @@ test("controlled Home panels fully own touch gestures before native content scro
   );
   assert.match(
     openingHomeSource,
-    /activeSectionId === "featured-projects"[\s\S]*"touch-auto min-\[1024px\]:touch-pan-x"/,
+    /activeSectionId === "featured-projects"[\s\S]*"touch-pan-x min-\[1024px\]:touch-auto"[\s\S]*"touch-pan-x"/,
   );
 });
 
