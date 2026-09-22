@@ -1,4 +1,44 @@
+import { useEffect, useState } from "react";
+
+import {
+  PROCESS_MOBILE_QUERY,
+  getVisibleProcessVideos,
+} from "../utils/processVideoVisibility.js";
+
+function getInitialMobileLayout() {
+  return typeof window !== "undefined" &&
+    window.matchMedia?.(PROCESS_MOBILE_QUERY).matches === true;
+}
+
+function useMobileProcessLayout() {
+  const [mobileLayout, setMobileLayout] = useState(getInitialMobileLayout);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) {
+      return undefined;
+    }
+
+    const mediaQuery = window.matchMedia(PROCESS_MOBILE_QUERY);
+    const handleChange = (event) => setMobileLayout(event.matches);
+
+    setMobileLayout(mediaQuery.matches);
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", handleChange);
+      return () => mediaQuery.removeEventListener("change", handleChange);
+    }
+
+    mediaQuery.addListener?.(handleChange);
+    return () => mediaQuery.removeListener?.(handleChange);
+  }, []);
+
+  return mobileLayout;
+}
+
 function ProcessesVideoGrid({ active, inert, onVideoOpen, videos }) {
+  const mobileLayout = useMobileProcessLayout();
+  const visibleVideos = getVisibleProcessVideos(videos, mobileLayout);
+
   return (
     <div
       className="mx-auto grid w-full max-w-[1152px] grid-cols-2 gap-x-[16px] gap-y-[24px] px-[16px] min-[768px]:gap-[24px] min-[768px]:px-[48px] min-[1024px]:grid-cols-3 min-[1248px]:px-0"
@@ -6,7 +46,7 @@ function ProcessesVideoGrid({ active, inert, onVideoOpen, videos }) {
       inert={inert ? "" : undefined}
       data-node-id="4845:5294"
     >
-      {videos.map((video, index) => (
+      {visibleVideos.map((video, index) => (
         <button
           key={video.id}
           type="button"
