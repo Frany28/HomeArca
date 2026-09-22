@@ -100,11 +100,6 @@ function createFeaturedProjectsController({
     mobileBoundaryTransitionPending = null;
   };
 
-  const beginControlledTouchGesture = () => {
-    clearMobileBoundaryTransition();
-    previousMobileScrollTop = scroller.scrollTop;
-  };
-
   const flushMobileNativeBoundaryTransition = () => {
     const pendingTransition = mobileBoundaryTransitionPending;
 
@@ -654,6 +649,19 @@ function createFeaturedProjectsController({
     return null;
   };
 
+  const pinMobileBoundaryScroll = (scrollTop) => {
+    if (!Number.isFinite(scrollTop)) return;
+
+    if (
+      Math.abs(scroller.scrollTop - scrollTop) >
+      FEATURED_PROJECT_EDGE_TOLERANCE_PX
+    ) {
+      scroller.scrollTop = scrollTop;
+    }
+
+    previousMobileScrollTop = scrollTop;
+  };
+
   const observeMobileNativeBoundaryScroll = () => {
     const scrollTop = scroller.scrollTop;
     const previousScrollTop = previousMobileScrollTop;
@@ -661,20 +669,21 @@ function createFeaturedProjectsController({
 
     if (!isMobileTouchLayout()) return false;
 
-    /*
-     * Featured mobile owns vertical movement before scrollTop crosses a panel
-     * boundary. Native boundary observation remains only for the handoff from
-     * Processes back into Featured, where the gesture began outside Featured.
-     */
-    if (activeSectionRef.current === "featured-projects") {
-      clearMobileBoundaryTransition();
-      return false;
-    }
-
     if (mobileBoundaryTransitionPending) {
-      if (!mobileBoundaryTransitionPending.started) {
-        scheduleMobileBoundaryTransition();
+      if (mobileBoundaryTransitionPending.started) {
+        return false;
       }
+
+      /*
+       * Safari keeps emitting momentum scroll events after the finger leaves
+       * the screen. Keep that native momentum inside the current project until
+       * it settles, otherwise one fling can visually cross multiple projects
+       * before the controlled transition begins.
+       */
+      pinMobileBoundaryScroll(
+        mobileBoundaryTransitionPending.scrollTop,
+      );
+      scheduleMobileBoundaryTransition();
       return true;
     }
 
@@ -682,9 +691,28 @@ function createFeaturedProjectsController({
       return false;
     }
 
-    if (activeSectionRef.current !== "process") return false;
+    if (
+      activeSectionRef.current !== "featured-projects" &&
+      activeSectionRef.current !== "process"
+    ) {
+      return false;
+    }
 
     const direction = Math.sign(scrollTop - previousScrollTop);
+    if (!direction) return false;
+
+    /*
+     * The first Featured project can flow naturally back into Services.
+     * Every internal Featured boundary, and the handoff to/from Processes,
+     * is settled one transition at a time.
+     */
+    if (
+      activeSectionRef.current === "featured-projects" &&
+      activeFeaturedProjectIndexRef.current === 0 &&
+      direction < 0
+    ) {
+      return false;
+    }
 
     const boundary = getContentBoundary(
       direction,
@@ -704,14 +732,18 @@ function createFeaturedProjectsController({
     if (!crossingDirection) return false;
 
     /*
-     * Native touch scrolling owns the vertical axis until momentum settles.
-     * scrollend flushes this handoff when supported; the debounce is the
-     * capability-safe fallback for browsers that do not expose scrollend.
+     * Vertical movement remains browser-owned inside the project so iOS keeps
+     * its normal momentum. Ownership changes only at the real panel boundary:
+     * clamp the overshoot, wait for native scrolling to settle, then run one
+     * standard project/section transition. This prevents both the old
+     * "heavy" manual drag and Safari skipping multiple projects.
      */
     mobileBoundaryTransitionPending = {
       started: false,
+      scrollTop: boundary.scrollTop,
       transition: boundary.transition,
     };
+    pinMobileBoundaryScroll(boundary.scrollTop);
     scheduleMobileBoundaryTransition();
 
     return true;
@@ -903,7 +935,6 @@ function createFeaturedProjectsController({
   };
 
  return {
-  beginControlledTouchGesture,
   cancelExpansionTweens,
   commitProjectIndex,
   destroy,
