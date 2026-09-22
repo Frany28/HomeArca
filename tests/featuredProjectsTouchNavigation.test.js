@@ -48,9 +48,13 @@ const panelControllerSource = readFileSync(
   "utf8",
 );
 
-test("the featured carousel delegates locks direct carousel gestures to the horizontal axis", () => {
+test("the featured carousel locks direct carousel gestures to the horizontal axis", () => {
   assert.match(openingHomeSource, /touch-none/);
-  assert.match(mobileCarouselSource, /className="[^"]*touch-auto/);
+  assert.match(mobileCarouselSource, /className="[^"]*touch-pan-x/);
+  assert.doesNotMatch(
+    mobileCarouselSource,
+    /className="[^"]*touch-auto/,
+  );
   assert.match(mobileCarouselSource, /overflow-x-auto/);
   assert.match(mobileCarouselSource, /data-native-horizontal-scroll/);
   assert.match(mobileCarouselSource, /onTouchStart=\{beginUserInteraction\}/);
