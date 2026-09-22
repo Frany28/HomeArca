@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  STATEMENT_FOCUS_FILL_X_RATIO,
   drawStatementCanvasMask,
   getStatementCanvasFontSize,
   getStatementCanvasLayout,
@@ -89,6 +90,32 @@ test("statement canvas preserves the same zoom endpoints", () => {
   assert.equal(final.maskScale, 1);
   assert.equal(initial.focusAnchorX, final.focusAnchorX);
   assert.equal(initial.focusAnchorY, final.focusAnchorY);
+});
+
+test("statement zoom anchor sits inside the solid left arc of the focus C", () => {
+  const { context } = createContext();
+  const layout = getStatementCanvasLayout({
+    context,
+    focusLetterIndex: 1,
+    height: 800,
+    phrase: "abc",
+    progress: 0,
+    width: 390,
+  });
+
+  const glyphAdvance = 10;
+  const firstGlyphAdvanceWithTracking = glyphAdvance - 1;
+  const focusGlyphLeft = layout.firstX + firstGlyphAdvanceWithTracking;
+  const geometricCenter = focusGlyphLeft + glyphAdvance / 2;
+  const expectedFillAnchor =
+    focusGlyphLeft + glyphAdvance * STATEMENT_FOCUS_FILL_X_RATIO;
+
+  assert.equal(layout.focusAnchorX, expectedFillAnchor);
+  assert.ok(layout.focusAnchorX < geometricCenter);
+  assert.equal(
+    layout.focusAnchorY,
+    layout.baselineY + (2 - 8) / 2,
+  );
 });
 
 test("statement canvas punches the phrase out of the dark overlay", () => {
