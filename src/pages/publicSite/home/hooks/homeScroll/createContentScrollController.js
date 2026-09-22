@@ -195,6 +195,8 @@ function createContentScrollController({
   };
 
   const handleNativeScroll = () => {
+    coordination.featured.observeMobileNativeBoundaryScroll();
+
     if (runtime.isProgrammaticScroll) {
       synchronizeTitleVisibility();
       return;

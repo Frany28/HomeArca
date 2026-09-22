@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
+import {
+  getNativeBoundaryCrossingDirection,
+} from "../src/pages/publicSite/home/hooks/homeScroll/createFeaturedProjectsController.js";
+
 const openingHomeSource = readFileSync(
   new URL("../src/pages/publicSite/home/OpeningHome.jsx", import.meta.url),
   "utf8",
@@ -48,7 +52,7 @@ test("the featured carousel separates horizontal dragging from vertical page scr
 });
 
 
-test("mobile featured vertical navigation is owned only by native scroll", () => {
+test("mobile scrolling inside a featured project remains natively owned", () => {
   assert.match(
     inputGestureSource,
     /if \(!coordination\.featured\.isExpansionEnabled\(\)\) return;/,
@@ -72,4 +76,39 @@ test("mobile native scroll observes the most visible project", () => {
     contentScrollSource,
     /selectSection\(activeContentSection\?\.id \?\? "services"\)/,
   );
+});
+
+test("native scroll starts one transition only when it crosses a real boundary", () => {
+  const bounds = { start: 400, end: 900 };
+
+  assert.equal(getNativeBoundaryCrossingDirection(700, 760, bounds), 0);
+  assert.equal(getNativeBoundaryCrossingDirection(880, 900, bounds), 1);
+  assert.equal(getNativeBoundaryCrossingDirection(900, 920, bounds), 1);
+  assert.equal(getNativeBoundaryCrossingDirection(440, 400, bounds), -1);
+  assert.equal(getNativeBoundaryCrossingDirection(400, 380, bounds), -1);
+  assert.equal(getNativeBoundaryCrossingDirection(700, 650, bounds), 0);
+});
+
+test("mobile boundary transitions observe scroll before content synchronization", () => {
+  const observerCall = contentScrollSource.indexOf(
+    "coordination.featured.observeMobileNativeBoundaryScroll();",
+  );
+  const programmaticGuard = contentScrollSource.indexOf(
+    "if (runtime.isProgrammaticScroll)",
+  );
+  const contentSync = contentScrollSource.indexOf(
+    "synchronizeContentScroll();",
+    programmaticGuard,
+  );
+
+  assert.notEqual(observerCall, -1);
+  assert.ok(observerCall < programmaticGuard);
+  assert.ok(observerCall < contentSync);
+  assert.match(
+    featuredControllerSource,
+    /\(max-width: 1023px\) and \(pointer: coarse\)/,
+  );
+  assert.match(featuredControllerSource, /runtime\.activeTween \|\|/);
+  assert.match(featuredControllerSource, /deferStateCommit: true/);
+  assert.doesNotMatch(inputGestureSource, /nativeTouchIntent/);
 });

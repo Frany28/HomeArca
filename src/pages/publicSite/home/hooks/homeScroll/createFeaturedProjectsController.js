@@ -14,6 +14,39 @@ import {
   WHEEL_GESTURE_THRESHOLD_PX,
 } from "./homeScrollConstants.js";
 
+function getNativeBoundaryCrossingDirection(
+  previousScrollTop,
+  scrollTop,
+  bounds,
+) {
+  if (
+    !bounds ||
+    !Number.isFinite(previousScrollTop) ||
+    !Number.isFinite(scrollTop) ||
+    scrollTop === previousScrollTop
+  ) {
+    return 0;
+  }
+
+  if (
+    scrollTop > previousScrollTop &&
+    previousScrollTop <= bounds.end &&
+    scrollTop >= bounds.end
+  ) {
+    return 1;
+  }
+
+  if (
+    scrollTop < previousScrollTop &&
+    previousScrollTop >= bounds.start &&
+    scrollTop <= bounds.start
+  ) {
+    return -1;
+  }
+
+  return 0;
+}
+
 function createFeaturedProjectsController({
   activeFeaturedProjectIndexRef,
   activeSectionRef,
@@ -29,6 +62,7 @@ function createFeaturedProjectsController({
   let expansionGeneration = 0;
   let processReturnGestureLocked = false;
   let processReturnGestureBecameIdle = false;
+  let previousMobileScrollTop = scroller.scrollTop;
     const expansionTweens = new Map();
     const expansionTargets = expansionProgress.map((progress) => progress.get());
     const beginProcessReturnGestureLock = () => {
@@ -62,6 +96,11 @@ function createFeaturedProjectsController({
   const isExpansionEnabled = () =>
     !(typeof window !== "undefined" &&
       window.matchMedia?.("(max-width: 1023px)").matches);
+
+  const isMobileTouchLayout = () =>
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(max-width: 1023px) and (pointer: coarse)").matches;
+
   const getExpansionProgress = (index) => expansionProgress[index]?.get() ?? 0;
   const getExpansionTarget = (index) => expansionTargets[index] ?? 0;
 
@@ -267,13 +306,17 @@ function createFeaturedProjectsController({
     }
   };
 
-  const transitionProject = (direction, travelDistance = 0) => {
+  const transitionProject = (
+    direction,
+    travelDistance = 0,
+    { deferStateCommit = false } = {},
+  ) => {
     if (runtime.activeTween || runtime.isProgrammaticScroll) return false;
     const transition = getProjectTransition(direction, travelDistance);
     if (!transition) return false;
 
     expansionCompletionLock = null;
-    if (direction < 0) {
+    if (direction < 0 && !deferStateCommit) {
       if (isExpansionEnabled() && isImageProject(transition.index)) {
         setPreparationOffset(
           transition.index,
@@ -287,8 +330,11 @@ function createFeaturedProjectsController({
     return coordination.panel.startScrollTransition({
       scrollTop: transition.scrollTop,
       onComplete: () => {
-        if (direction > 0) commitProjectIndex(transition.index);
+        if (direction > 0 || deferStateCommit) {
+          commitProjectIndex(transition.index);
+        }
         if (direction < 0) setPreparationOffset(transition.index, 0);
+        if (deferStateCommit) previousMobileScrollTop = scroller.scrollTop;
         coordination.content.synchronizeContentScroll();
       },
     });
@@ -296,7 +342,11 @@ function createFeaturedProjectsController({
 
   const transitionBetweenSections = (
     targetSectionId,
-    { featuredProjectIndex = null, targetAlignment = "start" } = {},
+    {
+      deferStateCommit = false,
+      featuredProjectIndex = null,
+      targetAlignment = "start",
+    } = {},
   ) => {
     if (runtime.activeTween || runtime.isProgrammaticScroll) return false;
     const target = coordination.content.getSection(targetSectionId);
@@ -312,14 +362,14 @@ function createFeaturedProjectsController({
       targetSectionId === "featured-projects" &&
       featuredProjectIndex !== null &&
       targetAlignment === "end";
-    if (entersAptoFromProcess) {
+    if (entersAptoFromProcess && !deferStateCommit) {
       beginProcessReturnGestureLock();
     }
     if (entersQuintaFromServices) {
       expansionCompletionLock = null;
       setPreparationOffset(0, 0);
       setExpansionProgress(0, 0);
-      commitProjectIndex(0);
+      if (!deferStateCommit) commitProjectIndex(0);
     }
 
     let targetElement = target;
@@ -343,8 +393,12 @@ function createFeaturedProjectsController({
       );
       setExpansionProgress(featuredProjectIndex, 1);
     }
-    if (featuredProjectIndex !== null) commitProjectIndex(featuredProjectIndex);
-    if (entersAptoFromProcess) coordination.content.selectSection(targetSectionId);
+    if (featuredProjectIndex !== null && !deferStateCommit) {
+      commitProjectIndex(featuredProjectIndex);
+    }
+    if (entersAptoFromProcess && !deferStateCommit) {
+      coordination.content.selectSection(targetSectionId);
+    }
 
     return coordination.panel.startScrollTransition({
       scrollTop: targetScrollTop,
@@ -352,12 +406,14 @@ function createFeaturedProjectsController({
       coordination.content.selectSection(targetSectionId);
 
       if (featuredProjectIndex !== null) {
+        if (deferStateCommit) commitProjectIndex(featuredProjectIndex);
         setPreparationOffset(featuredProjectIndex, 0);
       }
 
+      if (deferStateCommit) previousMobileScrollTop = scroller.scrollTop;
       coordination.content.synchronizeContentScroll();
 
-      if (entersAptoFromProcess) {
+      if (entersAptoFromProcess && !deferStateCommit) {
         completeProcessReturnGesture();
       }
     },
@@ -471,7 +527,10 @@ function createFeaturedProjectsController({
     return true;
   };
 
-  const getContentBoundary = (direction) => {
+  const getContentBoundary = (
+    direction,
+    { deferStateCommit = false } = {},
+  ) => {
     if (activeSectionRef.current === "process" && direction < 0) {
       const bounds = getPanelScrollBounds(coordination.content.getSection("process"));
       const projectPanels = getProjectPanels();
@@ -480,6 +539,7 @@ function createFeaturedProjectsController({
       return {
         scrollTop: bounds.start,
         transition: () => transitionBetweenSections("featured-projects", {
+          deferStateCommit,
           featuredProjectIndex: lastProjectIndex,
           targetAlignment: "end",
         }),
@@ -496,22 +556,86 @@ function createFeaturedProjectsController({
     if (nextIndex >= 0 && nextIndex < projectPanels.length) {
       return {
         scrollTop: direction > 0 ? bounds.end : bounds.start,
-        transition: () => transitionProject(direction),
+        transition: () => transitionProject(
+          direction,
+          0,
+          { deferStateCommit },
+        ),
       };
     }
     if (direction < 0 && currentIndex === 0) {
       return {
         scrollTop: bounds.start,
-        transition: () => transitionBetweenSections("services", { targetAlignment: "end" }),
+        transition: () => transitionBetweenSections("services", {
+          deferStateCommit,
+          targetAlignment: "end",
+        }),
       };
     }
     if (direction > 0 && currentIndex === projectPanels.length - 1) {
       return {
         scrollTop: bounds.end,
-        transition: () => transitionBetweenSections("process"),
+        transition: () => transitionBetweenSections("process", {
+          deferStateCommit,
+        }),
       };
     }
     return null;
+  };
+
+  const observeMobileNativeBoundaryScroll = () => {
+    const scrollTop = scroller.scrollTop;
+    const previousScrollTop = previousMobileScrollTop;
+    previousMobileScrollTop = scrollTop;
+
+    if (
+      !isMobileTouchLayout() ||
+      runtime.activeTween ||
+      runtime.isProgrammaticScroll
+    ) {
+      return false;
+    }
+
+    if (activeSectionRef.current === "services") {
+      const services = coordination.content.getSection("services");
+      const bounds = getPanelScrollBounds(services);
+      const direction = getNativeBoundaryCrossingDirection(
+        previousScrollTop,
+        scrollTop,
+        bounds,
+      );
+
+      if (direction <= 0) return false;
+
+      return transitionBetweenSections("featured-projects", {
+        deferStateCommit: true,
+        featuredProjectIndex: 0,
+      });
+    }
+
+    if (
+      activeSectionRef.current !== "featured-projects" &&
+      activeSectionRef.current !== "process"
+    ) {
+      return false;
+    }
+
+    const boundary = getContentBoundary(
+      Math.sign(scrollTop - previousScrollTop),
+      { deferStateCommit: true },
+    );
+    if (!boundary) return false;
+
+    const direction = getNativeBoundaryCrossingDirection(
+      previousScrollTop,
+      scrollTop,
+      {
+        start: boundary.scrollTop,
+        end: boundary.scrollTop,
+      },
+    );
+
+    return direction ? boundary.transition() : false;
   };
 
   const handleExpansionInput = (
@@ -707,6 +831,7 @@ function createFeaturedProjectsController({
   isExpansionEnabled,
   isImageProject,
   isProcessReturnGestureLocked,
+  observeMobileNativeBoundaryScroll,
   pinExpansion,
   pinMobileProjectBoundary,
   prepareForScrollbarNavigation,
@@ -720,4 +845,7 @@ function createFeaturedProjectsController({
   
 }
 
-export { createFeaturedProjectsController };
+export {
+  createFeaturedProjectsController,
+  getNativeBoundaryCrossingDirection,
+};
