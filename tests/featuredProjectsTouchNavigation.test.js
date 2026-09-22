@@ -4,7 +4,9 @@ import test from "node:test";
 
 import {
   getNativeBoundaryCrossingDirection,
+  isAndroidTouchPlatform,
   isTouchCapableMobileLayout,
+  shouldUseImmediateMobileBoundaryRelease,
   shouldActivateIncomingFeaturedBeforeTransition,
   shouldActivateIncomingProjectBeforeTransition,
 } from "../src/pages/publicSite/home/hooks/homeScroll/createFeaturedProjectsController.js";
@@ -297,6 +299,67 @@ test("Android touch layouts are recognized even when the primary pointer is not 
       maxTouchPoints: 5,
     }),
     false,
+  );
+});
+
+
+test("Android uses an immediate boundary handoff while iPhone keeps the settled path", () => {
+  assert.equal(
+    isAndroidTouchPlatform({
+      platform: "Linux armv8l",
+      userAgent:
+        "Mozilla/5.0 (Linux; Android 16; Pixel) AppleWebKit/537.36 Chrome/151 Mobile Safari/537.36",
+    }),
+    true,
+  );
+  assert.equal(
+    isAndroidTouchPlatform({
+      platform: "iPhone",
+      userAgent:
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 19_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1",
+    }),
+    false,
+  );
+
+  assert.equal(
+    shouldUseImmediateMobileBoundaryRelease({
+      direction: 1,
+      isAndroidTouchLayout: true,
+    }),
+    true,
+  );
+  assert.equal(
+    shouldUseImmediateMobileBoundaryRelease({
+      direction: 1,
+      isAndroidTouchLayout: false,
+    }),
+    false,
+  );
+  assert.equal(
+    shouldUseImmediateMobileBoundaryRelease({
+      direction: -1,
+      isAndroidTouchLayout: false,
+    }),
+    true,
+  );
+});
+
+test("Android downward Featured handoff reuses the release-frame path without changing iPhone timing", () => {
+  assert.match(
+    featuredControllerSource,
+    /allowDownward:\s*isAndroidMobileTouchLayout\(\)/,
+  );
+  assert.match(
+    featuredControllerSource,
+    /shouldUseImmediateMobileBoundaryRelease\([\s\S]*isAndroidTouchLayout:\s*isAndroidMobileTouchLayout\(\)/,
+  );
+  assert.match(
+    featuredControllerSource,
+    /scheduleMobileBoundaryTransition\(\)/,
+  );
+  assert.match(
+    featuredControllerSource,
+    /runtime\.requestAnimationFrame\([\s\S]*flushMobileNativeBoundaryTransition\(\)/,
   );
 });
 
