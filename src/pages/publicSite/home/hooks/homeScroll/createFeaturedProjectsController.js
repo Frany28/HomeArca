@@ -15,9 +15,6 @@ import {
   WHEEL_GESTURE_THRESHOLD_PX,
 } from "./homeScrollConstants.js";
 
-const MOBILE_BOUNDARY_TRANSITION_DURATION_SECONDS = 0.38;
-const MOBILE_BOUNDARY_TRANSITION_EASE = "power2.out";
-
 function getNativeBoundaryCrossingDirection(
   previousScrollTop,
   scrollTop,
@@ -333,12 +330,6 @@ function createFeaturedProjectsController({
 
     return coordination.panel.startScrollTransition({
       scrollTop: transition.scrollTop,
-      duration: deferStateCommit
-        ? MOBILE_BOUNDARY_TRANSITION_DURATION_SECONDS
-        : undefined,
-      ease: deferStateCommit
-        ? MOBILE_BOUNDARY_TRANSITION_EASE
-        : undefined,
       onComplete: () => {
         if (direction > 0 || deferStateCommit) {
           commitProjectIndex(transition.index);
@@ -412,12 +403,6 @@ function createFeaturedProjectsController({
 
     return coordination.panel.startScrollTransition({
       scrollTop: targetScrollTop,
-      duration: deferStateCommit
-        ? MOBILE_BOUNDARY_TRANSITION_DURATION_SECONDS
-        : undefined,
-      ease: deferStateCommit
-        ? MOBILE_BOUNDARY_TRANSITION_EASE
-        : undefined,
       onComplete: () => {
       coordination.content.selectSection(targetSectionId);
 
