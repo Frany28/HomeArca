@@ -10,6 +10,10 @@ import { useReducedMotion } from "motion/react";
 import HomeScrollHint from "../HomeScrollHint/HomeScrollHint.jsx";
 import { connectStatementPlayback } from "../../utils/statementVideoPlayback.js";
 import { getHomeStatementTransform } from "../../utils/homeScrollNavigation.js";
+import {
+  VIEWPORT_RESIZE_KINDS,
+  classifyViewportResize,
+} from "../../utils/viewportResize.js";
 
 const STATEMENT_MASK_ID = "home-statement-video-mask";
 const STATEMENT_FOCUS_LETTER = "c";
@@ -70,14 +74,38 @@ function HomeStatementPanel({
     if (!svg || !maskGroup || !maskText) return undefined;
 
     let cancelled = false;
+    let previousViewportSize = {
+      width: svg.clientWidth,
+      height: svg.clientHeight,
+    };
 
-    const measureGeometry = () => {
+    const measureGeometry = ({ force = false } = {}) => {
       if (cancelled) return;
 
       const width = svg.clientWidth;
       const height = svg.clientHeight;
 
       if (!width || !height) return;
+
+      const resizeKind = classifyViewportResize({
+        previousWidth: previousViewportSize.width,
+        previousHeight: previousViewportSize.height,
+        nextWidth: width,
+        nextHeight: height,
+        hasVisualViewport: Boolean(window.visualViewport),
+        coarsePointer:
+          window.matchMedia?.("(pointer: coarse)").matches ?? false,
+      });
+
+      previousViewportSize = { width, height };
+
+      if (
+        !force &&
+        resizeKind === VIEWPORT_RESIZE_KINDS.TRANSIENT_MOBILE_HEIGHT
+      ) {
+        renderMaskTransform(progress.get());
+        return;
+      }
 
       maskGroup.removeAttribute("transform");
       svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
@@ -94,10 +122,12 @@ function HomeStatementPanel({
       renderMaskTransform(progress.get());
     };
 
-    measureGeometry();
-    document.fonts?.ready.then(measureGeometry).catch(() => undefined);
+    measureGeometry({ force: true });
+    document.fonts?.ready
+      .then(() => measureGeometry({ force: true }))
+      .catch(() => undefined);
 
-    const resizeObserver = new ResizeObserver(measureGeometry);
+    const resizeObserver = new ResizeObserver(() => measureGeometry());
     resizeObserver.observe(svg);
 
     return () => {
