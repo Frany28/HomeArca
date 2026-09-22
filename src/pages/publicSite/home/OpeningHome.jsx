@@ -62,7 +62,7 @@ function OpeningHome() {
     visibleContentTitleIds.includes(id);
 
   const touchNavigationClassName = !contentScrollActive
-    ? "touch-pan-x"
+    ? "touch-none"
     : activeSectionId === "featured-projects" && !reduceMotion
       ? "touch-auto min-[1024px]:touch-pan-x"
       : "touch-auto";

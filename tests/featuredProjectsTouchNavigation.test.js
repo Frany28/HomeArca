@@ -49,7 +49,7 @@ const panelControllerSource = readFileSync(
 test("the featured carousel separates horizontal dragging from vertical page scrolling", () => {
   assert.match(
     openingHomeSource,
-    /touch-auto min-\[1024px\]:touch-pan-x/,
+    /touch-none/,
   );
   assert.match(mobileCarouselSource, /className="[^"]*touch-pan-y/);
   assert.match(mobileCarouselSource, /handlePointerMove/);
@@ -203,5 +203,17 @@ test("mobile boundary transitions preserve the standard section speed after nati
   assert.match(
     panelControllerSource,
     /ease: SECTION_NAVIGATION_EASE/,
+  );
+});
+
+
+test("controlled Home panels fully own touch gestures before native content scrolling", () => {
+  assert.match(
+    openingHomeSource,
+    /!contentScrollActive\s*\? "touch-none"/,
+  );
+  assert.match(
+    openingHomeSource,
+    /activeSectionId === "featured-projects"[\s\S]*"touch-auto min-\[1024px\]:touch-pan-x"/,
   );
 });
