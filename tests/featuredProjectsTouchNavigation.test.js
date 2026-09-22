@@ -7,7 +7,6 @@ import {
   isTouchCapableMobileLayout,
   shouldActivateIncomingFeaturedBeforeTransition,
   shouldActivateIncomingProjectBeforeTransition,
-  shouldFlushMobileBoundaryImmediately,
 } from "../src/pages/publicSite/home/hooks/homeScroll/createFeaturedProjectsController.js";
 
 const openingHomeSource = readFileSync(
@@ -353,11 +352,7 @@ test("mobile boundary transitions reuse the standard section navigation motion",
   assert.match(panelControllerSource, /ease: SECTION_NAVIGATION_EASE/);
 });
 
-test("mobile upward boundary handoff starts immediately while downward waits for settle", () => {
-  assert.equal(shouldFlushMobileBoundaryImmediately(-1), true);
-  assert.equal(shouldFlushMobileBoundaryImmediately(1), false);
-  assert.equal(shouldFlushMobileBoundaryImmediately(0), false);
-
+test("mobile upward boundary handoff waits for touch release before starting the tween", () => {
   const observerStart = featuredControllerSource.indexOf(
     "const observeMobileNativeBoundaryScroll",
   );
@@ -371,20 +366,54 @@ test("mobile upward boundary handoff starts immediately while downward waits for
   );
 
   assert.match(
-    observerSource,
-    /shouldFlushMobileBoundaryImmediately\(crossingDirection\)[\s\S]*flushMobileNativeBoundaryTransition\(\)/,
+    featuredControllerSource,
+    /let mobileTouchGestureActive = false/,
+  );
+  assert.match(
+    featuredControllerSource,
+    /const beginMobileTouchGesture = \(\) =>[\s\S]*mobileTouchGestureActive = true/,
+  );
+  assert.match(
+    featuredControllerSource,
+    /const endMobileTouchGesture = \(\) =>[\s\S]*mobileTouchGestureActive = false[\s\S]*flushMobileBoundaryAfterTouchRelease\(\)/,
   );
   assert.match(
     observerSource,
-    /scheduleMobileBoundaryTransition\(\)/,
+    /direction: crossingDirection/,
   );
-  assert.match(featuredControllerSource, /SCROLL_SETTLE_DELAY_MS/);
   assert.match(
-    contentScrollSource,
-    /handleScrollEnd[\s\S]*flushMobileNativeBoundaryTransition\(\)/,
+    observerSource,
+    /crossingDirection < 0[\s\S]*mobileTouchGestureActive[\s\S]*flushMobileBoundaryAfterTouchRelease\(\)/,
   );
-  assert.doesNotMatch(observerSource, /requestAnimationFrame/);
+  assert.match(
+    featuredControllerSource,
+    /flushMobileBoundaryAfterTouchRelease[\s\S]*pinMobileBoundaryScroll\(pendingTransition\.scrollTop\)[\s\S]*requestAnimationFrame[\s\S]*flushMobileNativeBoundaryTransition\(\)/,
+  );
 });
+
+test("input controller reports native touch lifecycle without preventing the browser gesture", () => {
+  assert.match(
+    inputGestureSource,
+    /const handleNativeTouchStart = \(\) =>[\s\S]*beginMobileTouchGesture/,
+  );
+  assert.match(
+    inputGestureSource,
+    /const handleNativeTouchEnd = \(\) =>[\s\S]*endMobileTouchGesture/,
+  );
+  assert.match(
+    inputGestureSource,
+    /addEventListener\("touchstart", handleNativeTouchStart, \{ passive: true \}\)/,
+  );
+  assert.match(
+    inputGestureSource,
+    /addEventListener\("touchend", handleNativeTouchEnd, \{ passive: true \}\)/,
+  );
+  assert.match(
+    inputGestureSource,
+    /addEventListener\("touchcancel", handleNativeTouchEnd, \{ passive: true \}\)/,
+  );
+});
+
 
 test("mobile downward boundary handoff still waits for native momentum to settle", () => {
   assert.match(
