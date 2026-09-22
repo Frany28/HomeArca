@@ -35,7 +35,12 @@ function createPanelNavigationController({
     onComplete?.();
   };
 
-  const startScrollTransition = ({ scrollTop, onComplete, replace = false }) => {
+  const startScrollTransition = ({
+    scrollTop,
+    onComplete,
+    replace = false,
+    duration = SCROLL_STEP_DURATION_SECONDS,
+  }) => {
     if (replace) {
       cancelActiveTween();
       runtime.isProgrammaticScroll = false;
@@ -53,7 +58,7 @@ function createPanelNavigationController({
 
     runtime.activeTween = gsap.to(scroller, {
       scrollTo: { y: scrollTop, autoKill: false },
-      duration: SCROLL_STEP_DURATION_SECONDS,
+      duration,
       ease: SECTION_NAVIGATION_EASE,
       overwrite: true,
       onComplete: () => completeProgrammaticScroll(onComplete),
