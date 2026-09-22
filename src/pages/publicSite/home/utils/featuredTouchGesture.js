@@ -4,6 +4,13 @@ const FEATURED_TOUCH_AXES = Object.freeze({
   VERTICAL: "VERTICAL",
 });
 
+function canControlFeaturedTouchGesture({
+  activeTween = false,
+  isProgrammaticScroll = false,
+}) {
+  return !activeTween && !isProgrammaticScroll;
+}
+
 function resolveFeaturedTouchAxis({
   deltaX,
   deltaY,
@@ -110,12 +117,11 @@ function advanceControlledFeaturedTouchGesture(
     bounds.end,
   );
   const direction = Math.sign(verticalDistance);
+  const boundaryOvershoot = direction > 0
+    ? projectedScrollTop - bounds.end
+    : bounds.start - projectedScrollTop;
   const reachedBoundary =
-    Math.abs(verticalDistance) >= transitionThreshold &&
-    (
-      (direction > 0 && projectedScrollTop >= bounds.end) ||
-      (direction < 0 && projectedScrollTop <= bounds.start)
-    );
+    direction !== 0 && boundaryOvershoot >= transitionThreshold;
 
   if (!reachedBoundary || nextGesture.transitionAttempted) {
     return {
@@ -141,6 +147,7 @@ function advanceControlledFeaturedTouchGesture(
 export {
   FEATURED_TOUCH_AXES,
   advanceControlledFeaturedTouchGesture,
+  canControlFeaturedTouchGesture,
   createControlledFeaturedTouchGesture,
   resolveFeaturedTouchAxis,
 };

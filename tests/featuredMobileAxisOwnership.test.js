@@ -9,6 +9,7 @@ import {
 import {
   FEATURED_TOUCH_AXES,
   advanceControlledFeaturedTouchGesture,
+  canControlFeaturedTouchGesture,
   createControlledFeaturedTouchGesture,
 } from "../src/pages/publicSite/home/utils/featuredTouchGesture.js";
 import {
@@ -38,6 +39,39 @@ test("Featured mobile clamps vertical movement to the current project boundary",
   assert.equal(update.transitionDirection, 1);
 });
 
+test("reaching a Featured boundary does not skip its transition threshold", () => {
+  const gesture = createControlledFeaturedTouchGesture({
+    bounds: { start: 400, end: 900 },
+    pointerId: 7,
+    startScrollTop: 500,
+    startX: 30,
+    startY: 600,
+  });
+
+  const atBoundary = advanceControlledFeaturedTouchGesture(gesture, {
+    clientX: 30,
+    clientY: 200,
+    transitionThreshold: 48,
+  });
+
+  assert.equal(atBoundary.scrollTop, 900);
+  assert.equal(atBoundary.transitionDirection, null);
+  assert.equal(atBoundary.gesture.consumed, false);
+
+  const deliberateOvershoot = advanceControlledFeaturedTouchGesture(
+    atBoundary.gesture,
+    {
+      clientX: 30,
+      clientY: 152,
+      transitionThreshold: 48,
+    },
+  );
+
+  assert.equal(deliberateOvershoot.scrollTop, 900);
+  assert.equal(deliberateOvershoot.transitionDirection, 1);
+  assert.equal(deliberateOvershoot.gesture.consumed, true);
+});
+
 test("one vertical gesture can request at most one project transition", () => {
   const firstUpdate = advanceControlledFeaturedTouchGesture(
     createGesture(),
@@ -51,6 +85,21 @@ test("one vertical gesture can request at most one project transition", () => {
   assert.equal(firstUpdate.transitionDirection, 1);
   assert.equal(secondUpdate.transitionDirection, null);
   assert.equal(secondUpdate.gesture.consumed, true);
+});
+
+test("Featured cannot take scrollTop ownership while a panel transition is active", () => {
+  assert.equal(
+    canControlFeaturedTouchGesture({ activeTween: true }),
+    false,
+  );
+  assert.equal(
+    canControlFeaturedTouchGesture({ isProgrammaticScroll: true }),
+    false,
+  );
+  assert.equal(
+    canControlFeaturedTouchGesture({}),
+    true,
+  );
 });
 
 test("reverse Featured navigation also stops at one project per gesture", () => {

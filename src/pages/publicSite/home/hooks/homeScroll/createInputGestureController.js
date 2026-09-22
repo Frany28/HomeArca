@@ -17,6 +17,7 @@ import {
 } from "../../utils/touchGestureOwnership.js";
 import {
   advanceControlledFeaturedTouchGesture,
+  canControlFeaturedTouchGesture,
   createControlledFeaturedTouchGesture,
 } from "../../utils/featuredTouchGesture.js";
 import {
@@ -478,6 +479,15 @@ function createInputGestureController({
       featuredProjectActive && coordination.featured.isExpansionEnabled();
     const featuredProjectReady =
       featuredProjectActive && (!reduceMotion || !featuredExpansionEnabled);
+
+    if (
+      featuredProjectReady &&
+      !canControlFeaturedTouchGesture({
+        activeTween: Boolean(runtime.activeTween),
+        isProgrammaticScroll: runtime.isProgrammaticScroll,
+      })
+    ) return;
+
     const gestureOwner = getTouchGestureOwner({
       contentMode: runtime.contentMode,
       featuredProjectReady,
@@ -567,13 +577,24 @@ function createInputGestureController({
     const verticalDistance = touchGesture.startY - event.clientY;
     if (touchGesture.featuredProject) {
       if (touchGesture.featuredControlledMobile) {
+        if (!canControlFeaturedTouchGesture({
+          activeTween: Boolean(runtime.activeTween),
+          isProgrammaticScroll: runtime.isProgrammaticScroll,
+        })) {
+          touchGesture = {
+            ...touchGesture,
+            consumed: true,
+          };
+          return;
+        }
+
         const update = advanceControlledFeaturedTouchGesture(
           touchGesture,
           {
             clientX: event.clientX,
             clientY: event.clientY,
             dominance: TOUCH_VERTICAL_DOMINANCE,
-            transitionThreshold: FEATURED_TOUCH_SWIPE_THRESHOLD_PX,
+            transitionThreshold: TOUCH_SWIPE_THRESHOLD_PX,
           },
         );
 
