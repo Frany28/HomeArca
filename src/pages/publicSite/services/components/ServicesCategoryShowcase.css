@@ -1,6 +1,7 @@
 /* Aproximación CSS del efecto Glass de Figma (radio 5, profundidad 30,
    luz -45°). El relleno mantiene el 10 % de primary-300 en ambos temas. */
 .services-category-showcase__frame {
+  --services-frame-inset: 24px;
   isolation: isolate;
   background: color-mix(in srgb, var(--color-primary-300) 10%, transparent);
   backdrop-filter: blur(5px);
@@ -26,6 +27,19 @@
   pointer-events: none;
   content: "";
 }
+
+.services-category-showcase__viewport {
+  inset: var(--services-frame-inset);
+  isolation: isolate;
+  /*
+   * Do not size this child with width/height: 100% inside an aspect-ratio
+   * parent with padding. WebKit can resolve that percentage height against
+   * the outer box and let the image bleed below the glass frame.
+   * Explicit insets make the inner rectangle deterministic on iOS.
+   */
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+}
+
 .services-category-showcase__tab {
   color: var(--color-neutral-100-uniform);
 }
@@ -51,8 +65,8 @@
   }
 
   .services-category-showcase__frame {
+    --services-frame-inset: 16px;
     width: clamp(128px, 31.25vw, 320px);
-    padding: 16px;
   }
 
   .services-category-showcase__list {
