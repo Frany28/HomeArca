@@ -87,6 +87,10 @@ function getNativeBoundaryCrossingDirection(
   return 0;
 }
 
+function shouldFlushMobileBoundaryImmediately(direction) {
+  return direction < 0;
+}
+
 function createFeaturedProjectsController({
   activeFeaturedProjectIndexRef,
   activeSectionRef,
@@ -840,8 +844,21 @@ function createFeaturedProjectsController({
       transition: boundary.transition,
     };
     pinMobileBoundaryScroll(boundary.scrollTop);
-    scheduleMobileBoundaryTransition();
 
+    /*
+     * Upward touch navigation must start the controlled transition as soon as
+     * the boundary is claimed. Waiting for native momentum to settle lets the
+     * previous project/section become visible before the tween begins, which
+     * makes the upward transition appear to be missing on iOS and Android.
+     *
+     * Downward navigation keeps the settle delay because that protection is
+     * what prevents one fling from skipping multiple projects.
+     */
+    if (shouldFlushMobileBoundaryImmediately(crossingDirection)) {
+      return flushMobileNativeBoundaryTransition();
+    }
+
+    scheduleMobileBoundaryTransition();
     return true;
   };
 
@@ -1065,4 +1082,5 @@ export {
   isTouchCapableMobileLayout,
   shouldActivateIncomingFeaturedBeforeTransition,
   shouldActivateIncomingProjectBeforeTransition,
+  shouldFlushMobileBoundaryImmediately,
 };
