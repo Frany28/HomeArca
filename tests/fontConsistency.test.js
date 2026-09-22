@@ -17,6 +17,10 @@ const globalCss = readFileSync(
 const packageJson = JSON.parse(
   readFileSync(new URL("../package.json", import.meta.url), "utf8"),
 );
+const indexHtml = readFileSync(
+  new URL("../index.html", import.meta.url),
+  "utf8",
+);
 
 test("Inter Variable is bundled and enforced globally across devices", () => {
   assert.equal(
@@ -35,4 +39,6 @@ test("Inter Variable is bundled and enforced globally across devices", () => {
     /button,[\s\S]*input,[\s\S]*select,[\s\S]*textarea[\s\S]*font-family: inherit;/,
   );
   assert.doesNotMatch(indexCss, /font-family: system-ui, sans-serif;/);
+  assert.match(indexHtml, /<html lang="es">/);
+  assert.doesNotMatch(indexHtml, /fonts\.googleapis\.com|fonts\.gstatic\.com/);
 });
