@@ -54,6 +54,20 @@ function isTouchCapableMobileLayout({
   );
 }
 
+function isAndroidTouchPlatform({
+  platform = "",
+  userAgent = "",
+} = {}) {
+  return /android/i.test(`${platform} ${userAgent}`);
+}
+
+function shouldUseImmediateMobileBoundaryRelease({
+  direction = 0,
+  isAndroidTouchLayout = false,
+} = {}) {
+  return direction < 0 || (direction > 0 && isAndroidTouchLayout);
+}
+
 function getNativeBoundaryCrossingDirection(
   previousScrollTop,
   scrollTop,
@@ -190,6 +204,20 @@ function createFeaturedProjectsController({
         typeof navigator !== "undefined"
           ? navigator.maxTouchPoints ?? 0
           : 0,
+    });
+  };
+
+  const isAndroidMobileTouchLayout = () => {
+    if (!isMobileTouchLayout() || typeof navigator === "undefined") {
+      return false;
+    }
+
+    return isAndroidTouchPlatform({
+      platform:
+        navigator.userAgentData?.platform ??
+        navigator.platform ??
+        "",
+      userAgent: navigator.userAgent ?? "",
     });
   };
 
@@ -762,13 +790,18 @@ function createFeaturedProjectsController({
     previousMobileScrollTop = scrollTop;
   };
 
-  const flushMobileBoundaryAfterTouchRelease = () => {
+  const flushMobileBoundaryAfterTouchRelease = ({
+    allowDownward = false,
+  } = {}) => {
     const pendingTransition = mobileBoundaryTransitionPending;
 
     if (
       !pendingTransition ||
       pendingTransition.started ||
-      pendingTransition.direction >= 0
+      (
+        pendingTransition.direction >= 0 &&
+        !allowDownward
+      )
     ) {
       return false;
     }
@@ -808,7 +841,9 @@ function createFeaturedProjectsController({
     if (!isMobileTouchLayout()) return false;
 
     mobileTouchGestureActive = false;
-    return flushMobileBoundaryAfterTouchRelease();
+    return flushMobileBoundaryAfterTouchRelease({
+      allowDownward: isAndroidMobileTouchLayout(),
+    });
   };
 
   const observeMobileNativeBoundaryScroll = () => {
@@ -832,9 +867,17 @@ function createFeaturedProjectsController({
         mobileBoundaryTransitionPending.scrollTop,
       );
 
-      if (mobileBoundaryTransitionPending.direction < 0) {
+      const useImmediateRelease =
+        shouldUseImmediateMobileBoundaryRelease({
+          direction: mobileBoundaryTransitionPending.direction,
+          isAndroidTouchLayout: isAndroidMobileTouchLayout(),
+        });
+
+      if (useImmediateRelease) {
         if (mobileTouchGestureActive) return true;
-        return flushMobileBoundaryAfterTouchRelease();
+        return flushMobileBoundaryAfterTouchRelease({
+          allowDownward: isAndroidMobileTouchLayout(),
+        });
       }
 
       scheduleMobileBoundaryTransition();
@@ -905,9 +948,17 @@ function createFeaturedProjectsController({
      * native scroller. Hold at the boundary, then cancel residual momentum and
      * start the controlled tween immediately after touch release.
      */
-    if (crossingDirection < 0) {
+    const useImmediateRelease =
+      shouldUseImmediateMobileBoundaryRelease({
+        direction: crossingDirection,
+        isAndroidTouchLayout: isAndroidMobileTouchLayout(),
+      });
+
+    if (useImmediateRelease) {
       if (mobileTouchGestureActive) return true;
-      return flushMobileBoundaryAfterTouchRelease();
+      return flushMobileBoundaryAfterTouchRelease({
+        allowDownward: isAndroidMobileTouchLayout(),
+      });
     }
 
     scheduleMobileBoundaryTransition();
@@ -1161,7 +1212,9 @@ function createFeaturedProjectsController({
 export {
   createFeaturedProjectsController,
   getNativeBoundaryCrossingDirection,
+  isAndroidTouchPlatform,
   isTouchCapableMobileLayout,
+  shouldUseImmediateMobileBoundaryRelease,
   shouldActivateIncomingFeaturedBeforeTransition,
   shouldActivateIncomingProjectBeforeTransition,
 };
