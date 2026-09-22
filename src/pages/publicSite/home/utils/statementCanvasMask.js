@@ -7,6 +7,15 @@ const STATEMENT_LETTER_SPACING_PX = -1;
 const STATEMENT_BASELINE_EM_OFFSET = 0.35;
 const STATEMENT_MAX_DEVICE_PIXEL_RATIO = 2;
 
+/*
+ * The statement zoom is focused on the "c" in "hacemos".
+ * Its geometric center falls inside the counter/open space of the glyph.
+ * Anchor the zoom inside the solid left arc instead so the reveal is born
+ * from the letter fill rather than from the empty center.
+ */
+const STATEMENT_FOCUS_FILL_X_RATIO = 0.22;
+const STATEMENT_FOCUS_FILL_Y_RATIO = 0.5;
+
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
@@ -102,8 +111,23 @@ function getStatementCanvasLayout({
 
     if (index === focusLetterIndex) {
       const bounds = getTextMetricsBounds(metrics);
-      focusAnchorX = cursorX + (bounds.right - bounds.left) / 2;
-      focusAnchorY = baselineY + (bounds.descent - bounds.ascent) / 2;
+      const glyphLeft = cursorX - bounds.left;
+      const glyphTop = baselineY - bounds.ascent;
+      const glyphWidth = Math.max(0, bounds.left + bounds.right);
+      const glyphHeight = Math.max(0, bounds.ascent + bounds.descent);
+
+      /*
+       * Do not use the geometric center of "c": that point is visually
+       * inside its empty counter. The optical anchor sits in the solid
+       * left-hand arc, vertically centered in the glyph. This keeps the
+       * first visible part of the video inside the letter stroke.
+       */
+      focusAnchorX = glyphWidth > 0
+        ? glyphLeft + glyphWidth * STATEMENT_FOCUS_FILL_X_RATIO
+        : cursorX;
+      focusAnchorY = glyphHeight > 0
+        ? glyphTop + glyphHeight * STATEMENT_FOCUS_FILL_Y_RATIO
+        : baselineY;
     }
 
     cursorX += glyphWidth + letterSpacing;
@@ -177,6 +201,7 @@ function drawStatementCanvasMask({
 }
 
 export {
+  STATEMENT_FOCUS_FILL_X_RATIO,
   STATEMENT_LETTER_SPACING_PX,
   drawStatementCanvasMask,
   getStatementCanvasFontSize,
