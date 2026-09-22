@@ -5,6 +5,9 @@ import {
   advanceWheelGesture,
   consumeWheelGesture,
 } from "../../utils/homeScrollNavigation.js";
+const MOBILE_BOUNDARY_TRANSITION_DURATION_SECONDS = 0.38;
+const MOBILE_BOUNDARY_TRANSITION_EASE = "power2.out";
+
 import {
   FEATURED_EXPANSION_SMOOTH_MAX_SECONDS,
   FEATURED_EXPANSION_SMOOTH_MIN_SECONDS,
@@ -329,6 +332,12 @@ function createFeaturedProjectsController({
 
     return coordination.panel.startScrollTransition({
       scrollTop: transition.scrollTop,
+      duration: deferStateCommit
+        ? MOBILE_BOUNDARY_TRANSITION_DURATION_SECONDS
+        : undefined,
+      ease: deferStateCommit
+        ? MOBILE_BOUNDARY_TRANSITION_EASE
+        : undefined,
       onComplete: () => {
         if (direction > 0 || deferStateCommit) {
           commitProjectIndex(transition.index);
@@ -402,6 +411,12 @@ function createFeaturedProjectsController({
 
     return coordination.panel.startScrollTransition({
       scrollTop: targetScrollTop,
+      duration: deferStateCommit
+        ? MOBILE_BOUNDARY_TRANSITION_DURATION_SECONDS
+        : undefined,
+      ease: deferStateCommit
+        ? MOBILE_BOUNDARY_TRANSITION_EASE
+        : undefined,
       onComplete: () => {
       coordination.content.selectSection(targetSectionId);
 
@@ -596,23 +611,6 @@ function createFeaturedProjectsController({
       return false;
     }
 
-    if (activeSectionRef.current === "services") {
-      const services = coordination.content.getSection("services");
-      const bounds = getPanelScrollBounds(services);
-      const direction = getNativeBoundaryCrossingDirection(
-        previousScrollTop,
-        scrollTop,
-        bounds,
-      );
-
-      if (direction <= 0) return false;
-
-      return transitionBetweenSections("featured-projects", {
-        deferStateCommit: true,
-        featuredProjectIndex: 0,
-      });
-    }
-
     if (
       activeSectionRef.current !== "featured-projects" &&
       activeSectionRef.current !== "process"
@@ -620,8 +618,18 @@ function createFeaturedProjectsController({
       return false;
     }
 
+    const direction = Math.sign(scrollTop - previousScrollTop);
+
+    if (
+      activeSectionRef.current === "featured-projects" &&
+      activeFeaturedProjectIndexRef.current === 0 &&
+      direction < 0
+    ) {
+      return false;
+    }
+
     const boundary = getContentBoundary(
-      Math.sign(scrollTop - previousScrollTop),
+      direction,
       { deferStateCommit: true },
     );
     if (!boundary) return false;
