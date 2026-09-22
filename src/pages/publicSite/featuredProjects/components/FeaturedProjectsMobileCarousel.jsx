@@ -251,20 +251,20 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
     >
       <div
         ref={trackRef}
-        className="flex h-full w-max items-start gap-[var(--spacing-gap-7)] will-change-transform min-[768px]:gap-[16px]"
+        className="flex h-full w-max items-start gap-[16px] will-change-transform"
         data-featured-gallery-carousel-track
       >
         {repeatedColumns.map((set, setIndex) => (
           <div
             ref={setIndex === 0 ? firstSetRef : secondSetRef}
             aria-hidden={set.ariaHidden ? "true" : undefined}
-            className="flex shrink-0 gap-[var(--spacing-gap-7)] min-[768px]:gap-[16px]"
+            className="flex shrink-0 gap-[16px]"
             data-featured-gallery-carousel-set
             key={set.key}
           >
             {set.columns.map((cards, columnIndex) => (
               <div
-                className="flex shrink-0 gap-[var(--spacing-gap-7)] min-[768px]:gap-[16px]"
+                className="flex shrink-0 gap-[16px]"
                 data-featured-gallery-carousel-group
                 key={columnIndex}
               >

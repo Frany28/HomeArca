@@ -75,7 +75,7 @@ test("tablet and mobile galleries use a horizontal photo carousel", () => {
   assert.match(mobileCarouselSource, /h-\[500px\] w-\[300px\]/);
   assert.match(
     mobileCarouselSource,
-    /gap-\[var\(--spacing-gap-7\)\]/,
+    /gap-\[16px\]/,
   );
   assert.match(
     mobileCarouselSource,
@@ -94,15 +94,19 @@ test("tablet and mobile galleries use a horizontal photo carousel", () => {
 test("mobile Featured uses one uniform gap between every adjacent image", () => {
   assert.match(
     mobileCarouselSource,
-    /className="flex h-full w-max items-start gap-\[var\(--spacing-gap-7\)\][^"]*min-\[768px\]:gap-\[16px\]"/,
+    /className="flex h-full w-max items-start gap-\[16px\] will-change-transform"/,
   );
   assert.match(
     mobileCarouselSource,
-    /className="flex shrink-0 gap-\[var\(--spacing-gap-7\)\] min-\[768px\]:gap-\[16px\]"[\s\S]*data-featured-gallery-carousel-set/,
+    /className="flex shrink-0 gap-\[16px\]"[\s\S]*data-featured-gallery-carousel-set/,
   );
   assert.match(
     mobileCarouselSource,
-    /className="flex shrink-0 gap-\[var\(--spacing-gap-7\)\] min-\[768px\]:gap-\[16px\]"[\s\S]*data-featured-gallery-carousel-group/,
+    /className="flex shrink-0 gap-\[16px\]"[\s\S]*data-featured-gallery-carousel-group/,
+  );
+  assert.doesNotMatch(
+    mobileCarouselSource,
+    /gap-\[var\(--spacing-gap-7\)\]/,
   );
 });
 
