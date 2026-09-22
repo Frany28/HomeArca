@@ -59,10 +59,13 @@ function ProcessesVideoModal({ onClose, origin, video, visible }) {
 
     const element = videoRef.current;
 
-    if (element?.readyState >= 1) {
-      calculateTarget();
-    } else {
-      element?.addEventListener("loadedmetadata", calculateTarget, {
+    // Open immediately with the known portrait fallback, then refine the
+    // target if metadata becomes available. Older/slow WebKit must not make
+    // a successful tap look ignored while waiting for loadedmetadata.
+    calculateTarget();
+
+    if (element?.readyState < 1) {
+      element.addEventListener("loadedmetadata", calculateTarget, {
         once: true,
       });
     }
@@ -147,6 +150,7 @@ function ProcessesVideoModal({ onClose, origin, video, visible }) {
           loop
           muted
           playsInline
+          preload="metadata"
           aria-label={video.description}
           onClick={handleClose}
         >
