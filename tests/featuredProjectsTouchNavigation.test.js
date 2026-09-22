@@ -217,3 +217,23 @@ test("controlled Home panels fully own touch gestures before native content scro
     /activeSectionId === "featured-projects"[\s\S]*"touch-auto min-\[1024px\]:touch-pan-x"/,
   );
 });
+
+
+test("iOS controlled touch ignores interactive controls and resets stale gestures", () => {
+  assert.match(
+    inputGestureSource,
+    /isInteractiveTarget\(event\.target\)/,
+  );
+  assert.match(
+    inputGestureSource,
+    /addEventListener\("lostpointercapture", resetTouchGesture\)/,
+  );
+  assert.match(
+    inputGestureSource,
+    /window\.addEventListener\("blur", resetTouchGesture\)/,
+  );
+  assert.match(
+    inputGestureSource,
+    /document\.addEventListener\("visibilitychange", handleVisibilityChange\)/,
+  );
+});
