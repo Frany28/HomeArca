@@ -154,7 +154,11 @@ test("mobile boundary transitions reuse the standard section navigation motion",
   );
   assert.match(
     panelControllerSource,
-    /duration: SCROLL_STEP_DURATION_SECONDS/,
+    /duration = SCROLL_STEP_DURATION_SECONDS/,
+  );
+  assert.match(
+    panelControllerSource,
+    /duration,/,
   );
   assert.match(
     panelControllerSource,
