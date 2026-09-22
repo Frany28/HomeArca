@@ -63,10 +63,8 @@ function OpeningHome() {
 
   const touchNavigationClassName = !contentScrollActive
     ? "touch-none"
-    : activeSectionId === "featured-projects"
-      ? reduceMotion
-        ? "touch-pan-x min-[1024px]:touch-auto"
-        : "touch-pan-x"
+    : activeSectionId === "featured-projects" && !reduceMotion
+      ? "touch-auto min-[1024px]:touch-pan-x"
       : "touch-auto";
 
   useEffect(() => {

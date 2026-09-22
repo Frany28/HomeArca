@@ -29,7 +29,7 @@ test("content scrolling stays browser-owned unless a concrete featured effect ow
       featuredProjectReady: true,
       featuredExpansionEnabled: false,
     }),
-    TOUCH_GESTURE_OWNERS.CONTROLLED_VERTICAL,
+    TOUCH_GESTURE_OWNERS.NATIVE_VERTICAL,
   );
 
   assert.equal(
