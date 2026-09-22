@@ -833,6 +833,11 @@ function createInputGestureController({
     }
     window.addEventListener("resize", coordination.content.handleResize);
     window.addEventListener("orientationchange", coordination.content.handleResize);
+    window.visualViewport?.addEventListener(
+      "resize",
+      coordination.content.handleResize,
+      { passive: true },
+    );
   };
 
   const destroy = () => {
@@ -853,6 +858,10 @@ function createInputGestureController({
     }
     window.removeEventListener("resize", coordination.content.handleResize);
     window.removeEventListener("orientationchange", coordination.content.handleResize);
+    window.visualViewport?.removeEventListener(
+      "resize",
+      coordination.content.handleResize,
+    );
     document.removeEventListener(
       "mousedown",
       handleScrollbarMouseDown,
