@@ -3,21 +3,20 @@ import { useEffect, useMemo, useRef } from "react";
 import MainLogo from "../../../../assets/logos/MainLogo.jsx";
 import ProjectImage from "../../../../components/ui/ProjectImage/ProjectImage.jsx";
 import {
+  advanceCarouselAutoPosition,
   canResumeCarouselAutoScroll,
   canWriteCarouselAutoScroll,
-  shouldPauseCarouselAutoScroll,
 } from "../utils/carouselAutoScroll.js";
 
 const AUTO_SCROLL_SPEED_PX_PER_SECOND = 24;
-const AUTO_SCROLL_RESUME_DELAY_MS = 1000;
-const AUTO_SCROLL_POSITION_TOLERANCE_PX = 1;
+const AUTO_SCROLL_RESUME_DELAY_MS = 700;
 
 function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
   const carouselRef = useRef(null);
   const resumeTimerRef = useRef(null);
   const pausedRef = useRef(false);
   const interactionActiveRef = useRef(false);
-  const expectedScrollLeftRef = useRef(0);
+  const autoPositionRef = useRef(0);
   const firstSetRef = useRef(null);
   const secondSetRef = useRef(null);
 
@@ -38,17 +37,20 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
 
     let animationFrame = 0;
     let previousTimestamp = null;
-    expectedScrollLeftRef.current = carousel.scrollLeft;
+    autoPositionRef.current = carousel.scrollLeft;
 
     carousel.addEventListener("scroll", handleCarouselScroll, {
       passive: true,
     });
     carousel.addEventListener("scrollend", handleCarouselScrollEnd);
 
-    const getLoopDistance = () => secondSet.offsetLeft - firstSet.offsetLeft;
+    const getLoopDistance = () =>
+      secondSet.offsetLeft - firstSet.offsetLeft;
 
     const animate = (timestamp) => {
-      if (previousTimestamp === null) previousTimestamp = timestamp;
+      if (previousTimestamp === null) {
+        previousTimestamp = timestamp;
+      }
 
       const elapsedSeconds = Math.min(
         (timestamp - previousTimestamp) / 1000,
@@ -57,35 +59,28 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
       previousTimestamp = timestamp;
 
       if (
-        !pausedRef.current &&
-        shouldPauseCarouselAutoScroll({
-          currentScrollLeft: carousel.scrollLeft,
-          expectedScrollLeft: expectedScrollLeftRef.current,
+        canWriteCarouselAutoScroll({
           interactionActive: interactionActiveRef.current,
-          paused: false,
-          tolerance: AUTO_SCROLL_POSITION_TOLERANCE_PX,
+          paused: pausedRef.current,
         })
       ) {
-        pauseAutoScroll();
-        expectedScrollLeftRef.current = carousel.scrollLeft;
-        scheduleAutoScrollResume();
-      }
-
-      if (canWriteCarouselAutoScroll({
-        interactionActive: interactionActiveRef.current,
-        paused: pausedRef.current,
-      })) {
         const loopDistance = getLoopDistance();
 
         if (loopDistance > 0) {
-          carousel.scrollLeft +=
-            AUTO_SCROLL_SPEED_PX_PER_SECOND * elapsedSeconds;
+          /*
+           * Keep autoplay position in our own floating-point accumulator.
+           * WebKit can quantize scrollLeft writes during async scrolling;
+           * accumulating from the DOM value every frame can therefore turn
+           * ~0.4px/frame into 0px forever on high-refresh iPhones.
+           */
+          autoPositionRef.current = advanceCarouselAutoPosition(
+            autoPositionRef.current,
+            elapsedSeconds,
+            loopDistance,
+            AUTO_SCROLL_SPEED_PX_PER_SECOND,
+          );
 
-          if (carousel.scrollLeft >= loopDistance) {
-            carousel.scrollLeft -= loopDistance;
-          }
-
-          expectedScrollLeftRef.current = carousel.scrollLeft;
+          carousel.scrollLeft = autoPositionRef.current;
         }
       }
 
@@ -103,7 +98,12 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
   }, [columns]);
 
   const pauseAutoScroll = () => {
+    const carousel = carouselRef.current;
+
     pausedRef.current = true;
+    if (carousel) {
+      autoPositionRef.current = carousel.scrollLeft;
+    }
     window.clearTimeout(resumeTimerRef.current);
   };
 
@@ -111,15 +111,18 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
     window.clearTimeout(resumeTimerRef.current);
     resumeTimerRef.current = window.setTimeout(() => {
       const carousel = carouselRef.current;
+
       if (
         !carousel ||
         !canResumeCarouselAutoScroll({
           interactionActive: interactionActiveRef.current,
           scrollSettled: true,
         })
-      ) return;
+      ) {
+        return;
+      }
 
-      expectedScrollLeftRef.current = carousel.scrollLeft;
+      autoPositionRef.current = carousel.scrollLeft;
       pausedRef.current = false;
     }, AUTO_SCROLL_RESUME_DELAY_MS);
   };
@@ -130,29 +133,48 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
   };
 
   const endUserInteraction = () => {
+    const carousel = carouselRef.current;
+
     interactionActiveRef.current = false;
+    if (carousel) {
+      autoPositionRef.current = carousel.scrollLeft;
+    }
+
+    /*
+     * Do not resume immediately: iOS may still be applying horizontal
+     * momentum after touchend/pointerup. Scroll events keep resetting this
+     * timer until that native momentum has actually settled.
+     */
     scheduleAutoScrollResume();
   };
 
   function handleCarouselScroll() {
     const carousel = carouselRef.current;
-    if (!carousel) return;
 
-    if (!shouldPauseCarouselAutoScroll({
-      currentScrollLeft: carousel.scrollLeft,
-      expectedScrollLeft: expectedScrollLeftRef.current,
-      interactionActive: interactionActiveRef.current,
-      paused: pausedRef.current,
-      tolerance: AUTO_SCROLL_POSITION_TOLERANCE_PX,
-    })) return;
+    if (
+      !carousel ||
+      !pausedRef.current ||
+      interactionActiveRef.current
+    ) {
+      return;
+    }
 
-    pausedRef.current = true;
-    expectedScrollLeftRef.current = carousel.scrollLeft;
+    autoPositionRef.current = carousel.scrollLeft;
     scheduleAutoScrollResume();
   }
 
   function handleCarouselScrollEnd() {
-    if (!pausedRef.current || interactionActiveRef.current) return;
+    const carousel = carouselRef.current;
+
+    if (
+      !carousel ||
+      !pausedRef.current ||
+      interactionActiveRef.current
+    ) {
+      return;
+    }
+
+    autoPositionRef.current = carousel.scrollLeft;
     scheduleAutoScrollResume();
   }
 
@@ -160,7 +182,7 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
     <div
       ref={carouselRef}
       aria-label={galleryLabel}
-      className="flex h-full touch-auto items-start gap-[16px] overflow-x-auto overscroll-x-contain px-[16px] pt-[48px] pb-[var(--spacing-gap-9)] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-[768px]:gap-[16px] min-[768px]:px-[24px] min-[768px]:py-[32px]"
+      className="flex h-full touch-auto items-start gap-[16px] overflow-x-auto overscroll-x-contain px-[16px] pt-[48px] pb-[var(--spacing-gap-9)] [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden min-[768px]:gap-[16px] min-[768px]:px-[24px] min-[768px]:py-[32px]"
       data-featured-gallery-carousel
       data-native-horizontal-scroll
       onPointerDown={beginUserInteraction}
