@@ -6,24 +6,17 @@ import {
   advanceCarouselAutoPosition,
   canResumeCarouselAutoScroll,
   canWriteCarouselAutoScroll,
-  normalizeCarouselLoopPosition,
-  resolveCarouselGestureAxis,
 } from "../utils/carouselAutoScroll.js";
 
 const AUTO_SCROLL_SPEED_PX_PER_SECOND = 24;
 const AUTO_SCROLL_RESUME_DELAY_MS = 700;
-const INERTIA_MIN_VELOCITY_PX_PER_MS = 0.02;
-const INERTIA_DECAY_PER_FRAME = 0.9;
 
 function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
   const carouselRef = useRef(null);
   const resumeTimerRef = useRef(null);
   const pausedRef = useRef(false);
   const interactionActiveRef = useRef(false);
-  const touchActiveRef = useRef(false);
   const autoPositionRef = useRef(0);
-  const inertiaFrameRef = useRef(0);
-  const dragRef = useRef(null);
   const firstSetRef = useRef(null);
   const secondSetRef = useRef(null);
 
@@ -35,42 +28,12 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
     [columns],
   );
 
-  const getLoopDistance = () => {
+  useEffect(() => {
+    const carousel = carouselRef.current;
     const firstSet = firstSetRef.current;
     const secondSet = secondSetRef.current;
 
-    if (!firstSet || !secondSet) return 0;
-
-    return secondSet.offsetLeft - firstSet.offsetLeft;
-  };
-
-  const writeCarouselPosition = (position) => {
-    const carousel = carouselRef.current;
-
-    if (!carousel) return;
-
-    const normalized = normalizeCarouselLoopPosition(
-      position,
-      getLoopDistance(),
-    );
-
-    carousel.scrollLeft = normalized;
-    autoPositionRef.current = normalized;
-  };
-
-  const cancelInertia = () => {
-    if (!inertiaFrameRef.current) return;
-
-    window.cancelAnimationFrame(inertiaFrameRef.current);
-    inertiaFrameRef.current = 0;
-  };
-
-  useEffect(() => {
-    const carousel = carouselRef.current;
-
-    if (!carousel || !firstSetRef.current || !secondSetRef.current) {
-      return undefined;
-    }
+    if (!carousel || !firstSet || !secondSet) return undefined;
 
     let animationFrame = 0;
     let previousTimestamp = null;
@@ -80,6 +43,9 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
       passive: true,
     });
     carousel.addEventListener("scrollend", handleCarouselScrollEnd);
+
+    const getLoopDistance = () =>
+      secondSet.offsetLeft - firstSet.offsetLeft;
 
     const animate = (timestamp) => {
       if (previousTimestamp === null) {
@@ -119,7 +85,6 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
 
     return () => {
       window.cancelAnimationFrame(animationFrame);
-      window.cancelAnimationFrame(inertiaFrameRef.current);
       window.clearTimeout(resumeTimerRef.current);
       carousel.removeEventListener("scroll", handleCarouselScroll);
       carousel.removeEventListener("scrollend", handleCarouselScrollEnd);
@@ -156,9 +121,12 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
     }, AUTO_SCROLL_RESUME_DELAY_MS);
   };
 
-  const finishUserInteraction = () => {
-    if (touchActiveRef.current || inertiaFrameRef.current) return;
+  const beginUserInteraction = () => {
+    interactionActiveRef.current = true;
+    pauseAutoScroll();
+  };
 
+  const endUserInteraction = () => {
     const carousel = carouselRef.current;
 
     interactionActiveRef.current = false;
@@ -166,148 +134,11 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
       autoPositionRef.current = carousel.scrollLeft;
     }
 
+    /*
+     * Native touch scrolling owns axis arbitration and momentum. Scroll events
+     * keep resetting this timer until horizontal momentum has fully settled.
+     */
     scheduleAutoScrollResume();
-  };
-
-  const startHorizontalInertia = (initialVelocity) => {
-    if (
-      !Number.isFinite(initialVelocity) ||
-      Math.abs(initialVelocity) < INERTIA_MIN_VELOCITY_PX_PER_MS
-    ) {
-      inertiaFrameRef.current = 0;
-      finishUserInteraction();
-      return;
-    }
-
-    cancelInertia();
-
-    let velocity = initialVelocity;
-    let previousTimestamp = null;
-
-    const animateInertia = (timestamp) => {
-      if (previousTimestamp === null) {
-        previousTimestamp = timestamp;
-      }
-
-      const elapsedMs = Math.min(timestamp - previousTimestamp, 32);
-      previousTimestamp = timestamp;
-
-      writeCarouselPosition(
-        (carouselRef.current?.scrollLeft ?? 0) +
-          velocity * elapsedMs,
-      );
-
-      velocity *= Math.pow(
-        INERTIA_DECAY_PER_FRAME,
-        elapsedMs / (1000 / 60),
-      );
-
-      if (
-        Math.abs(velocity) <
-        INERTIA_MIN_VELOCITY_PX_PER_MS
-      ) {
-        inertiaFrameRef.current = 0;
-        finishUserInteraction();
-        return;
-      }
-
-      inertiaFrameRef.current =
-        window.requestAnimationFrame(animateInertia);
-    };
-
-    inertiaFrameRef.current =
-      window.requestAnimationFrame(animateInertia);
-  };
-
-  const handlePointerDown = (event) => {
-    const carousel = carouselRef.current;
-
-    if (
-      !carousel ||
-      (event.pointerType === "mouse" && event.button !== 0)
-    ) {
-      return;
-    }
-
-    cancelInertia();
-    interactionActiveRef.current = true;
-    pauseAutoScroll();
-
-    dragRef.current = {
-      axis: null,
-      lastTime: event.timeStamp,
-      lastX: event.clientX,
-      pointerId: event.pointerId,
-      startScrollLeft: carousel.scrollLeft,
-      startX: event.clientX,
-      startY: event.clientY,
-      velocity: 0,
-    };
-  };
-
-  const handlePointerMove = (event) => {
-    const drag = dragRef.current;
-
-    if (!drag || drag.pointerId !== event.pointerId) return;
-
-    const deltaX = event.clientX - drag.startX;
-    const deltaY = event.clientY - drag.startY;
-
-    if (!drag.axis) {
-      drag.axis = resolveCarouselGestureAxis(deltaX, deltaY);
-    }
-
-    if (drag.axis !== "horizontal") return;
-
-    writeCarouselPosition(
-      drag.startScrollLeft - deltaX,
-    );
-
-    const elapsedMs = Math.max(
-      event.timeStamp - drag.lastTime,
-      1,
-    );
-
-    drag.velocity =
-      (drag.lastX - event.clientX) / elapsedMs;
-    drag.lastX = event.clientX;
-    drag.lastTime = event.timeStamp;
-  };
-
-  const handlePointerEnd = (event) => {
-    const drag = dragRef.current;
-
-    if (!drag || drag.pointerId !== event.pointerId) return;
-
-    dragRef.current = null;
-
-    if (drag.axis === "horizontal") {
-      startHorizontalInertia(drag.velocity);
-      return;
-    }
-
-    finishUserInteraction();
-  };
-
-  const handlePointerCancel = (event) => {
-    const drag = dragRef.current;
-
-    if (!drag || drag.pointerId !== event.pointerId) return;
-
-    dragRef.current = null;
-    cancelInertia();
-    finishUserInteraction();
-  };
-
-  const handleTouchStart = () => {
-    touchActiveRef.current = true;
-    interactionActiveRef.current = true;
-    pauseAutoScroll();
-  };
-
-  const handleTouchEnd = () => {
-    touchActiveRef.current = false;
-    finishUserInteraction();
   };
 
   function handleCarouselScroll() {
@@ -344,16 +175,15 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
     <div
       ref={carouselRef}
       aria-label={galleryLabel}
-      className="flex h-full touch-pan-y items-start gap-[16px] overflow-x-auto overscroll-x-contain px-[var(--spacing-gap-5)] py-[var(--spacing-gap-8)] [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden min-[768px]:gap-[16px] min-[768px]:px-[24px] min-[768px]:py-[32px]"
+      className="flex h-full touch-auto items-start gap-[16px] overflow-x-auto overscroll-x-contain px-[var(--spacing-gap-5)] py-[var(--spacing-gap-8)] [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden min-[768px]:gap-[16px] min-[768px]:px-[24px] min-[768px]:py-[32px]"
       data-featured-gallery-carousel
       data-native-horizontal-scroll
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerEnd}
-      onPointerCancel={handlePointerCancel}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={handleTouchEnd}
+      onPointerDown={beginUserInteraction}
+      onPointerUp={endUserInteraction}
+      onPointerCancel={endUserInteraction}
+      onTouchStart={beginUserInteraction}
+      onTouchEnd={endUserInteraction}
+      onTouchCancel={endUserInteraction}
       role="region"
     >
       {repeatedColumns.map((set, setIndex) => (
