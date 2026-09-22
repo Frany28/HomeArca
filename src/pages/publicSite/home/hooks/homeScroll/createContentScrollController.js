@@ -40,6 +40,16 @@ function isContentNavigationReady({
   );
 }
 
+function isAutomaticStatementScrollOwned({
+  currentState,
+  autoRevealing = false,
+}) {
+  return Boolean(
+    autoRevealing &&
+      currentState?.panelIndex === STATEMENT_PANEL_INDEX
+  );
+}
+
 function createContentScrollController({
   activeSectionRef,
   contentModeRef,
@@ -274,8 +284,10 @@ function createContentScrollController({
     const currentState = navigationStateRef.current;
     const statementTop = panels[STATEMENT_PANEL_INDEX]?.offsetTop ?? 0;
     const automaticStatementOwnsScroll =
-      currentState.panelIndex === STATEMENT_PANEL_INDEX &&
-      statement.isAutoRevealing();
+      isAutomaticStatementScrollOwned({
+        currentState,
+        autoRevealing: statement.isAutoRevealing(),
+      });
 
     /*
      * A programmatic panel alignment can still emit one or more delayed
@@ -483,6 +495,7 @@ function createContentScrollController({
 
 export {
   createContentScrollController,
+  isAutomaticStatementScrollOwned,
   isContentNavigationReady,
   isVisibleWithinViewport,
 };
