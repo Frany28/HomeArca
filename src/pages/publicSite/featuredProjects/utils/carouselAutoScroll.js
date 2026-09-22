@@ -1,5 +1,5 @@
-const CAROUSEL_AXIS_THRESHOLD_PX = 8;
-const CAROUSEL_AXIS_BIAS = 1.15;
+const CAROUSEL_AXIS_THRESHOLD_PX = 12;
+const CAROUSEL_AXIS_BIAS = 1.4;
 
 function canWriteCarouselAutoScroll({
   interactionActive = false,
@@ -53,8 +53,20 @@ function resolveCarouselGestureAxis(
   const absY = Math.abs(deltaY);
 
   if (Math.max(absX, absY) < threshold) return null;
-  if (absX > absY * bias) return "horizontal";
-  if (absY > absX * bias) return "vertical";
+
+  /*
+   * Vertical navigation has priority. Horizontal ownership is granted only
+   * when X clearly dominates Y; every other deliberate vertical/diagonal
+   * gesture is left to the page.
+   */
+  if (
+    absX >= threshold &&
+    absX >= absY * bias
+  ) {
+    return "horizontal";
+  }
+
+  if (absY >= threshold) return "vertical";
 
   return null;
 }
