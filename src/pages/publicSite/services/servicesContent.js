@@ -1,5 +1,5 @@
 import residentialDesignImage from "../../../assets/services/residential-design.webp";
-import commercialDesignImage from "../../../assets/services/commercial-design.webp";
+import commercialDesignImage from "../../../assets/services/commercial-design-portrait.png";
 import institutionalDesignImage from "../../../assets/services/institutional-design.webp";
 import industrialDesignImage from "../../../assets/services/industrial-design.webp";
 import remodelingDesignImage from "../../../assets/services/remodeling-design.webp";
@@ -29,7 +29,7 @@ const SERVICES_CATEGORIES = Object.freeze([
     id: "commercial",
     label: "Diseño comercial",
     image: commercialDesignImage,
-    imagePosition: "54% 50%",
+    imagePosition: "50% 50%",
     imageAlt: "Proyecto de diseño comercial de ARCA Studio",
   }),
   Object.freeze({
