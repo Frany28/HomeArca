@@ -53,6 +53,26 @@ const MOVING_GRADIENT_SHADER = {
   },
 };
 
+function isAndroidTouchDevice() {
+  if (
+    typeof window === "undefined" ||
+    typeof navigator === "undefined"
+  ) {
+    return false;
+  }
+
+  const coarseTouch =
+    window.matchMedia?.("(hover: none) and (pointer: coarse)")?.matches ??
+    false;
+  const platform =
+    navigator.userAgentData?.platform ??
+    navigator.platform ??
+    "";
+  const userAgent = navigator.userAgent ?? "";
+
+  return coarseTouch && /android/i.test(`${platform} ${userAgent}`);
+}
+
 function ContactTiltCard() {
   const cardRef = useRef(null);
   const glareRef = useRef(null);
@@ -62,9 +82,7 @@ function ContactTiltCard() {
   useEffect(() => {
     let cancelled = false;
 
-    const prefersCssGradient =
-      typeof window !== "undefined" &&
-      window.matchMedia?.("(hover: none) and (pointer: coarse)")?.matches;
+    const prefersCssGradient = isAndroidTouchDevice();
 
     if (
       typeof navigator === "undefined" ||
