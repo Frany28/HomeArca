@@ -7,6 +7,7 @@ import {
   isTouchCapableMobileLayout,
   shouldActivateIncomingFeaturedBeforeTransition,
   shouldActivateIncomingProjectBeforeTransition,
+  shouldFlushMobileBoundaryImmediately,
 } from "../src/pages/publicSite/home/hooks/homeScroll/createFeaturedProjectsController.js";
 
 const openingHomeSource = readFileSync(
@@ -350,6 +351,39 @@ test("mobile boundary transitions reuse the standard section navigation motion",
     /duration = SCROLL_STEP_DURATION_SECONDS/,
   );
   assert.match(panelControllerSource, /ease: SECTION_NAVIGATION_EASE/);
+});
+
+test("mobile upward boundary handoff starts immediately while downward waits for settle", () => {
+  assert.equal(shouldFlushMobileBoundaryImmediately(-1), true);
+  assert.equal(shouldFlushMobileBoundaryImmediately(1), false);
+  assert.equal(shouldFlushMobileBoundaryImmediately(0), false);
+
+  const observerStart = featuredControllerSource.indexOf(
+    "const observeMobileNativeBoundaryScroll",
+  );
+  const observerEnd = featuredControllerSource.indexOf(
+    "const handleExpansionInput",
+    observerStart,
+  );
+  const observerSource = featuredControllerSource.slice(
+    observerStart,
+    observerEnd,
+  );
+
+  assert.match(
+    observerSource,
+    /shouldFlushMobileBoundaryImmediately\(crossingDirection\)[\s\S]*flushMobileNativeBoundaryTransition\(\)/,
+  );
+  assert.match(
+    observerSource,
+    /scheduleMobileBoundaryTransition\(\)/,
+  );
+  assert.match(featuredControllerSource, /SCROLL_SETTLE_DELAY_MS/);
+  assert.match(
+    contentScrollSource,
+    /handleScrollEnd[\s\S]*flushMobileNativeBoundaryTransition\(\)/,
+  );
+  assert.doesNotMatch(observerSource, /requestAnimationFrame/);
 });
 
 test("mobile boundary handoff waits for native momentum to settle", () => {
