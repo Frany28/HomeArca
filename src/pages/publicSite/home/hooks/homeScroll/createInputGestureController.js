@@ -16,10 +16,6 @@ import {
   getTouchGestureOwner,
 } from "../../utils/touchGestureOwnership.js";
 import {
-  advanceControlledFeaturedTouchGesture,
-  createControlledFeaturedTouchGesture,
-} from "../../utils/featuredTouchGesture.js";
-import {
   FEATURED_PROJECT_EDGE_TOLERANCE_PX,
   STATEMENT_PANEL_INDEX,
   TOUCH_SWIPE_THRESHOLD_PX,
@@ -486,18 +482,9 @@ function createInputGestureController({
       nativeHorizontalTarget: isNativeHorizontalTarget(event.target),
     });
 
-    const pendingFeaturedAxis =
-      featuredProjectReady &&
-      gestureOwner === TOUCH_GESTURE_OWNERS.NATIVE_HORIZONTAL &&
-      !featuredExpansionEnabled;
-
-    if (
-      gestureOwner !== TOUCH_GESTURE_OWNERS.CONTROLLED_VERTICAL &&
-      !pendingFeaturedAxis
-    ) return;
+    if (gestureOwner !== TOUCH_GESTURE_OWNERS.CONTROLLED_VERTICAL) return;
 
     if (featuredProjectReady) {
-      coordination.featured.beginControlledTouchGesture();
       const projectPanels = coordination.featured.getProjectPanels();
       const projectIndex = activeFeaturedProjectIndexRef.current;
       const bounds = coordination.featured.getPanelScrollBounds(projectPanels[projectIndex]);
@@ -506,16 +493,11 @@ function createInputGestureController({
         projectPanels,
       );
       touchGesture = {
-        ...createControlledFeaturedTouchGesture({
-          bounds,
-          nativeHorizontalTarget: isNativeHorizontalTarget(event.target),
-          pointerId: event.pointerId,
-          startScrollTop: scroller.scrollTop,
-          startX: event.clientX,
-          startY: event.clientY,
-        }),
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        startScrollTop: scroller.scrollTop,
         featuredProject: true,
-        featuredControlledMobile: !featuredExpansionEnabled,
         featuredBounds: bounds,
         featuredBoundaryAtStart: bounds
           ? {
@@ -566,46 +548,6 @@ function createInputGestureController({
     const horizontalDistance = event.clientX - touchGesture.startX;
     const verticalDistance = touchGesture.startY - event.clientY;
     if (touchGesture.featuredProject) {
-      if (touchGesture.featuredControlledMobile) {
-        const update = advanceControlledFeaturedTouchGesture(
-          touchGesture,
-          {
-            clientX: event.clientX,
-            clientY: event.clientY,
-            dominance: TOUCH_VERTICAL_DOMINANCE,
-            transitionThreshold: FEATURED_TOUCH_SWIPE_THRESHOLD_PX,
-          },
-        );
-
-        touchGesture = update.gesture;
-        if (!update.ownsVertical) return;
-
-        event.preventDefault();
-        touchGesture.captured = true;
-
-        if (
-          Number.isFinite(update.scrollTop) &&
-          Math.abs(scroller.scrollTop - update.scrollTop) > 0.01
-        ) {
-          scroller.scrollTop = update.scrollTop;
-          coordination.content.synchronizeContentScroll();
-        }
-
-        if (update.transitionDirection !== null) {
-          const transitioned = coordination.featured.transitionProject(
-            update.transitionDirection,
-            0,
-          );
-
-          if (!transitioned) {
-            coordination.featured
-              .getContentBoundary(update.transitionDirection)
-              ?.transition();
-          }
-        }
-        return;
-      }
-
       const expansion = touchGesture.featuredExpansion;
       const absoluteVerticalDistance = Math.abs(verticalDistance);
       const isVerticalGesture =
