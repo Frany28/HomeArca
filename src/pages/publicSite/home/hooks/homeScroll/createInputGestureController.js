@@ -727,6 +727,14 @@ function createInputGestureController({
     );
   };
 
+  const handleNativeTouchStart = () => {
+    coordination.featured.beginMobileTouchGesture?.();
+  };
+
+  const handleNativeTouchEnd = () => {
+    coordination.featured.endMobileTouchGesture?.();
+  };
+
   const resetTouchGesture = () => {
     touchGesture = null;
   };
@@ -816,6 +824,9 @@ function createInputGestureController({
     });
     scroller.addEventListener("pointerup", clearTouchGesture);
     scroller.addEventListener("pointercancel", clearTouchGesture);
+    scroller.addEventListener("touchstart", handleNativeTouchStart, { passive: true });
+    scroller.addEventListener("touchend", handleNativeTouchEnd, { passive: true });
+    scroller.addEventListener("touchcancel", handleNativeTouchEnd, { passive: true });
     scroller.addEventListener("lostpointercapture", resetTouchGesture);
     window.addEventListener("blur", resetTouchGesture);
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -852,6 +863,9 @@ function createInputGestureController({
     scroller.removeEventListener("pointermove", handlePointerMove, true);
     scroller.removeEventListener("pointerup", clearTouchGesture);
     scroller.removeEventListener("pointercancel", clearTouchGesture);
+    scroller.removeEventListener("touchstart", handleNativeTouchStart);
+    scroller.removeEventListener("touchend", handleNativeTouchEnd);
+    scroller.removeEventListener("touchcancel", handleNativeTouchEnd);
     scroller.removeEventListener("lostpointercapture", resetTouchGesture);
     window.removeEventListener("blur", resetTouchGesture);
     document.removeEventListener("visibilitychange", handleVisibilityChange);
