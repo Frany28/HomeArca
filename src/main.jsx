@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 
 import App from "./App.jsx";
 import ThemeSync from "./components/ui/ThemeSync.jsx";
+import "@fontsource-variable/inter";
 import "./index.css";
 
 createRoot(document.getElementById("root")).render(

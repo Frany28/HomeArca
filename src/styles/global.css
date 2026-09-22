@@ -92,7 +92,7 @@ input[type="reset"]:disabled,
 
   /* TEXT */
   /*fuente para el texto*/
-  --app-font-sans: "Inter", sans-serif;
+  --app-font-sans: "Inter Variable", sans-serif;
   /*colores para el texto*/
   --app-text-50: #0f0f0f;
   --app-text-100: #818181;
