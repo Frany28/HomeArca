@@ -499,7 +499,7 @@ test("direct Process -> Featured navigation returns through Apto JC instead of Q
   );
   assert.match(
     directNavigationSource,
-    /transitionBetweenSections\([\s\S]*"featured-projects"[\s\S]*featuredProjectIndex: lastProjectIndex[\s\S]*targetAlignment: "end"/,
+    /transitionBetweenSections\([\s\S]*"featured-projects"[\s\S]*featuredProjectIndex: lastProjectIndex[\s\S]*lockProcessReturnGesture: false[\s\S]*targetAlignment: "end"/,
   );
 
   const specialReturn = directNavigationSource.indexOf(
@@ -512,6 +512,33 @@ test("direct Process -> Featured navigation returns through Apto JC instead of Q
   assert.ok(specialReturn >= 0);
   assert.ok(genericReset >= 0);
   assert.ok(specialReturn < genericReset);
+});
+
+test("navbar Process -> Apto entry does not inherit wheel inertia locking", () => {
+  const transitionStart = featuredControllerSource.indexOf(
+    "const transitionBetweenSections",
+  );
+  const transitionEnd = featuredControllerSource.indexOf(
+    "const getExpansionAnchor",
+    transitionStart,
+  );
+  const transitionSource = featuredControllerSource.slice(
+    transitionStart,
+    transitionEnd,
+  );
+
+  assert.match(
+    transitionSource,
+    /lockProcessReturnGesture = true/,
+  );
+  assert.match(
+    transitionSource,
+    /entersAptoFromProcess[\s\S]*lockProcessReturnGesture[\s\S]*beginProcessReturnGestureLock\(\)/,
+  );
+  assert.match(
+    contentScrollSource,
+    /lockProcessReturnGesture: false/,
+  );
 });
 
 test("Process -> Apto activates Featured when the controlled return transition starts", () => {
