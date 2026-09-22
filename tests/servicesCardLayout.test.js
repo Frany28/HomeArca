@@ -18,6 +18,14 @@ const showcaseCss = readFileSync(
   "utf8",
 );
 
+const servicesContentSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/services/servicesContent.js",
+    import.meta.url,
+  ),
+  "utf8",
+);
+
 const sectionCss = readFileSync(
   new URL(
     "../src/pages/publicSite/services/components/ServicesSection.css",
@@ -60,5 +68,21 @@ test("services card enables a WebKit-safe rounded clipping layer", () => {
   assert.match(
     showcaseCss,
     /-webkit-mask-image:\s*-webkit-radial-gradient\(white, black\)/,
+  );
+});
+
+test("service images keep their proportions and use a focal point per category", () => {
+  assert.match(
+    showcaseSource,
+    /className="absolute inset-0 size-full object-cover"/,
+  );
+  assert.match(
+    showcaseSource,
+    /style=\{\{ objectPosition: category\.imagePosition \}\}/,
+  );
+  assert.doesNotMatch(showcaseSource, /h-\[162\.23%\]|w-\[438\.02%\]/);
+  assert.equal(
+    servicesContentSource.match(/imagePosition:\s*"\d+% \d+%"/g)?.length,
+    7,
   );
 });
