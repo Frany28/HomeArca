@@ -12,6 +12,7 @@ import {
   FEATURED_IMAGE_GALLERY_SELECTOR,
   FEATURED_PROJECT_EDGE_TOLERANCE_PX,
   FEATURED_PROJECT_SELECTOR,
+  SCROLL_STEP_DURATION_SECONDS,
   WHEEL_GESTURE_THRESHOLD_PX,
 } from "./homeScrollConstants.js";
 
@@ -105,6 +106,21 @@ function createFeaturedProjectsController({
 
   const getExpansionProgress = (index) => expansionProgress[index]?.get() ?? 0;
   const getExpansionTarget = (index) => expansionTargets[index] ?? 0;
+
+  const getMobileTransitionDuration = (targetScrollTop) => {
+    if (!Number.isFinite(targetScrollTop) || scroller.clientHeight <= 0) {
+      return SCROLL_STEP_DURATION_SECONDS;
+    }
+
+    const remainingDistance = Math.abs(targetScrollTop - scroller.scrollTop);
+    const viewportDistance = Math.max(1, scroller.clientHeight);
+    const distanceRatio = Math.min(1, remainingDistance / viewportDistance);
+
+    return Math.max(
+      0.12,
+      SCROLL_STEP_DURATION_SECONDS * distanceRatio,
+    );
+  };
 
   const commitProjectIndex = (index) => {
     if (activeFeaturedProjectIndexRef.current === index) return;
@@ -331,6 +347,9 @@ function createFeaturedProjectsController({
 
     return coordination.panel.startScrollTransition({
       scrollTop: transition.scrollTop,
+      duration: deferStateCommit
+        ? getMobileTransitionDuration(transition.scrollTop)
+        : undefined,
       onComplete: () => {
         if (direction > 0 || deferStateCommit) {
           commitProjectIndex(transition.index);
@@ -407,6 +426,9 @@ function createFeaturedProjectsController({
 
     return coordination.panel.startScrollTransition({
       scrollTop: targetScrollTop,
+      duration: deferStateCommit
+        ? getMobileTransitionDuration(targetScrollTop)
+        : undefined,
       onComplete: () => {
       coordination.content.selectSection(targetSectionId);
 
