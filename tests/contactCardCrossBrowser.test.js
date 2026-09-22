@@ -43,7 +43,7 @@ test("contact card keeps Figma geometry without percentage-height children", () 
   );
 });
 
-test("contact card uses the shader only on compatible non-touch environments", () => {
+test("contact card keeps the shader on compatible iPhone Safari and falls back on Android touch", () => {
   assert.match(cardSource, /useState\("fallback"\)/);
   assert.match(cardSource, /navigator\.gpu/);
   assert.match(cardSource, /requestAdapter\(\)/);
@@ -51,13 +51,15 @@ test("contact card uses the shader only on compatible non-touch environments", (
     cardSource,
     /\(hover: none\) and \(pointer: coarse\)/,
   );
-  assert.match(cardSource, /prefersCssGradient/);
+  assert.match(cardSource, /isAndroidTouchDevice/);
+  assert.match(cardSource, /\/android\/i/);
+  assert.match(cardSource, /prefersCssGradient = isAndroidTouchDevice\(\)/);
   assert.match(cardSource, /gradientRenderer === "shader"/);
   assert.match(cardSource, /<ShaderFill/);
   assert.match(cardSource, /paused=\{reduceMotion\}/);
 });
 
-test("contact card has an animated same-palette CSS fallback for Android and touch devices", () => {
+test("contact card has an animated same-palette CSS fallback for Android and unsupported GPU devices", () => {
   assert.match(cardSource, /setGradientRenderer\("fallback"\)/);
   assert.match(cardSource, /contact-tilt-card__gradient-fallback/);
   assert.match(
