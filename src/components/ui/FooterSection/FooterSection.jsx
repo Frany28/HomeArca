@@ -278,7 +278,7 @@ function PublicCtaFooter({
   ...props
 }) {
   const navigationClassName =
-    "[&_button]:text-[var(--color-primary-500)] [&_button:hover]:text-[var(--color-neutral-100-uniform)]";
+    "[&_button]:text-[var(--color-neutral-100-uniform)] [&_button:hover]:text-[var(--color-neutral-200)]";
 
   return (
     <footer
@@ -361,7 +361,7 @@ function PublicCtaFooter({
       </div>
 
       <div className="w-full px-[var(--spacing-gap-7)] max-[767px]:px-0">
-        <div className="flex w-full items-center justify-center border-t border-[var(--color-neutral-200)] py-[24px]">
+        <div className="flex w-full items-center justify-center border-t border-[var(--color-neutral-200)] pb-[calc(24px+env(safe-area-inset-bottom))] pt-[24px] min-[768px]:py-[24px]">
           <p className="text-body-2 m-0 text-center text-[var(--color-text-100)]">
             {copyrightText}
           </p>
