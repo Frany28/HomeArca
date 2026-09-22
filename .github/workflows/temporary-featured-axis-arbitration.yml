@@ -1,0 +1,22 @@
+name: Temporary Featured axis arbitration validation
+
+on:
+  push:
+    branches:
+      - fix/featured-carousel-axis-arbitration
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: Featured carousel tests
+        run: node --test tests/featuredProjectsGallery.test.js tests/featuredProjectsTouchNavigation.test.js tests/featuredMobileAxisOwnership.test.js tests/crossBrowserGestureOwnership.test.js
+      - name: Regression suite excluding known Contact baseline
+        run: node --test $(find tests -name '*.test.js' ! -name 'contactSection.test.js' | sort)
+      - run: npm run build
