@@ -1,0 +1,22 @@
+name: Temporary canvas statement validation
+
+on:
+  push:
+    branches:
+      - fix/cross-browser-statement-canvas-mask
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: Focused statement tests
+        run: node --test tests/statementCanvasMask.test.js tests/homeStatementMobileLifecycle.test.js tests/statementVideoPlayback.test.js
+      - name: Regression suite excluding known Contact baseline
+        run: node --test $(find tests -name '*.test.js' ! -name 'contactSection.test.js' | sort)
+      - run: npm run build
