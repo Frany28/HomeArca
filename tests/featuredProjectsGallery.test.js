@@ -92,7 +92,7 @@ test("mobile Featured matches Figma's 24px card gap and 16px group gap", () => {
   );
   assert.match(
     mobileCarouselSource,
-    /data-featured-gallery-carousel-set[\s\S]*className="flex shrink-0 gap-\[16px\]"/,
+    /className="flex shrink-0 gap-\[16px\]"[\s\S]*data-featured-gallery-carousel-set/,
   );
   assert.match(
     mobileCarouselSource,
