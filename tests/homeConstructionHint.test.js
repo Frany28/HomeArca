@@ -37,6 +37,20 @@ const inputControllerSource = readFileSync(
   ),
   "utf8",
 );
+const contentControllerSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/home/hooks/homeScroll/createContentScrollController.js",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const panelControllerSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/home/hooks/homeScroll/createPanelNavigationController.js",
+    import.meta.url,
+  ),
+  "utf8",
+);
 
 test("the Construction scroll hint appears on panel arrival and is bottom-centered on mobile", () => {
   assert.match(
@@ -70,5 +84,16 @@ test("title reveal completion requires a fresh wheel gesture", () => {
   assert.doesNotMatch(
     inputControllerSource,
     /pendingPanelDirectionRef|QUEUED_TITLE_REVEAL/,
+  );
+});
+
+test("programmatic panel scroll cannot reveal Construction as a second gesture", () => {
+  assert.match(
+    panelControllerSource,
+    /onComplete: \(\) => \{\s*runtime\.activeTween = undefined;\s*runtime\.requestAnimationFrame\(completeAlignment\);/,
+  );
+  assert.match(
+    contentControllerSource,
+    /const handleScrollEnd = \(\) => \{\s*if \(runtime\.isProgrammaticScroll \|\| runtime\.activeTween\) return;\s*if \(runtime\.ignoreNextScrollEnd\)/,
   );
 });

@@ -155,7 +155,7 @@ function createPanelNavigationController({
       overwrite: true,
       onComplete: () => {
         runtime.activeTween = undefined;
-        completeAlignment();
+        runtime.requestAnimationFrame(completeAlignment);
       },
     });
     return true;

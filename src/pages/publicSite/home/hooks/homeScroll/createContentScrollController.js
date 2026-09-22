@@ -255,6 +255,8 @@ function createContentScrollController({
   };
 
   const handleScrollEnd = () => {
+    if (runtime.isProgrammaticScroll || runtime.activeTween) return;
+
     if (runtime.ignoreNextScrollEnd) {
       runtime.ignoreNextScrollEnd = false;
       return;
