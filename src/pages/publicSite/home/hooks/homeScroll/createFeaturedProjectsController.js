@@ -17,6 +17,20 @@ import {
   WHEEL_GESTURE_THRESHOLD_PX,
 } from "./homeScrollConstants.js";
 
+function shouldActivateIncomingFeaturedBeforeTransition({
+  activeSectionId,
+  featuredProjectIndex,
+  targetAlignment,
+  targetSectionId,
+}) {
+  return (
+    activeSectionId === "process" &&
+    targetSectionId === "featured-projects" &&
+    featuredProjectIndex !== null &&
+    targetAlignment === "end"
+  );
+}
+
 function getNativeBoundaryCrossingDirection(
   previousScrollTop,
   scrollTop,
@@ -418,10 +432,12 @@ function createFeaturedProjectsController({
       featuredProjectIndex === 0 &&
       targetAlignment === "start";
     const entersAptoFromProcess =
-      activeSectionRef.current === "process" &&
-      targetSectionId === "featured-projects" &&
-      featuredProjectIndex !== null &&
-      targetAlignment === "end";
+      shouldActivateIncomingFeaturedBeforeTransition({
+        activeSectionId: activeSectionRef.current,
+        featuredProjectIndex,
+        targetAlignment,
+        targetSectionId,
+      });
     if (entersAptoFromProcess && !deferStateCommit) {
       beginProcessReturnGestureLock();
     }
@@ -453,10 +469,20 @@ function createFeaturedProjectsController({
       );
       setExpansionProgress(featuredProjectIndex, 1);
     }
-    if (featuredProjectIndex !== null && !deferStateCommit) {
+    if (
+      featuredProjectIndex !== null &&
+      (!deferStateCommit || entersAptoFromProcess)
+    ) {
       commitProjectIndex(featuredProjectIndex);
     }
-    if (entersAptoFromProcess && !deferStateCommit) {
+    if (entersAptoFromProcess) {
+      /*
+       * Mobile Process -> Apto uses a deferred native-boundary handoff.
+       * The native gesture must settle before this point, but once the
+       * programmatic transition begins the incoming Featured project has to be
+       * active immediately. Keeping "process" active until onComplete makes
+       * Apto enter visually inactive and skips its transition state.
+       */
       coordination.content.selectSection(targetSectionId);
     }
 
@@ -966,4 +992,5 @@ function createFeaturedProjectsController({
 export {
   createFeaturedProjectsController,
   getNativeBoundaryCrossingDirection,
+  shouldActivateIncomingFeaturedBeforeTransition,
 };

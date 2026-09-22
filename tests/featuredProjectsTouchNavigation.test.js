@@ -4,6 +4,7 @@ import test from "node:test";
 
 import {
   getNativeBoundaryCrossingDirection,
+  shouldActivateIncomingFeaturedBeforeTransition,
 } from "../src/pages/publicSite/home/hooks/homeScroll/createFeaturedProjectsController.js";
 
 const openingHomeSource = readFileSync(
@@ -190,6 +191,51 @@ test("the first Featured project can still flow naturally back into Services", (
     observerSource,
     /activeFeaturedProjectIndexRef\.current === 0[\s\S]*direction < 0[\s\S]*return false/,
   );
+});
+
+test("Process -> Apto activates Featured when the controlled return transition starts", () => {
+  assert.equal(
+    shouldActivateIncomingFeaturedBeforeTransition({
+      activeSectionId: "process",
+      featuredProjectIndex: 2,
+      targetAlignment: "end",
+      targetSectionId: "featured-projects",
+    }),
+    true,
+  );
+
+  assert.equal(
+    shouldActivateIncomingFeaturedBeforeTransition({
+      activeSectionId: "featured-projects",
+      featuredProjectIndex: 2,
+      targetAlignment: "end",
+      targetSectionId: "process",
+    }),
+    false,
+  );
+
+  const transitionStart = featuredControllerSource.indexOf(
+    "const transitionBetweenSections",
+  );
+  const transitionEnd = featuredControllerSource.indexOf(
+    "const getExpansionAnchor",
+    transitionStart,
+  );
+  const transitionSource = featuredControllerSource.slice(
+    transitionStart,
+    transitionEnd,
+  );
+
+  const activateTarget = transitionSource.indexOf(
+    "coordination.content.selectSection(targetSectionId);",
+  );
+  const startScrollTransition = transitionSource.indexOf(
+    "coordination.panel.startScrollTransition",
+  );
+
+  assert.ok(activateTarget >= 0);
+  assert.ok(startScrollTransition >= 0);
+  assert.ok(activateTarget < startScrollTransition);
 });
 
 test("mobile boundary transitions reuse the standard section navigation motion", () => {
