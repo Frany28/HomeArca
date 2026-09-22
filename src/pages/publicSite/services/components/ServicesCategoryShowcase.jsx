@@ -105,13 +105,25 @@ function ServicesCategoryShowcase({
                 data-category-slide
                 aria-hidden={index !== activeIndex}
               >
-                <img
-                  className="services-category-showcase__image absolute inset-0 size-full object-cover"
-                  src={category.image}
-                  alt={category.imageAlt}
-                  decoding="async"
-                  style={{ objectPosition: category.imagePosition }}
-                />
+                {category.id === "commercial" ? (
+                  <div
+                    className="services-category-showcase__commercial-image absolute inset-0"
+                    role="img"
+                    aria-label={category.imageAlt}
+                    style={{
+                      backgroundImage: `url("${category.image}")`,
+                      backgroundPosition: category.imagePosition,
+                    }}
+                  />
+                ) : (
+                  <img
+                    className="services-category-showcase__image absolute inset-0 size-full object-cover"
+                    src={category.image}
+                    alt={category.imageAlt}
+                    decoding="async"
+                    style={{ objectPosition: category.imagePosition }}
+                  />
+                )}
               </div>
             ))}
           </div>
