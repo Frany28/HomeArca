@@ -94,7 +94,7 @@ test("touch upward boundary watcher claims only a real vertical overshoot", () =
     shouldClaimTouchUpBoundary({
       boundaryScrollTop: 900,
       currentX: 100,
-      currentY: 330,
+      currentY: 315,
       startScrollTop: 1000,
       startX: 100,
       startY: 200,
@@ -166,7 +166,14 @@ test("touch upward handoff suppresses native momentum once the transition is cla
   );
   assert.match(
     featuredControllerSource,
-    /clearMobileBoundaryTransition\(\);[\s\S]*pinMobileBoundaryScroll\(boundary\.scrollTop\)/,
+    /const claimMobileTouchBoundary = \(direction\) =>[\s\S]*clearMobileBoundaryTransition\(\)/,
+  );
+  assert.doesNotMatch(
+    featuredControllerSource.slice(
+      featuredControllerSource.indexOf("const claimMobileTouchBoundary"),
+      featuredControllerSource.indexOf("const handleExpansionInput"),
+    ),
+    /pinMobileBoundaryScroll\(boundary\.scrollTop\)/,
   );
 });
 
