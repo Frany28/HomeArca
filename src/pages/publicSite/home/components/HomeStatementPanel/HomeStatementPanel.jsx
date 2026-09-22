@@ -13,6 +13,7 @@ import { getHomeStatementTransform } from "../../utils/homeScrollNavigation.js";
 import { classifyViewportResize } from "../../utils/viewportResize.js";
 import {
   createStatementGeometryRefreshQueue,
+  getStatementFocusBounds,
   isStatementGeometrySettled,
   shouldDeferStatementGeometryResize,
 } from "../../utils/statementGeometry.js";
@@ -43,6 +44,7 @@ function HomeStatementPanel({
     anchorX: 0,
     anchorY: 0,
   });
+  const measureGeometryRef = useRef(null);
   const effectStartedRef = useRef(effectStarted);
   const statementVisibleRef = useRef(statementVisible);
   const [videoFailed, setVideoFailed] = useState(false);
@@ -133,8 +135,19 @@ function HomeStatementPanel({
       maskGroup.removeAttribute("transform");
       svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
 
-      const focusBounds = (focusGlyph ?? maskText).getBBox();
-      if (!focusBounds.width || !focusBounds.height) return;
+      const focusBounds = getStatementFocusBounds({
+        focusGlyph,
+        focusLetterIndex,
+        maskText,
+      });
+      if (!focusBounds) {
+        geometryRef.current = {
+          ready: false,
+          anchorX: width / 2,
+          anchorY: height / 2,
+        };
+        return;
+      }
 
       geometryRef.current = {
         ready: true,
@@ -146,6 +159,7 @@ function HomeStatementPanel({
       renderMaskTransform(progress.get());
     };
 
+    measureGeometryRef.current = measureGeometry;
     measureGeometry({ force: true });
     document.fonts?.ready
       .then(() => {
@@ -156,6 +170,9 @@ function HomeStatementPanel({
 
     const handleProgress = (value) => {
       if (value > 0 && value < 1) animationHasProgressed = true;
+      if (!geometryRef.current.ready) {
+        measureGeometry({ force: true });
+      }
       renderMaskTransform(value);
       geometryRefreshQueue.flushIfSettled(geometryIsSettled);
     };
@@ -165,11 +182,26 @@ function HomeStatementPanel({
 
     return () => {
       cancelled = true;
+      if (measureGeometryRef.current === measureGeometry) {
+        measureGeometryRef.current = null;
+      }
       geometryRefreshQueue.destroy();
       unsubscribeProgress();
       resizeObserver.disconnect();
     };
   }, [phrase, progress, renderMaskTransform]);
+
+  useLayoutEffect(() => {
+    if (!effectStarted) return;
+
+    /*
+     * Re-measure after EFFECT makes the SVG visible. This avoids relying on
+     * hidden-SVG text metrics, which are not consistent between Blink and
+     * WebKit.
+     */
+    measureGeometryRef.current?.({ force: true });
+    renderMaskTransform(progress.get());
+  }, [effectStarted, progress, renderMaskTransform]);
 
   useEffect(() => {
     const video = videoRef.current;
