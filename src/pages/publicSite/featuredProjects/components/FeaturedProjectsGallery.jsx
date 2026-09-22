@@ -389,6 +389,7 @@ function FeaturedProjectsGallery({
         {stage}
         <div className="hidden h-full max-[1023px]:block">
           <FeaturedProjectsMobileCarousel
+            active={active}
             columns={columns}
             galleryLabel={galleryLabel}
           />

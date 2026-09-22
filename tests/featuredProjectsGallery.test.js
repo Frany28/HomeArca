@@ -91,6 +91,22 @@ test("tablet and mobile galleries use a horizontal photo carousel", () => {
   assert.doesNotMatch(mobileCarouselSource, /onClick/);
 });
 
+test("only the active mobile Featured carousel schedules animation work", () => {
+  assert.match(gallerySource, /<FeaturedProjectsMobileCarousel[\s\S]*active=\{active\}/);
+  assert.match(mobileCarouselSource, /active = false/);
+  assert.match(
+    mobileCarouselSource,
+    /if \(!active\) \{[\s\S]*?clearTimeout\(resumeTimerRef\.current\)[\s\S]*?return undefined;/,
+  );
+  assert.match(
+    mobileCarouselSource,
+    /useEffect\(\(\) => \{\s*autoPositionRef\.current = 0;\s*renderedPositionRef\.current = 0;\s*writeCarouselPosition\(0\);\s*\}, \[columns\]\);/,
+  );
+  assert.match(mobileCarouselSource, /\}, \[active, columns\]\);/);
+  assert.doesNotMatch(mobileCarouselSource, /preventDefault\(\)/);
+  assert.match(mobileCarouselSource, /touch-pan-y/);
+});
+
 test("mobile Featured uses one uniform gap between every adjacent image", () => {
   assert.match(
     mobileCarouselSource,

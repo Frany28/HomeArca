@@ -16,10 +16,15 @@ import {
 const AUTO_SCROLL_SPEED_PX_PER_SECOND = 24;
 const AUTO_SCROLL_RESUME_DELAY_MS = 700;
 
-function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
+function FeaturedProjectsMobileCarousel({
+  active = false,
+  columns,
+  galleryLabel,
+}) {
   const carouselRef = useRef(null);
   const trackRef = useRef(null);
   const resumeTimerRef = useRef(null);
+  const activeRef = useRef(active);
   const pausedRef = useRef(false);
   const interactionActiveRef = useRef(false);
   const autoPositionRef = useRef(0);
@@ -30,10 +35,13 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
   const firstSetRef = useRef(null);
   const secondSetRef = useRef(null);
 
+  activeRef.current = active;
+
   const scheduleAutoScrollResume = () => {
     window.clearTimeout(resumeTimerRef.current);
     resumeTimerRef.current = window.setTimeout(() => {
       if (
+        !activeRef.current ||
         !carouselRef.current ||
         !canResumeCarouselAutoScroll({
           interactionActive: interactionActiveRef.current,
@@ -80,8 +88,24 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
   };
 
   useEffect(() => {
+    autoPositionRef.current = 0;
+    renderedPositionRef.current = 0;
+    writeCarouselPosition(0);
+  }, [columns]);
+
+  useEffect(() => {
     const carousel = carouselRef.current;
     const track = trackRef.current;
+
+    if (!active) {
+      window.clearTimeout(resumeTimerRef.current);
+      pausedRef.current = false;
+      interactionActiveRef.current = false;
+      dragRef.current = null;
+      dragTargetPositionRef.current = null;
+      dragSettlingRef.current = false;
+      return undefined;
+    }
 
     if (
       !carousel ||
@@ -94,8 +118,6 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
 
     let animationFrame = 0;
     let previousTimestamp = null;
-    autoPositionRef.current = 0;
-    writeCarouselPosition(0);
 
     const animate = (timestamp) => {
       if (previousTimestamp === null) {
@@ -165,7 +187,7 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
       window.cancelAnimationFrame(animationFrame);
       window.clearTimeout(resumeTimerRef.current);
     };
-  }, [columns]);
+  }, [active, columns]);
 
   const pauseAutoScroll = () => {
     pausedRef.current = true;
