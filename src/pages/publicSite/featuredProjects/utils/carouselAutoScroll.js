@@ -1,6 +1,8 @@
 const CAROUSEL_AXIS_THRESHOLD_PX = 12;
 const CAROUSEL_AXIS_BIAS = 1.4;
 const CAROUSEL_DRAG_RESPONSE = 0.42;
+const CAROUSEL_ACTIVE_DRAG_RESPONSE = 0.68;
+const CAROUSEL_SETTLE_DRAG_RESPONSE = 0.34;
 
 function canWriteCarouselAutoScroll({
   interactionActive = false,
@@ -115,7 +117,9 @@ function normalizeCarouselLoopPosition(position, loopDistance) {
 export {
   CAROUSEL_AXIS_BIAS,
   CAROUSEL_AXIS_THRESHOLD_PX,
+  CAROUSEL_ACTIVE_DRAG_RESPONSE,
   CAROUSEL_DRAG_RESPONSE,
+  CAROUSEL_SETTLE_DRAG_RESPONSE,
   advanceCarouselAutoPosition,
   canResumeCarouselAutoScroll,
   canWriteCarouselAutoScroll,
