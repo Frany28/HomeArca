@@ -57,16 +57,20 @@ function ContactTiltCard() {
   const cardRef = useRef(null);
   const glareRef = useRef(null);
   const reduceMotion = useReducedMotion();
-  const [gradientRenderer, setGradientRenderer] = useState(() =>
-    typeof navigator !== "undefined" && navigator.gpu
-      ? "shader"
-      : "fallback",
-  );
+  const [gradientRenderer, setGradientRenderer] = useState("fallback");
 
   useEffect(() => {
     let cancelled = false;
 
-    if (typeof navigator === "undefined" || !navigator.gpu) {
+    const prefersCssGradient =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(hover: none) and (pointer: coarse)")?.matches;
+
+    if (
+      typeof navigator === "undefined" ||
+      !navigator.gpu ||
+      prefersCssGradient
+    ) {
       setGradientRenderer("fallback");
       return undefined;
     }

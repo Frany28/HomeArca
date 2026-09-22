@@ -31,13 +31,59 @@
 
 .contact-tilt-card__gradient-fallback {
   background:
+    radial-gradient(
+      circle at 18% 28%,
+      rgb(255 68 49 / 0.95) 0%,
+      rgb(255 68 49 / 0.48) 24%,
+      transparent 52%
+    ),
+    radial-gradient(
+      circle at 78% 68%,
+      rgb(255 255 255 / 0.88) 0%,
+      rgb(255 255 255 / 0.32) 20%,
+      transparent 48%
+    ),
     linear-gradient(
       135deg,
       rgb(255 68 49) 0%,
       rgb(255 255 255) 50%,
       rgb(42 41 41) 100%
     );
+  background-position:
+    0% 0%,
+    100% 100%,
+    0% 50%;
+  background-size:
+    160% 160%,
+    175% 175%,
+    220% 220%;
   opacity: 0.2;
+  transform: translate3d(0, 0, 0);
+  animation: contact-card-gradient-drift 7s ease-in-out infinite alternate;
+  will-change: background-position;
+}
+
+@keyframes contact-card-gradient-drift {
+  0% {
+    background-position:
+      0% 0%,
+      100% 100%,
+      0% 50%;
+  }
+
+  50% {
+    background-position:
+      72% 24%,
+      24% 68%,
+      58% 50%;
+  }
+
+  100% {
+    background-position:
+      100% 72%,
+      0% 18%,
+      100% 50%;
+  }
 }
 
 .contact-tilt-card__logo {
@@ -63,7 +109,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .contact-tilt-card__gradient {
+  .contact-tilt-card__gradient,
+  .contact-tilt-card__gradient-fallback {
     animation: none;
   }
 }

@@ -43,23 +43,38 @@ test("contact card keeps Figma geometry without percentage-height children", () 
   );
 });
 
-test("contact card uses the shader when WebGPU is available", () => {
+test("contact card uses the shader only on compatible non-touch environments", () => {
+  assert.match(cardSource, /useState\("fallback"\)/);
   assert.match(cardSource, /navigator\.gpu/);
   assert.match(cardSource, /requestAdapter\(\)/);
+  assert.match(
+    cardSource,
+    /\(hover: none\) and \(pointer: coarse\)/,
+  );
+  assert.match(cardSource, /prefersCssGradient/);
   assert.match(cardSource, /gradientRenderer === "shader"/);
   assert.match(cardSource, /<ShaderFill/);
   assert.match(cardSource, /paused=\{reduceMotion\}/);
 });
 
-test("contact card has a same-palette fallback when WebGPU is unavailable", () => {
+test("contact card has an animated same-palette CSS fallback for Android and touch devices", () => {
   assert.match(cardSource, /setGradientRenderer\("fallback"\)/);
   assert.match(cardSource, /contact-tilt-card__gradient-fallback/);
   assert.match(
     cardStyles,
-    /rgb\(255 68 49\)[\s\S]*rgb\(255 255 255\)[\s\S]*rgb\(42 41 41\)/,
+    /rgb\(255 68 49[\s\S]*rgb\(255 255 255[\s\S]*rgb\(42 41 41\)/,
   );
   assert.match(
     cardStyles,
     /\.contact-tilt-card__gradient-fallback\s*\{[\s\S]*opacity:\s*0\.2/,
+  );
+  assert.match(
+    cardStyles,
+    /animation:\s*contact-card-gradient-drift 7s ease-in-out infinite alternate/,
+  );
+  assert.match(cardStyles, /@keyframes contact-card-gradient-drift/);
+  assert.match(
+    cardStyles,
+    /prefers-reduced-motion:[\s\S]*contact-tilt-card__gradient-fallback/,
   );
 });
