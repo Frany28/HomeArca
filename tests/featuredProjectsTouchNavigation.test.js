@@ -6,6 +6,7 @@ import {
   getNativeBoundaryCrossingDirection,
   isTouchCapableMobileLayout,
   shouldActivateIncomingFeaturedBeforeTransition,
+  shouldActivateIncomingProjectBeforeTransition,
 } from "../src/pages/publicSite/home/hooks/homeScroll/createFeaturedProjectsController.js";
 
 const openingHomeSource = readFileSync(
@@ -249,6 +250,53 @@ test("the first Featured project can still flow naturally back into Services", (
     observerSource,
     /activeFeaturedProjectIndexRef\.current === 0[\s\S]*direction < 0[\s\S]*return false/,
   );
+});
+
+test("mobile upward project transitions activate the incoming project before the tween starts", () => {
+  assert.equal(
+    shouldActivateIncomingProjectBeforeTransition({
+      deferStateCommit: true,
+      direction: -1,
+    }),
+    true,
+  );
+  assert.equal(
+    shouldActivateIncomingProjectBeforeTransition({
+      deferStateCommit: true,
+      direction: 1,
+    }),
+    false,
+  );
+  assert.equal(
+    shouldActivateIncomingProjectBeforeTransition({
+      deferStateCommit: false,
+      direction: -1,
+    }),
+    false,
+  );
+
+  const transitionStart = featuredControllerSource.indexOf(
+    "const transitionProject",
+  );
+  const transitionEnd = featuredControllerSource.indexOf(
+    "const transitionBetweenSections",
+    transitionStart,
+  );
+  const transitionSource = featuredControllerSource.slice(
+    transitionStart,
+    transitionEnd,
+  );
+
+  const activateIncoming = transitionSource.indexOf(
+    "commitProjectIndex(transition.index);",
+  );
+  const startScrollTransition = transitionSource.indexOf(
+    "coordination.panel.startScrollTransition",
+  );
+
+  assert.ok(activateIncoming >= 0);
+  assert.ok(startScrollTransition >= 0);
+  assert.ok(activateIncoming < startScrollTransition);
 });
 
 test("Process -> Apto activates Featured when the controlled return transition starts", () => {

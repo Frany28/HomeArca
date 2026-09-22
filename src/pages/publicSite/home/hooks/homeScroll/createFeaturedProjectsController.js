@@ -31,6 +31,13 @@ function shouldActivateIncomingFeaturedBeforeTransition({
   );
 }
 
+function shouldActivateIncomingProjectBeforeTransition({
+  deferStateCommit = false,
+  direction = 0,
+}) {
+  return deferStateCommit && direction < 0;
+}
+
 function isTouchCapableMobileLayout({
   anyPointerCoarse = false,
   matchesMobileWidth = false,
@@ -425,7 +432,18 @@ function createFeaturedProjectsController({
     if (!transition) return false;
 
     expansionCompletionLock = null;
-    if (direction < 0 && !deferStateCommit) {
+
+    const activatesIncomingProjectBeforeTransition =
+      direction < 0 &&
+      (
+        !deferStateCommit ||
+        shouldActivateIncomingProjectBeforeTransition({
+          deferStateCommit,
+          direction,
+        })
+      );
+
+    if (activatesIncomingProjectBeforeTransition) {
       if (isExpansionEnabled() && isImageProject(transition.index)) {
         setPreparationOffset(
           transition.index,
@@ -433,6 +451,13 @@ function createFeaturedProjectsController({
         );
         setExpansionProgress(transition.index, 1);
       }
+
+      /*
+       * Upward transitions must render the incoming project as active while
+       * the tween is running. Delaying this commit until onComplete leaves
+       * the previous project active for the entire return animation, which
+       * visually removes the transition on mobile/tablet.
+       */
       commitProjectIndex(transition.index);
     }
 
@@ -442,7 +467,11 @@ function createFeaturedProjectsController({
         ? getMobileTransitionDuration(transition.scrollTop)
         : undefined,
       onComplete: () => {
-        if (direction > 0 || deferStateCommit) {
+        if (
+          direction > 0 ||
+          (deferStateCommit &&
+            !activatesIncomingProjectBeforeTransition)
+        ) {
           commitProjectIndex(transition.index);
         }
         if (direction < 0) setPreparationOffset(transition.index, 0);
@@ -1035,4 +1064,5 @@ export {
   getNativeBoundaryCrossingDirection,
   isTouchCapableMobileLayout,
   shouldActivateIncomingFeaturedBeforeTransition,
+  shouldActivateIncomingProjectBeforeTransition,
 };
