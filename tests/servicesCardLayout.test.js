@@ -74,13 +74,17 @@ test("services card enables a WebKit-safe rounded clipping layer", () => {
 test("service images keep their proportions and use a focal point per category", () => {
   assert.match(
     showcaseSource,
-    /className="absolute inset-0 size-full object-cover"/,
+    /className="services-category-showcase__image absolute inset-0 size-full object-cover"/,
   );
   assert.match(
     showcaseSource,
     /style=\{\{ objectPosition: category\.imagePosition \}\}/,
   );
   assert.doesNotMatch(showcaseSource, /h-\[162\.23%\]|w-\[438\.02%\]/);
+  assert.match(
+    showcaseCss,
+    /\.services-category-showcase__image\s*\{[\s\S]*object-fit:\s*cover/,
+  );
   assert.equal(
     servicesContentSource.match(/imagePosition:\s*"\d+% \d+%"/g)?.length,
     7,

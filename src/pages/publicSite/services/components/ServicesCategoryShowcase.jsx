@@ -106,7 +106,7 @@ function ServicesCategoryShowcase({
                 aria-hidden={index !== activeIndex}
               >
                 <img
-                  className="absolute inset-0 size-full object-cover"
+                  className="services-category-showcase__image absolute inset-0 size-full object-cover"
                   src={category.image}
                   alt={category.imageAlt}
                   decoding="async"

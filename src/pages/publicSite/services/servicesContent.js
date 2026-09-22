@@ -29,7 +29,7 @@ const SERVICES_CATEGORIES = Object.freeze([
     id: "commercial",
     label: "Diseño comercial",
     image: commercialDesignImage,
-    imagePosition: "52% 50%",
+    imagePosition: "54% 50%",
     imageAlt: "Proyecto de diseño comercial de ARCA Studio",
   }),
   Object.freeze({
