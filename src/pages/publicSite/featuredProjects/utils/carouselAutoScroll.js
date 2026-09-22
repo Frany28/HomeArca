@@ -1,5 +1,6 @@
 const CAROUSEL_AXIS_THRESHOLD_PX = 12;
 const CAROUSEL_AXIS_BIAS = 1.4;
+const CAROUSEL_DRAG_RESPONSE = 0.42;
 
 function canWriteCarouselAutoScroll({
   interactionActive = false,
@@ -13,6 +14,34 @@ function canResumeCarouselAutoScroll({
   scrollSettled = false,
 }) {
   return !interactionActive && scrollSettled;
+}
+
+function smoothCarouselDragPosition(
+  currentPosition,
+  targetPosition,
+  elapsedSeconds,
+  response = CAROUSEL_DRAG_RESPONSE,
+) {
+  const current = Number.isFinite(currentPosition)
+    ? currentPosition
+    : 0;
+  const target = Number.isFinite(targetPosition)
+    ? targetPosition
+    : current;
+  const elapsed = Number.isFinite(elapsedSeconds)
+    ? Math.max(0, elapsedSeconds)
+    : 0;
+  const safeResponse = Number.isFinite(response)
+    ? Math.min(Math.max(response, 0), 1)
+    : CAROUSEL_DRAG_RESPONSE;
+
+  if (elapsed <= 0 || safeResponse <= 0) return current;
+  if (safeResponse >= 1) return target;
+
+  const equivalentFrames = elapsed * 60;
+  const blend = 1 - Math.pow(1 - safeResponse, equivalentFrames);
+
+  return current + (target - current) * blend;
 }
 
 function advanceCarouselAutoPosition(
@@ -86,9 +115,11 @@ function normalizeCarouselLoopPosition(position, loopDistance) {
 export {
   CAROUSEL_AXIS_BIAS,
   CAROUSEL_AXIS_THRESHOLD_PX,
+  CAROUSEL_DRAG_RESPONSE,
   advanceCarouselAutoPosition,
   canResumeCarouselAutoScroll,
   canWriteCarouselAutoScroll,
   normalizeCarouselLoopPosition,
   resolveCarouselGestureAxis,
+  smoothCarouselDragPosition,
 };
