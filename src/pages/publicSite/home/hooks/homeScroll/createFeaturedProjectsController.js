@@ -87,10 +87,6 @@ function getNativeBoundaryCrossingDirection(
   return 0;
 }
 
-function shouldFlushMobileBoundaryImmediately(direction) {
-  return direction < 0;
-}
-
 function createFeaturedProjectsController({
   activeFeaturedProjectIndexRef,
   activeSectionRef,
@@ -109,6 +105,8 @@ function createFeaturedProjectsController({
   let previousMobileScrollTop = scroller.scrollTop;
   let mobileBoundaryTransitionPending = null;
   let mobileBoundarySettleTimer;
+  let mobileBoundaryReleaseFrame;
+  let mobileTouchGestureActive = false;
     const expansionTweens = new Map();
     const expansionTargets = expansionProgress.map((progress) => progress.get());
     const beginProcessReturnGestureLock = () => {
@@ -138,6 +136,8 @@ function createFeaturedProjectsController({
   const clearMobileBoundaryTransition = () => {
     window.clearTimeout(mobileBoundarySettleTimer);
     mobileBoundarySettleTimer = undefined;
+    runtime.cancelAnimationFrame(mobileBoundaryReleaseFrame);
+    mobileBoundaryReleaseFrame = undefined;
     mobileBoundaryTransitionPending = null;
   };
 
@@ -762,6 +762,55 @@ function createFeaturedProjectsController({
     previousMobileScrollTop = scrollTop;
   };
 
+  const flushMobileBoundaryAfterTouchRelease = () => {
+    const pendingTransition = mobileBoundaryTransitionPending;
+
+    if (
+      !pendingTransition ||
+      pendingTransition.started ||
+      pendingTransition.direction >= 0
+    ) {
+      return false;
+    }
+
+    /*
+     * Re-pin only after the finger is no longer driving native scroll. This
+     * cancels residual touch momentum without asking GSAP and the browser to
+     * write scrollTop at the same time.
+     */
+    pinMobileBoundaryScroll(pendingTransition.scrollTop);
+
+    runtime.cancelAnimationFrame(mobileBoundaryReleaseFrame);
+    mobileBoundaryReleaseFrame = runtime.requestAnimationFrame(() => {
+      mobileBoundaryReleaseFrame = undefined;
+
+      if (
+        mobileTouchGestureActive ||
+        mobileBoundaryTransitionPending !== pendingTransition ||
+        pendingTransition.started
+      ) {
+        return;
+      }
+
+      pinMobileBoundaryScroll(pendingTransition.scrollTop);
+      flushMobileNativeBoundaryTransition();
+    });
+
+    return true;
+  };
+
+  const beginMobileTouchGesture = () => {
+    if (!isMobileTouchLayout()) return;
+    mobileTouchGestureActive = true;
+  };
+
+  const endMobileTouchGesture = () => {
+    if (!isMobileTouchLayout()) return false;
+
+    mobileTouchGestureActive = false;
+    return flushMobileBoundaryAfterTouchRelease();
+  };
+
   const observeMobileNativeBoundaryScroll = () => {
     const scrollTop = scroller.scrollTop;
     const previousScrollTop = previousMobileScrollTop;
@@ -775,14 +824,19 @@ function createFeaturedProjectsController({
       }
 
       /*
-       * Safari keeps emitting momentum scroll events after the finger leaves
-       * the screen. Keep that native momentum inside the current project until
-       * it settles, otherwise one fling can visually cross multiple projects
-       * before the controlled transition begins.
+       * Keep native momentum at the claimed boundary. Upward navigation waits
+       * for touch release before starting the tween so native touch and GSAP
+       * never compete for scrollTop.
        */
       pinMobileBoundaryScroll(
         mobileBoundaryTransitionPending.scrollTop,
       );
+
+      if (mobileBoundaryTransitionPending.direction < 0) {
+        if (mobileTouchGestureActive) return true;
+        return flushMobileBoundaryAfterTouchRelease();
+      }
+
       scheduleMobileBoundaryTransition();
       return true;
     }
@@ -839,6 +893,7 @@ function createFeaturedProjectsController({
      * "heavy" manual drag and Safari skipping multiple projects.
      */
     mobileBoundaryTransitionPending = {
+      direction: crossingDirection,
       started: false,
       scrollTop: boundary.scrollTop,
       transition: boundary.transition,
@@ -846,16 +901,13 @@ function createFeaturedProjectsController({
     pinMobileBoundaryScroll(boundary.scrollTop);
 
     /*
-     * Upward touch navigation must start the controlled transition as soon as
-     * the boundary is claimed. Waiting for native momentum to settle lets the
-     * previous project/section become visible before the tween begins, which
-     * makes the upward transition appear to be missing on iOS and Android.
-     *
-     * Downward navigation keeps the settle delay because that protection is
-     * what prevents one fling from skipping multiple projects.
+     * Upward transitions must not start while a finger is still driving the
+     * native scroller. Hold at the boundary, then cancel residual momentum and
+     * start the controlled tween immediately after touch release.
      */
-    if (shouldFlushMobileBoundaryImmediately(crossingDirection)) {
-      return flushMobileNativeBoundaryTransition();
+    if (crossingDirection < 0) {
+      if (mobileTouchGestureActive) return true;
+      return flushMobileBoundaryAfterTouchRelease();
     }
 
     scheduleMobileBoundaryTransition();
@@ -1048,9 +1100,11 @@ function createFeaturedProjectsController({
   };
 
  return {
+  beginMobileTouchGesture,
   cancelExpansionTweens,
   commitProjectIndex,
   destroy,
+  endMobileTouchGesture,
   getContentBoundary,
   getExpansionProgress,
   getPanelScrollBounds,
@@ -1082,5 +1136,4 @@ export {
   isTouchCapableMobileLayout,
   shouldActivateIncomingFeaturedBeforeTransition,
   shouldActivateIncomingProjectBeforeTransition,
-  shouldFlushMobileBoundaryImmediately,
 };
