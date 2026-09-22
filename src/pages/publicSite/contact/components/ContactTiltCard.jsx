@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { useReducedMotion } from "motion/react";
 
@@ -57,6 +57,35 @@ function ContactTiltCard() {
   const cardRef = useRef(null);
   const glareRef = useRef(null);
   const reduceMotion = useReducedMotion();
+  const [gradientRenderer, setGradientRenderer] = useState(() =>
+    typeof navigator !== "undefined" && navigator.gpu
+      ? "shader"
+      : "fallback",
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (typeof navigator === "undefined" || !navigator.gpu) {
+      setGradientRenderer("fallback");
+      return undefined;
+    }
+
+    navigator.gpu
+      .requestAdapter()
+      .then((adapter) => {
+        if (!cancelled) {
+          setGradientRenderer(adapter ? "shader" : "fallback");
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setGradientRenderer("fallback");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useLayoutEffect(() => {
     const card = cardRef.current;
@@ -249,12 +278,19 @@ function ContactTiltCard() {
         data-node-id="4856:5063"
         onContextMenu={(event) => event.preventDefault()}
       >
-        <ShaderFill
-          className="contact-tilt-card__gradient pointer-events-none absolute inset-0"
-          shader={MOVING_GRADIENT_SHADER}
-          paused={reduceMotion}
-          aria-hidden="true"
-        />
+        {gradientRenderer === "shader" ? (
+          <ShaderFill
+            className="contact-tilt-card__gradient pointer-events-none absolute inset-0"
+            shader={MOVING_GRADIENT_SHADER}
+            paused={reduceMotion}
+            aria-hidden="true"
+          />
+        ) : (
+          <div
+            className="contact-tilt-card__gradient-fallback pointer-events-none absolute inset-0"
+            aria-hidden="true"
+          />
+        )}
         <div
           ref={glareRef}
           className="contact-tilt-card__glare pointer-events-none absolute z-10 will-change-transform"
@@ -262,7 +298,7 @@ function ContactTiltCard() {
         />
 
         <div
-          className="contact-tilt-card__logo relative z-20 h-full w-full overflow-hidden will-change-transform"
+          className="contact-tilt-card__logo absolute z-20 overflow-hidden will-change-transform"
           data-node-id="4856:5064"
         >
           <img
