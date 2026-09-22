@@ -66,7 +66,11 @@ test("the featured carousel delegates horizontal and vertical arbitration to nat
 test("mobile scrolling inside a featured project remains natively owned", () => {
   assert.match(
     inputGestureSource,
-    /if \(!coordination\.featured\.isExpansionEnabled\(\)\) return;/,
+    /featuredExpansionEnabled:[\s\S]*coordination\.featured\.isExpansionEnabled\(\)/,
+  );
+  assert.match(
+    inputGestureSource,
+    /gestureOwner !== TOUCH_GESTURE_OWNERS\.CONTROLLED_VERTICAL/,
   );
   assert.doesNotMatch(inputGestureSource, /nativeTouchIntent/);
   assert.doesNotMatch(inputGestureSource, /handleNativeTouchScroll/);
