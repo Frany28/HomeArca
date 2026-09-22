@@ -112,7 +112,10 @@ test("statement zoom anchor sits inside the solid left arc of the focus C", () =
 
   assert.equal(layout.focusAnchorX, expectedFillAnchor);
   assert.ok(layout.focusAnchorX < geometricCenter);
-  assert.equal(layout.focusAnchorY, 400);
+  assert.equal(
+    layout.focusAnchorY,
+    layout.baselineY + (2 - 8) / 2,
+  );
 });
 
 test("statement canvas punches the phrase out of the dark overlay", () => {
