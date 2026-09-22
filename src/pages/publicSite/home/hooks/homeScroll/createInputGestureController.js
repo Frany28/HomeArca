@@ -30,24 +30,6 @@ function isInteractiveTarget(target) {
 }
 
 const FEATURED_TOUCH_SWIPE_THRESHOLD_PX = 18;
-const FEATURED_TOUCH_SCROLL_IDLE_MS = 64;
-
-function updateNativeTouchIntentFromScroll(intent, scrollTop) {
-  if (!intent || intent.triggered || !Number.isFinite(scrollTop)) return false;
-
-  const previousScrollTop = intent.lastScrollTop;
-  intent.lastScrollTop = scrollTop;
-
-  if (!Number.isFinite(previousScrollTop) || scrollTop === previousScrollTop) {
-    return false;
-  }
-
-  intent.direction = scrollTop > previousScrollTop
-    ? HOME_SCROLL_DIRECTIONS.DOWN
-    : HOME_SCROLL_DIRECTIONS.UP;
-  intent.intentional = true;
-  return true;
-}
 
 function createInputGestureController({
   titleRevealLockedRef,
@@ -61,8 +43,6 @@ function createInputGestureController({
   statement,
 }) {
   let touchGesture = null;
-  let nativeTouchIntent = null;
-  let nativeTouchScrollTimer = null;
 
  const settleWheelGesture = () => {
     runtime.wheelGestureState =
@@ -474,18 +454,21 @@ function createInputGestureController({
       activeSectionRef.current === "featured-projects" &&
       !reduceMotion;
     if (featuredProjectReady) {
+      if (!coordination.featured.isExpansionEnabled()) return;
+
       const projectPanels = coordination.featured.getProjectPanels();
       const projectIndex = activeFeaturedProjectIndexRef.current;
       const bounds = coordination.featured.getPanelScrollBounds(projectPanels[projectIndex]);
-      const imageProject = coordination.featured.isExpansionEnabled() &&
-        coordination.featured.isImageProject(projectIndex, projectPanels);
+      const imageProject = coordination.featured.isImageProject(
+        projectIndex,
+        projectPanels,
+      );
       touchGesture = {
         pointerId: event.pointerId,
         startX: event.clientX,
         startY: event.clientY,
         startScrollTop: scroller.scrollTop,
         featuredProject: true,
-        nativeFeaturedScroll: !coordination.featured.isExpansionEnabled(),
         featuredBounds: bounds,
         featuredBoundaryAtStart: bounds
           ? {
@@ -508,52 +491,10 @@ function createInputGestureController({
         captured: false,
         consumed: false,
       };
-      if (touchGesture.nativeFeaturedScroll) {
-        window.clearTimeout(nativeTouchScrollTimer);
-        nativeTouchScrollTimer = null;
-        nativeTouchIntent = {
-          direction: null,
-          ended: false,
-          intentional: false,
-          lastScrollTop: scroller.scrollTop,
-          projectIndex,
-          startX: event.clientX,
-          startY: event.clientY,
-          triggered: false,
-        };
-      }
       return;
     }
 
     if (runtime.contentMode) {
-      const tracksFeaturedReturn =
-        activeSectionRef.current === "process" &&
-        !coordination.featured.isExpansionEnabled();
-
-      touchGesture = {
-        pointerId: event.pointerId,
-        startX: event.clientX,
-        startY: event.clientY,
-        nativeContent: true,
-        tracksFeaturedReturn,
-        consumed: false,
-      };
-
-      if (tracksFeaturedReturn) {
-        window.clearTimeout(nativeTouchScrollTimer);
-        nativeTouchScrollTimer = null;
-        nativeTouchIntent = {
-          direction: null,
-          ended: false,
-          intentional: false,
-          lastScrollTop: scroller.scrollTop,
-          projectIndex: null,
-          sourceSection: "process",
-          startX: event.clientX,
-          startY: event.clientY,
-          triggered: false,
-        };
-      }
       return;
     }
 
@@ -576,60 +517,9 @@ function createInputGestureController({
       touchGesture.pointerId !== event.pointerId ||
       touchGesture.consumed
     ) return;
-    if (touchGesture.nativeContent) {
-      if (touchGesture.tracksFeaturedReturn && nativeTouchIntent) {
-        const direction = getSwipeDirection(
-          {
-            startX: touchGesture.startX,
-            startY: touchGesture.startY,
-            endX: event.clientX,
-            endY: event.clientY,
-          },
-          {
-            threshold: FEATURED_TOUCH_SWIPE_THRESHOLD_PX,
-            verticalDominance: TOUCH_VERTICAL_DOMINANCE,
-          },
-        );
-
-        if (direction === HOME_SCROLL_DIRECTIONS.UP) {
-          nativeTouchIntent.direction = direction;
-          nativeTouchIntent.intentional = true;
-        }
-      }
-      return;
-    }
-
     const horizontalDistance = event.clientX - touchGesture.startX;
     const verticalDistance = touchGesture.startY - event.clientY;
     if (touchGesture.featuredProject) {
-      /*
-       * Mobile/tablet without the fullscreen expansion:
-       * leave the whole pointer sequence to native scrolling. Mixing an
-       * occasional preventDefault here with the touchend fallback made the
-       * same gesture follow two different paths depending on browser timing,
-       * which produced a short hitch over the horizontal gallery.
-       */
-      if (touchGesture.nativeFeaturedScroll) {
-        const direction = getSwipeDirection(
-          {
-            startX: touchGesture.startX,
-            startY: touchGesture.startY,
-            endX: event.clientX,
-            endY: event.clientY,
-          },
-          {
-            threshold: FEATURED_TOUCH_SWIPE_THRESHOLD_PX,
-            verticalDominance: TOUCH_VERTICAL_DOMINANCE,
-          },
-        );
-
-        if (direction !== null && nativeTouchIntent) {
-          nativeTouchIntent.direction = direction;
-          nativeTouchIntent.intentional = true;
-        }
-        return;
-      }
-
       const expansion = touchGesture.featuredExpansion;
       const absoluteVerticalDistance = Math.abs(verticalDistance);
       const isVerticalGesture =
@@ -806,187 +696,6 @@ function createInputGestureController({
     if (touchGesture?.pointerId === event.pointerId) touchGesture = null;
   };
 
-  const clearNativeTouchIntent = () => {
-    window.clearTimeout(nativeTouchScrollTimer);
-    nativeTouchScrollTimer = null;
-    nativeTouchIntent = null;
-  };
-
-  const shouldDeferNativeContentSync = () => {
-    const intent = nativeTouchIntent;
-
-    if (
-      !intent ||
-      intent.triggered ||
-      !intent.intentional ||
-      !intent.direction ||
-      coordination.featured.isExpansionEnabled()
-    ) {
-      return false;
-    }
-
-    if (intent.sourceSection === "process") {
-      return (
-        intent.direction === HOME_SCROLL_DIRECTIONS.UP &&
-        activeSectionRef.current === "process"
-      );
-    }
-
-    return (
-      activeSectionRef.current === "featured-projects" &&
-      activeFeaturedProjectIndexRef.current === intent.projectIndex
-    );
-  };
-
-  const tryNativeTouchBoundaryTransition = () => {
-    const intent = nativeTouchIntent;
-
-    if (
-      !intent ||
-      intent.triggered ||
-      !intent.intentional ||
-      !intent.direction ||
-      coordination.featured.isExpansionEnabled() ||
-      runtime.activeTween ||
-      runtime.isProgrammaticScroll
-    ) {
-      return false;
-    }
-
-    if (
-      intent.sourceSection === "process" &&
-      intent.direction === HOME_SCROLL_DIRECTIONS.UP
-    ) {
-      if (activeSectionRef.current !== "process") return false;
-
-      const boundary = coordination.featured.getContentBoundary(
-        HOME_SCROLL_DIRECTIONS.UP,
-      );
-      if (!boundary) return false;
-
-      const reachedBoundary =
-        scroller.scrollTop <=
-        boundary.scrollTop + FEATURED_PROJECT_EDGE_TOLERANCE_PX;
-
-      if (!reachedBoundary) return false;
-
-      intent.triggered = true;
-      const transitioned = boundary.transition();
-      if (transitioned) nativeTouchIntent = null;
-      return transitioned;
-    }
-
-    if (
-      activeSectionRef.current !== "featured-projects" ||
-      activeFeaturedProjectIndexRef.current !== intent.projectIndex
-    ) {
-      return false;
-    }
-
-    const panels = coordination.featured.getProjectPanels();
-    const bounds = coordination.featured.getPanelScrollBounds(
-      panels[intent.projectIndex],
-    );
-    if (!bounds) return false;
-
-    const reachedBoundary = intent.direction > 0
-      ? scroller.scrollTop >= bounds.end - FEATURED_PROJECT_EDGE_TOLERANCE_PX
-      : scroller.scrollTop <= bounds.start + FEATURED_PROJECT_EDGE_TOLERANCE_PX;
-
-    if (!reachedBoundary) return false;
-
-    intent.triggered = true;
-
-    const transitioned = coordination.featured.transitionProject(
-      intent.direction,
-      0,
-    );
-
-    if (!transitioned) {
-      const boundary = coordination.featured.getContentBoundary(intent.direction);
-      if (!boundary?.transition()) {
-        intent.triggered = false;
-        return false;
-      }
-    }
-
-    nativeTouchIntent = null;
-    return true;
-  };
-
-  const settleNativeTouchIntent = () => {
-    window.clearTimeout(nativeTouchScrollTimer);
-    nativeTouchScrollTimer = null;
-
-    const intent = nativeTouchIntent;
-    if (!intent?.ended) return;
-
-    if (!tryNativeTouchBoundaryTransition()) {
-      nativeTouchIntent = null;
-    }
-  };
-
-  const scheduleNativeTouchSettlement = () => {
-    if (!nativeTouchIntent?.ended || nativeTouchIntent.triggered) return;
-    window.clearTimeout(nativeTouchScrollTimer);
-    nativeTouchScrollTimer = window.setTimeout(
-      settleNativeTouchIntent,
-      FEATURED_TOUCH_SCROLL_IDLE_MS,
-    );
-  };
-
-  const finishNativeFeaturedTouchGesture = (event) => {
-    const intent = nativeTouchIntent;
-    if (!intent) return;
-
-    const touch = event.changedTouches?.[0];
-    if (touch) {
-      const direction = getSwipeDirection(
-        {
-          startX: intent.startX,
-          startY: intent.startY,
-          endX: touch.clientX,
-          endY: touch.clientY,
-        },
-        {
-          threshold: FEATURED_TOUCH_SWIPE_THRESHOLD_PX,
-          verticalDominance: TOUCH_VERTICAL_DOMINANCE,
-        },
-      );
-
-      if (direction !== null) {
-        intent.direction = direction;
-        intent.intentional = true;
-      }
-    }
-
-    intent.ended = true;
-    touchGesture = null;
-    scheduleNativeTouchSettlement();
-  };
-
-  const handleNativeTouchScroll = () => {
-    if (
-      nativeTouchIntent &&
-      !coordination.featured.isExpansionEnabled() &&
-      !runtime.activeTween &&
-      !runtime.isProgrammaticScroll
-    ) {
-      updateNativeTouchIntentFromScroll(
-        nativeTouchIntent,
-        scroller.scrollTop,
-      );
-    }
-
-    if (tryNativeTouchBoundaryTransition()) return;
-    scheduleNativeTouchSettlement();
-  };
-
-  const cancelNativeFeaturedTouchGesture = () => {
-    touchGesture = null;
-    clearNativeTouchIntent();
-  };
-
   const handleKeyDown = (event) => {
     const direction = getKeyboardDirection(event);
     if (direction === null || isInteractiveTarget(event.target)) return;
@@ -1068,18 +777,7 @@ function createInputGestureController({
     });
     scroller.addEventListener("pointerup", clearTouchGesture);
     scroller.addEventListener("pointercancel", clearTouchGesture);
-    scroller.addEventListener("touchend", finishNativeFeaturedTouchGesture, {
-      passive: true,
-      capture: true,
-    });
-    scroller.addEventListener("touchcancel", cancelNativeFeaturedTouchGesture, true);
     scroller.addEventListener("keydown", handleKeyDown);
-    /*
-     * Mobile touch navigation must get the first look at native scroll.
-     * Otherwise content synchronization can change the active section/project
-     * before the boundary transition has a chance to claim the gesture.
-     */
-    scroller.addEventListener("scroll", handleNativeTouchScroll, { passive: true });
     scroller.addEventListener("scroll", coordination.content.handleNativeScroll, { passive: true });
     document.addEventListener(
       "mousedown",
@@ -1094,7 +792,6 @@ function createInputGestureController({
     );
     if (runtime.supportsScrollEnd) {
       scroller.addEventListener("scrollend", coordination.content.handleScrollEnd);
-      scroller.addEventListener("scrollend", settleNativeTouchIntent);
     }
     window.addEventListener("resize", coordination.content.handleResize);
     window.addEventListener("orientationchange", coordination.content.handleResize);
@@ -1102,21 +799,16 @@ function createInputGestureController({
 
   const destroy = () => {
     window.clearTimeout(runtime.wheelIdleTimer);
-    clearNativeTouchIntent();
     touchGesture = null;
     scroller.removeEventListener("wheel", handleWheel, true);
     scroller.removeEventListener("pointerdown", handlePointerDown, true);
     scroller.removeEventListener("pointermove", handlePointerMove, true);
     scroller.removeEventListener("pointerup", clearTouchGesture);
     scroller.removeEventListener("pointercancel", clearTouchGesture);
-    scroller.removeEventListener("touchend", finishNativeFeaturedTouchGesture, true);
-    scroller.removeEventListener("touchcancel", cancelNativeFeaturedTouchGesture, true);
     scroller.removeEventListener("keydown", handleKeyDown);
     scroller.removeEventListener("scroll", coordination.content.handleNativeScroll);
-    scroller.removeEventListener("scroll", handleNativeTouchScroll);
     if (runtime.supportsScrollEnd) {
       scroller.removeEventListener("scrollend", coordination.content.handleScrollEnd);
-      scroller.removeEventListener("scrollend", settleNativeTouchIntent);
     }
     window.removeEventListener("resize", coordination.content.handleResize);
     window.removeEventListener("orientationchange", coordination.content.handleResize);
@@ -1167,12 +859,7 @@ function createInputGestureController({
     observeConsumedWheelGesture,
     requireFreshWheelGesture,
     scheduleWheelGestureSettlement,
-    shouldDeferNativeContentSync,
   };
 }
 
-export {
-  createInputGestureController,
-  isInteractiveTarget,
-  updateNativeTouchIntentFromScroll,
-};
+export { createInputGestureController, isInteractiveTarget };

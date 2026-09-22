@@ -218,6 +218,30 @@ function createFeaturedProjectsController({
 
     const scrollTop = scroller.scrollTop;
     const viewportHeight = scroller.clientHeight;
+
+    if (!isExpansionEnabled()) {
+      const viewportEnd = scrollTop + viewportHeight;
+      let mostVisibleIndex = activeFeaturedProjectIndexRef.current;
+      let mostVisibleHeight = 0;
+
+      projectPanels.forEach((panel, index) => {
+        const panelTop = getElementScrollTop(panel);
+        const panelBottom = panelTop + panel.offsetHeight;
+        const visibleHeight = Math.max(
+          0,
+          Math.min(panelBottom, viewportEnd) - Math.max(panelTop, scrollTop),
+        );
+
+        if (visibleHeight > mostVisibleHeight) {
+          mostVisibleHeight = visibleHeight;
+          mostVisibleIndex = index;
+        }
+      });
+
+      if (mostVisibleHeight > 0) commitProjectIndex(mostVisibleIndex);
+      return;
+    }
+
     let closestIndex = activeFeaturedProjectIndexRef.current;
     let closestDistance = Number.POSITIVE_INFINITY;
 

@@ -71,15 +71,6 @@ function createContentScrollController({
   const synchronizeContentScroll = ({ titlesSynchronized = false } = {}) => {
     if (!titlesSynchronized) synchronizeTitleVisibility();
 
-    /*
-     * While a mobile Featured/Process touch gesture owns the upcoming
-     * boundary crossing, keep section/project state stable. The controlled
-     * transition commits the destination explicitly on completion.
-     */
-    if (coordination.input?.shouldDeferNativeContentSync?.()) {
-      return;
-    }
-
     const servicesTop = getSection("services")?.offsetTop;
    if (servicesTop !== undefined && scroller.scrollTop < servicesTop - 1) {
       setContentMode(false);
@@ -219,10 +210,6 @@ function createContentScrollController({
         return;
       }
       if (coordination.featured.pinExpansion()) {
-        synchronizeTitleVisibility();
-        return;
-      }
-      if (coordination.featured.pinMobileProjectBoundary()) {
         synchronizeTitleVisibility();
         return;
       }
