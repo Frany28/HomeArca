@@ -871,12 +871,16 @@ function createFeaturedProjectsController({
     if (!boundary) return false;
 
     clearMobileBoundaryTransition();
-    pinMobileBoundaryScroll(boundary.scrollTop);
 
     /*
+     * Touch ownership is claimed before the browser applies the remaining
+     * pan delta. Do not snap scrollTop to the boundary here: starting the
+     * tween from the currently rendered position preserves finger continuity
+     * and removes the small hitch that was visible on iOS/Android.
+     *
      * If the native-scroll fallback already started the same transition,
      * claiming the rest of the active touch still matters: the input layer
-     * will suppress subsequent touchmove writes so the tween can finish.
+     * suppresses subsequent touchmove writes so the tween can finish.
      */
     if (runtime.activeTween || runtime.isProgrammaticScroll) {
       return true;
