@@ -50,6 +50,13 @@ const footerSource = readFileSync(
   ),
   "utf8",
 );
+const publicCtaFooterSource = readFileSync(
+  new URL(
+    "../src/components/ui/FooterSection/PublicCtaFooter.jsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
 
 test("Contact is the final Home section and participates in shared navigation", () => {
   const aboutPosition = openingHomeSource.indexOf("<AboutSection");
@@ -66,17 +73,19 @@ test("Contact is the final Home section and participates in shared navigation", 
   assert.match(contactSectionSource, /onNavChange=\{handleFooterNavigation\}/);
 });
 
-test("the public CTA Footer presentation is additive and reuses the UI system", () => {
+test("the public CTA Footer remains compatible without loading the full footer", () => {
   assert.match(footerSource, /presentation = "default"/);
   assert.match(footerSource, /presentation === "publicCta"/);
   assert.match(footerSource, /presentation !== "publicCta"/);
   assert.match(footerSource, /<PublicCtaFooter/);
-  assert.match(footerSource, /<MainLogo/);
-  assert.match(footerSource, /<HorizontalTabMenu/);
-  assert.match(footerSource, /<Button/);
   assert.match(footerSource, /<Input/);
   assert.match(footerSource, /onSubscribeClick/);
-  assert.match(contactSectionSource, /presentation="publicCta"/);
+  assert.match(publicCtaFooterSource, /<MainLogo/);
+  assert.match(publicCtaFooterSource, /<HorizontalTabMenu/);
+  assert.match(publicCtaFooterSource, /<Button/);
+  assert.doesNotMatch(publicCtaFooterSource, /Input\/Input|TabItem\/TabItem/);
+  assert.match(contactSectionSource, /<PublicCtaFooter/);
+  assert.doesNotMatch(contactSectionSource, /<FooterSection|presentation="publicCta"/);
 });
 
 test("Contact preserves the Home phases and owns no scroll interception", () => {
@@ -139,19 +148,19 @@ test("the exact Figma logo vectors are stored locally", () => {
 
 test("public CTA footer stays visible above iPhone Safari chrome", () => {
   assert.match(
-    footerSource,
+    publicCtaFooterSource,
     /\[&_button\]:text-\[var\(--color-neutral-100-uniform\)\]/,
   );
   assert.doesNotMatch(
-    footerSource,
+    publicCtaFooterSource,
     /\[&_button\]:text-\[var\(--color-primary-500\)\]/,
   );
   assert.match(
-    footerSource,
+    publicCtaFooterSource,
     /safe-area-inset-bottom/,
   );
   assert.match(
-    footerSource,
+    publicCtaFooterSource,
     /pb-\[calc\(24px\+env\(safe-area-inset-bottom\)\)\]/,
   );
 });

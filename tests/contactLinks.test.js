@@ -7,7 +7,7 @@ const buttonSource = readFileSync(
   "utf8",
 );
 const footerSource = readFileSync(
-  new URL("../src/components/ui/FooterSection/FooterSection.jsx", import.meta.url),
+  new URL("../src/components/ui/FooterSection/PublicCtaFooter.jsx", import.meta.url),
   "utf8",
 );
 const contactContentSource = readFileSync(

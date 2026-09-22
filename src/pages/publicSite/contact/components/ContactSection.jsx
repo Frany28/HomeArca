@@ -1,7 +1,7 @@
 import { ArrowRight } from "iconsax-react";
 
 import Button from "../../../../components/ui/Button/Button.jsx";
-import FooterSection from "../../../../components/ui/FooterSection/FooterSection.jsx";
+import PublicCtaFooter from "../../../../components/ui/FooterSection/PublicCtaFooter.jsx";
 import {
   CONTACT_CONTENT,
   CONTACT_EXTERNAL_LINKS,
@@ -66,8 +66,7 @@ function ContactSection({ onNavigate }) {
         <ContactTiltCard />
       </div>
 
-      <FooterSection
-        presentation="publicCta"
+      <PublicCtaFooter
         title={CONTACT_CONTENT.footerTitle}
         navItems={navigationLabels}
         socialItems={CONTACT_SOCIAL_ITEMS}
