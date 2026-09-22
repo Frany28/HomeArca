@@ -535,7 +535,9 @@ function createInputGestureController({
     upwardBoundaryTouch = {
       consumed: false,
       identifier: touch.identifier,
+      startProjectIndex: activeFeaturedProjectIndexRef.current,
       startScrollTop: scroller.scrollTop,
+      startSectionId: activeSectionRef.current,
       startX: touch.clientX,
       startY: touch.clientY,
     };
@@ -545,7 +547,7 @@ function createInputGestureController({
     const gesture = upwardBoundaryTouch;
     if (!gesture) return;
 
-    const touch = [...event.touches].find(
+    const touch = Array.from(event.touches).find(
       (candidate) => candidate.identifier === gesture.identifier,
     );
     if (!touch) return;
@@ -554,6 +556,29 @@ function createInputGestureController({
       event.preventDefault();
       return;
     }
+
+    const navigationChanged =
+      activeSectionRef.current !== gesture.startSectionId ||
+      (
+        gesture.startSectionId === "featured-projects" &&
+        activeFeaturedProjectIndexRef.current !== gesture.startProjectIndex
+      );
+
+    /*
+     * The native-scroll fallback may have claimed the boundary first. Once
+     * that happens, suppress the rest of the same physical touch so native
+     * momentum cannot overwrite the already-running GSAP transition.
+     */
+    if (
+      navigationChanged &&
+      (runtime.activeTween || runtime.isProgrammaticScroll)
+    ) {
+      event.preventDefault();
+      gesture.consumed = true;
+      return;
+    }
+
+    if (navigationChanged) return;
 
     const boundary = coordination.featured.getContentBoundary(
       HOME_SCROLL_DIRECTIONS.UP,
@@ -860,6 +885,7 @@ function createInputGestureController({
 
   const resetTouchGesture = () => {
     touchGesture = null;
+    upwardBoundaryTouch = null;
   };
 
   const handleVisibilityChange = () => {
