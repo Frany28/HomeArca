@@ -182,7 +182,7 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
     <div
       ref={carouselRef}
       aria-label={galleryLabel}
-      className="flex h-full touch-pan-x items-start gap-[var(--spacing-gap-5)] overflow-x-auto overscroll-x-contain px-[var(--spacing-gap-5)] py-[var(--spacing-gap-8)] [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden min-[768px]:gap-[16px] min-[768px]:px-[24px] min-[768px]:py-[32px]"
+      className="flex h-full touch-pan-x items-start gap-[var(--spacing-gap-7)] overflow-x-auto overscroll-x-contain px-[var(--spacing-gap-5)] py-[var(--spacing-gap-8)] [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden min-[768px]:gap-[16px] min-[768px]:px-[24px] min-[768px]:py-[32px]"
       data-featured-gallery-carousel
       data-native-horizontal-scroll
       onPointerDown={beginUserInteraction}
@@ -197,7 +197,7 @@ function FeaturedProjectsMobileCarousel({ columns, galleryLabel }) {
         <div
           ref={setIndex === 0 ? firstSetRef : secondSetRef}
           aria-hidden={set.ariaHidden ? "true" : undefined}
-          className="flex shrink-0 gap-[var(--spacing-gap-5)]"
+          className="flex shrink-0 gap-[var(--spacing-gap-7)] min-[768px]:gap-[16px]"
           data-featured-gallery-carousel-set
           key={set.key}
         >
