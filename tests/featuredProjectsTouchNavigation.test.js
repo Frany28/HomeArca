@@ -49,16 +49,19 @@ const panelControllerSource = readFileSync(
   "utf8",
 );
 
-test("the featured carousel never owns vertical movement", () => {
+test("the featured carousel is not a scroll container and never owns vertical movement", () => {
   assert.match(openingHomeSource, /touch-none/);
-  assert.match(mobileCarouselSource, /className="[^"]*touch-pan-y/);
-  assert.match(mobileCarouselSource, /overflow-x-hidden/);
-  assert.match(mobileCarouselSource, /overflow-y-hidden/);
+  assert.match(mobileCarouselSource, /className="[^"]*touch-pan-y[^"]*overflow-clip/);
+  assert.doesNotMatch(mobileCarouselSource, /overflow-x-(auto|scroll|hidden)/);
+  assert.doesNotMatch(mobileCarouselSource, /overflow-y-(auto|scroll|hidden)/);
   assert.doesNotMatch(mobileCarouselSource, /data-native-horizontal-scroll/);
+  assert.match(mobileCarouselSource, /data-featured-gallery-carousel-track/);
   assert.match(mobileCarouselSource, /resolveCarouselGestureAxis/);
   assert.match(mobileCarouselSource, /onPointerMove=\{handlePointerMove\}/);
   assert.match(mobileCarouselSource, /drag\.axis !== "horizontal"/);
   assert.match(mobileCarouselSource, /writeCarouselPosition/);
+  assert.match(mobileCarouselSource, /translate3d/);
+  assert.doesNotMatch(mobileCarouselSource, /scrollLeft/);
   assert.doesNotMatch(mobileCarouselSource, /event\.preventDefault\(\)/);
   assert.doesNotMatch(mobileCarouselSource, /setPointerCapture/);
   assert.doesNotMatch(mobileCarouselSource, /-webkit-overflow-scrolling:touch/);
