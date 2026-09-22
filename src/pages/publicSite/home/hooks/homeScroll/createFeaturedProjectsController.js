@@ -31,6 +31,22 @@ function shouldActivateIncomingFeaturedBeforeTransition({
   );
 }
 
+function isTouchCapableMobileLayout({
+  anyPointerCoarse = false,
+  matchesMobileWidth = false,
+  maxTouchPoints = 0,
+  primaryPointerCoarse = false,
+}) {
+  return (
+    matchesMobileWidth &&
+    (
+      primaryPointerCoarse ||
+      anyPointerCoarse ||
+      maxTouchPoints > 0
+    )
+  );
+}
+
 function getNativeBoundaryCrossingDirection(
   previousScrollTop,
   scrollTop,
@@ -149,9 +165,22 @@ function createFeaturedProjectsController({
     !(typeof window !== "undefined" &&
       window.matchMedia?.("(max-width: 1023px)").matches);
 
-  const isMobileTouchLayout = () =>
-    typeof window !== "undefined" &&
-    window.matchMedia?.("(max-width: 1023px) and (pointer: coarse)").matches;
+  const isMobileTouchLayout = () => {
+    if (typeof window === "undefined") return false;
+
+    return isTouchCapableMobileLayout({
+      matchesMobileWidth:
+        window.matchMedia?.("(max-width: 1023px)").matches ?? false,
+      primaryPointerCoarse:
+        window.matchMedia?.("(pointer: coarse)").matches ?? false,
+      anyPointerCoarse:
+        window.matchMedia?.("(any-pointer: coarse)").matches ?? false,
+      maxTouchPoints:
+        typeof navigator !== "undefined"
+          ? navigator.maxTouchPoints ?? 0
+          : 0,
+    });
+  };
 
   const getExpansionProgress = (index) => expansionProgress[index]?.get() ?? 0;
   const getExpansionTarget = (index) => expansionTargets[index] ?? 0;
@@ -327,6 +356,18 @@ function createFeaturedProjectsController({
     const viewportHeight = scroller.clientHeight;
 
     if (!isExpansionEnabled()) {
+      /*
+       * On touch mobile/tablet, native scrolling owns movement only inside the
+       * currently active project. Project identity is a state-machine commit
+       * performed by the boundary transition, never by "most visible" math.
+       *
+       * Android browsers can deliver larger compositor scroll jumps than
+       * Safari. Recomputing the active project mid-momentum can therefore move
+       * the boundary forward before the current one is claimed, allowing a
+       * fling to visually traverse Muelle/Apto/Process.
+       */
+      if (isMobileTouchLayout()) return;
+
       const viewportEnd = scrollTop + viewportHeight;
       let mostVisibleIndex = activeFeaturedProjectIndexRef.current;
       let mostVisibleHeight = 0;
@@ -992,5 +1033,6 @@ function createFeaturedProjectsController({
 export {
   createFeaturedProjectsController,
   getNativeBoundaryCrossingDirection,
+  isTouchCapableMobileLayout,
   shouldActivateIncomingFeaturedBeforeTransition,
 };

@@ -4,6 +4,7 @@ import test from "node:test";
 
 import {
   getNativeBoundaryCrossingDirection,
+  isTouchCapableMobileLayout,
   shouldActivateIncomingFeaturedBeforeTransition,
 } from "../src/pages/publicSite/home/hooks/homeScroll/createFeaturedProjectsController.js";
 
@@ -169,9 +170,64 @@ test("mobile boundary transitions observe scroll before content synchronization"
   assert.ok(observerCall < contentSync);
   assert.match(
     featuredControllerSource,
-    /\(max-width: 1023px\) and \(pointer: coarse\)/,
+    /\(max-width: 1023px\)/,
   );
+  assert.match(featuredControllerSource, /\(pointer: coarse\)/);
+  assert.match(featuredControllerSource, /\(any-pointer: coarse\)/);
+  assert.match(featuredControllerSource, /navigator\.maxTouchPoints/);
   assert.match(featuredControllerSource, /deferStateCommit: true/);
+});
+
+test("Android touch layouts are recognized even when the primary pointer is not reported coarse", () => {
+  assert.equal(
+    isTouchCapableMobileLayout({
+      matchesMobileWidth: true,
+      primaryPointerCoarse: false,
+      anyPointerCoarse: true,
+      maxTouchPoints: 0,
+    }),
+    true,
+  );
+
+  assert.equal(
+    isTouchCapableMobileLayout({
+      matchesMobileWidth: true,
+      primaryPointerCoarse: false,
+      anyPointerCoarse: false,
+      maxTouchPoints: 5,
+    }),
+    true,
+  );
+
+  assert.equal(
+    isTouchCapableMobileLayout({
+      matchesMobileWidth: false,
+      primaryPointerCoarse: true,
+      anyPointerCoarse: true,
+      maxTouchPoints: 5,
+    }),
+    false,
+  );
+});
+
+test("mobile touch project identity is committed by transitions, not most-visible scroll math", () => {
+  const syncStart = featuredControllerSource.indexOf(
+    "const synchronizeProject",
+  );
+  const syncEnd = featuredControllerSource.indexOf(
+    "const transitionProject",
+    syncStart,
+  );
+  const syncSource = featuredControllerSource.slice(syncStart, syncEnd);
+
+  assert.match(
+    syncSource,
+    /if \(isMobileTouchLayout\(\)\) return;/,
+  );
+  assert.ok(
+    syncSource.indexOf("if (isMobileTouchLayout()) return;") <
+      syncSource.indexOf("mostVisibleIndex"),
+  );
 });
 
 test("the first Featured project can still flow naturally back into Services", () => {
