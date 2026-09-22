@@ -161,3 +161,15 @@ test("mobile boundary transitions reuse the standard section navigation motion",
     /ease: SECTION_NAVIGATION_EASE/,
   );
 });
+
+
+test("mobile boundary handoff waits one animation frame before GSAP takes scroll ownership", () => {
+  assert.match(
+    featuredControllerSource,
+    /mobileBoundaryTransitionPending = true;[\s\S]*runtime\.requestAnimationFrame\(\(\) => \{[\s\S]*boundary\.transition\(\)/,
+  );
+  assert.match(
+    contentScrollSource,
+    /const mobileBoundaryTransitionClaimed =[\s\S]*observeMobileNativeBoundaryScroll\(\);[\s\S]*if \(mobileBoundaryTransitionClaimed\)[\s\S]*synchronizeTitleVisibility\(\);[\s\S]*return;/,
+  );
+});
