@@ -16,6 +16,20 @@ const mobileCarouselSource = readFileSync(
   ),
   "utf8",
 );
+const featuredSectionSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/featuredProjects/components/FeaturedProjectsSection.jsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const featuredProjectPanelSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/featuredProjects/components/FeaturedProjectsProjectPanel.jsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
 const processGridSource = readFileSync(
   new URL(
     "../src/pages/publicSite/processes/components/ProcessesVideoGrid.jsx",
@@ -44,7 +58,7 @@ test("image galleries keep their bento layout but are no longer interactive view
 });
 
 test("tablet and mobile galleries use a horizontal photo carousel", () => {
-  assert.match(gallerySource, /max-\[767px\]:h-\[612px\]/);
+  assert.match(gallerySource, /max-\[767px\]:h-\[596px\]/);
   assert.match(gallerySource, /min-\[768px\]:max-\[1023px\]:h-\[480px\]/);
   assert.match(gallerySource, /max-\[1023px\]:hidden/);
   assert.match(gallerySource, /FeaturedProjectsMobileCarousel/);
@@ -53,12 +67,41 @@ test("tablet and mobile galleries use a horizontal photo carousel", () => {
   assert.match(mobileCarouselSource, /data-native-horizontal-scroll/);
   assert.doesNotMatch(mobileCarouselSource, /handlePointerMove/);
   assert.match(mobileCarouselSource, /h-\[500px\] w-\[300px\]/);
-  assert.match(mobileCarouselSource, /gap-\[24px\]/);
-  assert.match(mobileCarouselSource, /pb-\[var\(--spacing-gap-9\)\]/);
+  assert.match(
+    mobileCarouselSource,
+    /gap-\[var\(--spacing-gap-7\)\]/,
+  );
+  assert.match(
+    mobileCarouselSource,
+    /px-\[var\(--spacing-gap-5\)\] py-\[var\(--spacing-gap-8\)\]/,
+  );
+  assert.doesNotMatch(
+    mobileCarouselSource,
+    /pb-\[var\(--spacing-gap-9\)\]/,
+  );
   assert.match(mobileCarouselSource, /data-featured-gallery-carousel-group/);
   assert.match(mobileCarouselSource, /<MainLogo/);
   assert.match(mobileCarouselSource, /data-featured-gallery-carousel/);
   assert.doesNotMatch(mobileCarouselSource, /onClick/);
+});
+
+test("mobile Featured matches the two-level Figma spacing model", () => {
+  assert.match(
+    featuredSectionSource,
+    /pt-\[var\(--spacing-gap-9\)\][^"]*max-\[767px\]:pb-\[var\(--spacing-gap-9\)\]/,
+  );
+  assert.match(
+    featuredProjectPanelSource,
+    /max-\[767px\]:pb-\[var\(--spacing-gap-9\)\]/,
+  );
+  assert.match(
+    mobileCarouselSource,
+    /py-\[var\(--spacing-gap-8\)\]/,
+  );
+  assert.match(
+    gallerySource,
+    /max-\[767px\]:h-\[596px\]/,
+  );
 });
 
 test("the bento scrubs through a reversible GSAP Flip layout", () => {
