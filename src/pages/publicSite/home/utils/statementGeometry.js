@@ -6,6 +6,62 @@ function shouldDeferStatementGeometryResize(resizeKind) {
   return resizeKind === VIEWPORT_RESIZE_KINDS.TRANSIENT_MOBILE_HEIGHT;
 }
 
+function isUsableStatementBounds(bounds) {
+  return Boolean(
+    bounds &&
+      Number.isFinite(bounds.x) &&
+      Number.isFinite(bounds.y) &&
+      Number.isFinite(bounds.width) &&
+      Number.isFinite(bounds.height) &&
+      bounds.width > 0 &&
+      bounds.height > 0
+  );
+}
+
+function readStatementBounds(readBounds) {
+  if (typeof readBounds !== "function") return null;
+
+  try {
+    const bounds = readBounds();
+    return isUsableStatementBounds(bounds) ? bounds : null;
+  } catch {
+    return null;
+  }
+}
+
+function getStatementFocusBounds({
+  focusGlyph,
+  focusLetterIndex = -1,
+  maskText,
+}) {
+  if (!maskText) return null;
+
+  /*
+   * WebKit can report an empty getBBox() for a nested <tspan> while an SVG
+   * has just changed from visibility:hidden to visible. SVGTextContentElement
+   * character geometry is more stable there, so prefer it when available.
+   */
+  if (
+    Number.isInteger(focusLetterIndex) &&
+    focusLetterIndex >= 0 &&
+    typeof maskText.getExtentOfChar === "function"
+  ) {
+    const characterBounds = readStatementBounds(() =>
+      maskText.getExtentOfChar(focusLetterIndex),
+    );
+    if (characterBounds) return characterBounds;
+  }
+
+  const glyphBounds = readStatementBounds(() => focusGlyph?.getBBox());
+  if (glyphBounds) return glyphBounds;
+
+  /*
+   * Last-resort cross-browser fallback: keep the effect functional and
+   * centered even if per-character metrics are temporarily unavailable.
+   */
+  return readStatementBounds(() => maskText.getBBox());
+}
+
 function isStatementGeometrySettled({
   animationHasProgressed = false,
   effectStarted = false,
@@ -72,6 +128,8 @@ function createStatementGeometryRefreshQueue({
 export {
   STATEMENT_GEOMETRY_SETTLE_MS,
   createStatementGeometryRefreshQueue,
+  getStatementFocusBounds,
   isStatementGeometrySettled,
+  isUsableStatementBounds,
   shouldDeferStatementGeometryResize,
 };
