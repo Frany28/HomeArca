@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  advanceCarouselAutoPosition,
   canResumeCarouselAutoScroll,
   canWriteCarouselAutoScroll,
-  shouldPauseCarouselAutoScroll,
 } from "../src/pages/publicSite/featuredProjects/utils/carouselAutoScroll.js";
 import {
   TOUCH_GESTURE_OWNERS,
@@ -53,14 +53,7 @@ test("pointer cancellation clears only the matching controlled gesture", () => {
   assert.equal(clearTouchGestureForPointer(gesture, 8), gesture);
 });
 
-test("carousel autoplay never writes during manual scrolling", () => {
-  assert.equal(
-    shouldPauseCarouselAutoScroll({
-      currentScrollLeft: 140,
-      expectedScrollLeft: 100,
-    }),
-    true,
-  );
+test("carousel autoplay writes only outside real user interaction", () => {
   assert.equal(
     canWriteCarouselAutoScroll({ paused: true }),
     false,
@@ -68,6 +61,35 @@ test("carousel autoplay never writes during manual scrolling", () => {
   assert.equal(
     canWriteCarouselAutoScroll({ interactionActive: true }),
     false,
+  );
+  assert.equal(
+    canWriteCarouselAutoScroll({
+      interactionActive: false,
+      paused: false,
+    }),
+    true,
+  );
+});
+
+test("carousel autoplay keeps subpixel progress independent from DOM scrollLeft rounding", () => {
+  let position = 0;
+
+  for (let frame = 0; frame < 5; frame += 1) {
+    position = advanceCarouselAutoPosition(
+      position,
+      1 / 60,
+      1000,
+      24,
+    );
+  }
+
+  assert.ok(position > 1.9 && position < 2.1);
+});
+
+test("carousel autoplay wraps continuously at the duplicated-set boundary", () => {
+  assert.equal(
+    advanceCarouselAutoPosition(999, 1, 1000, 24),
+    23,
   );
 });
 
