@@ -90,13 +90,17 @@ test("mobile Featured uses gap 7 between every adjacent image", () => {
     mobileCarouselSource,
     /className="flex h-full touch-pan-x items-start gap-\[var\(--spacing-gap-7\)\][^"]*px-\[var\(--spacing-gap-5\)\]/,
   );
-  assert.match(
+
+  const mobileGap7Occurrences = [
+    ...mobileCarouselSource.matchAll(
+      /gap-\[var\(--spacing-gap-7\)\]/g,
+    ),
+  ].length;
+
+  assert.ok(mobileGap7Occurrences >= 3);
+  assert.doesNotMatch(
     mobileCarouselSource,
-    /className="flex shrink-0 gap-\[var\(--spacing-gap-7\)\] min-\[768px\]:gap-\[16px\]"/,
-  );
-  assert.match(
-    mobileCarouselSource,
-    /className="flex shrink-0 gap-\[var\(--spacing-gap-7\)\] min-\[768px\]:gap-\[16px\]"/,
+    /className="flex shrink-0 gap-\[var\(--spacing-gap-5\)\]"/,
   );
 });
 
