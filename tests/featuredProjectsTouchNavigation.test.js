@@ -115,12 +115,27 @@ test("mobile boundary transitions observe scroll before content synchronization"
 
 
 test("services and Quinta keep native mobile scrolling without a forced section transition", () => {
+  const observerStart = featuredControllerSource.indexOf(
+    "const observeMobileNativeBoundaryScroll",
+  );
+  const observerEnd = featuredControllerSource.indexOf(
+    "const handleExpansionInput",
+    observerStart,
+  );
+  const observerSource = featuredControllerSource.slice(
+    observerStart,
+    observerEnd,
+  );
+
+  assert.notEqual(observerStart, -1);
+  assert.notEqual(observerEnd, -1);
+  assert.doesNotMatch(observerSource, /activeSectionRef\.current === "services"/);
   assert.doesNotMatch(
-    featuredControllerSource,
-    /activeSectionRef\.current === "services"[\s\S]*transitionBetweenSections\("featured-projects"/,
+    observerSource,
+    /transitionBetweenSections\("featured-projects"/,
   );
   assert.match(
-    featuredControllerSource,
+    observerSource,
     /activeFeaturedProjectIndexRef\.current === 0[\s\S]*direction < 0[\s\S]*return false/,
   );
 });
