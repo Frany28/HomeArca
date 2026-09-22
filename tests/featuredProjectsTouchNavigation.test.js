@@ -9,6 +9,9 @@ import {
   shouldActivateIncomingProjectBeforeTransition,
   shouldFlushMobileBoundaryImmediately,
 } from "../src/pages/publicSite/home/hooks/homeScroll/createFeaturedProjectsController.js";
+import {
+  shouldClaimTouchUpBoundary,
+} from "../src/pages/publicSite/home/hooks/homeScroll/createInputGestureController.js";
 
 const openingHomeSource = readFileSync(
   new URL("../src/pages/publicSite/home/OpeningHome.jsx", import.meta.url),
@@ -84,6 +87,87 @@ test("mobile Featured vertical movement is no longer simulated with pointermove"
   );
   assert.doesNotMatch(inputGestureSource, /scrollLeft\s*=/);
   assert.doesNotMatch(inputGestureSource, /setPointerCapture/);
+});
+
+test("touch upward boundary watcher claims only a real vertical overshoot", () => {
+  assert.equal(
+    shouldClaimTouchUpBoundary({
+      boundaryScrollTop: 900,
+      currentX: 100,
+      currentY: 330,
+      startScrollTop: 1000,
+      startX: 100,
+      startY: 200,
+    }),
+    true,
+  );
+
+  assert.equal(
+    shouldClaimTouchUpBoundary({
+      boundaryScrollTop: 900,
+      currentX: 100,
+      currentY: 250,
+      startScrollTop: 1000,
+      startX: 100,
+      startY: 200,
+    }),
+    false,
+  );
+
+  assert.equal(
+    shouldClaimTouchUpBoundary({
+      boundaryScrollTop: 900,
+      currentX: 210,
+      currentY: 230,
+      startScrollTop: 900,
+      startX: 100,
+      startY: 200,
+    }),
+    false,
+  );
+
+  assert.equal(
+    shouldClaimTouchUpBoundary({
+      boundaryScrollTop: 900,
+      currentX: 100,
+      currentY: 150,
+      startScrollTop: 900,
+      startX: 100,
+      startY: 200,
+    }),
+    false,
+  );
+});
+
+test("touch upward handoff suppresses native momentum once the transition is claimed", () => {
+  assert.match(
+    inputGestureSource,
+    /addEventListener\("touchstart", handleBoundaryTouchStart,[\s\S]*passive: true/,
+  );
+  assert.match(
+    inputGestureSource,
+    /addEventListener\("touchmove", handleBoundaryTouchMove,[\s\S]*passive: false/,
+  );
+  assert.match(
+    inputGestureSource,
+    /gesture\.consumed[\s\S]*event\.preventDefault\(\)/,
+  );
+  assert.match(
+    inputGestureSource,
+    /navigationChanged[\s\S]*runtime\.activeTween[\s\S]*event\.preventDefault\(\)/,
+  );
+  assert.match(
+    inputGestureSource,
+    /claimMobileTouchBoundary\([\s\S]*HOME_SCROLL_DIRECTIONS\.UP/,
+  );
+  assert.match(
+    featuredControllerSource,
+    /const claimMobileTouchBoundary = \(direction\) =>/,
+  );
+  assert.match(
+    featuredControllerSource,
+    /clearMobileBoundaryTransition\(\);[\s\S]*pinMobileBoundaryScroll\(boundary\.scrollTop\)/,
+  );
 });
 
 test("native scroll starts one transition only when it crosses a real boundary", () => {
