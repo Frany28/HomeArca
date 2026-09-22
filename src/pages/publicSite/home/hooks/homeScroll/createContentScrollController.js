@@ -40,6 +40,16 @@ function isContentNavigationReady({
   );
 }
 
+function shouldReturnToLastFeaturedProject({
+  activeSectionId,
+  targetSectionId,
+}) {
+  return (
+    activeSectionId === "process" &&
+    targetSectionId === "featured-projects"
+  );
+}
+
 function isAutomaticStatementScrollOwned({
   currentState,
   autoRevealing = false,
@@ -204,6 +214,29 @@ function createContentScrollController({
       sectionId === "home" ? 0 : STATEMENT_PANEL_INDEX,
     ));
     runtime.statementEnteringUp = false;
+
+    const returnsToLastFeaturedProject =
+      shouldReturnToLastFeaturedProject({
+        activeSectionId: activeSectionRef.current,
+        targetSectionId: sectionId,
+      });
+
+    if (returnsToLastFeaturedProject) {
+      const projectPanels = coordination.featured.getProjectPanels();
+      const lastProjectIndex = projectPanels.length - 1;
+
+      if (lastProjectIndex >= 0) {
+        setContentMode(true);
+
+        return coordination.featured.transitionBetweenSections(
+          "featured-projects",
+          {
+            featuredProjectIndex: lastProjectIndex,
+            targetAlignment: "end",
+          },
+        );
+      }
+    }
 
     coordination.panel.startScrollTransition({
       scrollTop: target.offsetTop,
@@ -499,5 +532,6 @@ export {
   createContentScrollController,
   isAutomaticStatementScrollOwned,
   isContentNavigationReady,
+  shouldReturnToLastFeaturedProject,
   isVisibleWithinViewport,
 };
