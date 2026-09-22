@@ -29,7 +29,8 @@ function createAboutStoryController({
 
   const getStory = () => {
     const usesStaticResponsiveStory =
-      window.matchMedia?.("(max-width: 1024px)").matches ?? false;
+      typeof window !== "undefined" &&
+      (window.matchMedia?.("(max-width: 1024px)").matches ?? false);
 
     if (usesStaticResponsiveStory) return null;
 
