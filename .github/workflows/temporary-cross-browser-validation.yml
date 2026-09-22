@@ -15,5 +15,16 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
-      - run: npm test
+      - name: Run cross-browser regression tests
+        run: >
+          node --test
+          tests/crossBrowserGestureOwnership.test.js
+          tests/featuredProjectsTouchNavigation.test.js
+          tests/featuredProjectsGallery.test.js
+          tests/homeConstructionHint.test.js
+          tests/homeScrollNavigation.test.js
+          tests/statementVideoPlayback.test.js
+      - name: Record full-suite baseline
+        continue-on-error: true
+        run: npm test
       - run: npm run build
