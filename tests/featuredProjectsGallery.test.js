@@ -49,7 +49,9 @@ test("tablet and mobile galleries use a horizontal photo carousel", () => {
   assert.match(gallerySource, /max-\[1023px\]:hidden/);
   assert.match(gallerySource, /FeaturedProjectsMobileCarousel/);
   assert.match(mobileCarouselSource, /overflow-x-auto/);
-  assert.match(mobileCarouselSource, /touch-pan-y/);
+  assert.match(mobileCarouselSource, /touch-auto/);
+  assert.match(mobileCarouselSource, /data-native-horizontal-scroll/);
+  assert.doesNotMatch(mobileCarouselSource, /handlePointerMove/);
   assert.match(mobileCarouselSource, /h-\[500px\] w-\[300px\]/);
   assert.match(mobileCarouselSource, /gap-\[24px\]/);
   assert.match(mobileCarouselSource, /pb-\[var\(--spacing-gap-9\)\]/);
@@ -131,10 +133,13 @@ test("the expanded layout is a single larger Bento grid, not scattered cards", (
 test("process videos retain their click and modal behavior", () => {
   assert.match(processGridSource, /<button/);
   assert.match(processGridSource, /onClick=\{\(event\) =>/);
+  assert.match(processGridSource, /touch-manipulation/);
   assert.match(processGridSource, /onVideoOpen\(video/);
   assert.match(processModalSource, /createPortal\(/);
   assert.match(processModalSource, /onClick=\{handleClose\}/);
   assert.match(processModalSource, /autoPlay/);
+  assert.match(processModalSource, /calculateTarget\(\);[\s\S]*readyState < 1/);
+  assert.match(processModalSource, /preload="metadata"/);
   assert.match(processModalSource, /<source src=\{video\.webm\}/);
   assert.doesNotMatch(processModalSource, /video\.mp4/);
 });

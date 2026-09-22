@@ -94,6 +94,6 @@ test("programmatic panel scroll cannot reveal Construction as a second gesture",
   );
   assert.match(
     contentControllerSource,
-    /const handleScrollEnd = \(\) => \{\s*if \(runtime\.isProgrammaticScroll \|\| runtime\.activeTween\) return;\s*if \(runtime\.ignoreNextScrollEnd\)/,
+    /const handleScrollEnd = \(\) => \{\s*if \(runtime\.isProgrammaticScroll \|\| runtime\.activeTween\) return;[\s\S]*flushMobileNativeBoundaryTransition\(\)[\s\S]*if \(runtime\.ignoreNextScrollEnd\)/,
   );
 });

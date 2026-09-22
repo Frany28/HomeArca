@@ -46,23 +46,31 @@ const panelControllerSource = readFileSync(
   "utf8",
 );
 
-test("the featured carousel separates horizontal dragging from vertical page scrolling", () => {
+test("the featured carousel delegates horizontal and vertical arbitration to native scrolling", () => {
   assert.match(
     openingHomeSource,
     /touch-none/,
   );
-  assert.match(mobileCarouselSource, /className="[^"]*touch-pan-y/);
-  assert.match(mobileCarouselSource, /handlePointerMove/);
-  assert.match(mobileCarouselSource, /Math\.abs\(deltaX\) <= Math\.abs\(deltaY\)/);
-  assert.match(mobileCarouselSource, /targetScrollLeft = drag\.startScrollLeft - deltaX/);
+  assert.match(mobileCarouselSource, /className="[^"]*touch-auto/);
+  assert.match(mobileCarouselSource, /overflow-x-auto/);
+  assert.match(mobileCarouselSource, /data-native-horizontal-scroll/);
+  assert.match(mobileCarouselSource, /onTouchStart=\{pauseAutoScroll\}/);
   assert.match(mobileCarouselSource, /onTouchCancel=\{resumeAutoScroll\}/);
+  assert.doesNotMatch(mobileCarouselSource, /handlePointerMove/);
+  assert.doesNotMatch(mobileCarouselSource, /setPointerCapture/);
+  assert.doesNotMatch(mobileCarouselSource, /DRAG_MOMENTUM/);
+  assert.doesNotMatch(mobileCarouselSource, /event\.preventDefault\(\)/);
 });
 
 
 test("mobile scrolling inside a featured project remains natively owned", () => {
   assert.match(
     inputGestureSource,
-    /if \(!coordination\.featured\.isExpansionEnabled\(\)\) return;/,
+    /featuredExpansionEnabled:[\s\S]*coordination\.featured\.isExpansionEnabled\(\)/,
+  );
+  assert.match(
+    inputGestureSource,
+    /gestureOwner !== TOUCH_GESTURE_OWNERS\.CONTROLLED_VERTICAL/,
   );
   assert.doesNotMatch(inputGestureSource, /nativeTouchIntent/);
   assert.doesNotMatch(inputGestureSource, /handleNativeTouchScroll/);
@@ -167,15 +175,36 @@ test("mobile boundary transitions reuse the standard section navigation motion",
 });
 
 
-test("mobile boundary handoff waits one animation frame before GSAP takes scroll ownership", () => {
+test("mobile boundary handoff waits for native scroll settlement before GSAP takes ownership", () => {
   assert.match(
     featuredControllerSource,
-    /mobileBoundaryTransitionPending = true;[\s\S]*runtime\.requestAnimationFrame\(\(\) => \{[\s\S]*boundary\.transition\(\)/,
+    /mobileBoundaryTransitionPending = \{[\s\S]*transition: boundary\.transition/,
+  );
+  assert.match(
+    featuredControllerSource,
+    /scheduleMobileBoundaryTransition\(\)/,
+  );
+  assert.match(
+    featuredControllerSource,
+    /SCROLL_SETTLE_DELAY_MS/,
   );
   assert.match(
     contentScrollSource,
-    /const mobileBoundaryTransitionClaimed =[\s\S]*observeMobileNativeBoundaryScroll\(\);[\s\S]*if \(mobileBoundaryTransitionClaimed\)[\s\S]*synchronizeTitleVisibility\(\);[\s\S]*return;/,
+    /handleScrollEnd[\s\S]*flushMobileNativeBoundaryTransition\(\)/,
   );
+  const observerStart = featuredControllerSource.indexOf(
+    "const observeMobileNativeBoundaryScroll",
+  );
+  const observerEnd = featuredControllerSource.indexOf(
+    "const handleExpansionInput",
+    observerStart,
+  );
+  const observerSource = featuredControllerSource.slice(
+    observerStart,
+    observerEnd,
+  );
+
+  assert.doesNotMatch(observerSource, /requestAnimationFrame/);
 });
 
 
@@ -219,10 +248,14 @@ test("controlled Home panels fully own touch gestures before native content scro
 });
 
 
-test("iOS controlled touch ignores interactive controls and resets stale gestures", () => {
+test("controlled touch ignores browser-owned targets and resets stale gestures", () => {
   assert.match(
     inputGestureSource,
-    /isInteractiveTarget\(event\.target\)/,
+    /getTouchGestureOwner\(\{/,
+  );
+  assert.match(
+    inputGestureSource,
+    /nativeHorizontalTarget: isNativeHorizontalTarget\(event\.target\)/,
   );
   assert.match(
     inputGestureSource,

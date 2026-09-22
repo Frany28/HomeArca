@@ -12,6 +12,7 @@ import {
   FEATURED_IMAGE_GALLERY_SELECTOR,
   FEATURED_PROJECT_EDGE_TOLERANCE_PX,
   FEATURED_PROJECT_SELECTOR,
+  SCROLL_SETTLE_DELAY_MS,
   SCROLL_STEP_DURATION_SECONDS,
   WHEEL_GESTURE_THRESHOLD_PX,
 } from "./homeScrollConstants.js";
@@ -65,7 +66,8 @@ function createFeaturedProjectsController({
   let processReturnGestureLocked = false;
   let processReturnGestureBecameIdle = false;
   let previousMobileScrollTop = scroller.scrollTop;
-  let mobileBoundaryTransitionPending = false;
+  let mobileBoundaryTransitionPending = null;
+  let mobileBoundarySettleTimer;
     const expansionTweens = new Map();
     const expansionTargets = expansionProgress.map((progress) => progress.get());
     const beginProcessReturnGestureLock = () => {
@@ -91,6 +93,39 @@ function createFeaturedProjectsController({
 
   const isProcessReturnGestureLocked = () =>
     processReturnGestureLocked;
+
+  const clearMobileBoundaryTransition = () => {
+    window.clearTimeout(mobileBoundarySettleTimer);
+    mobileBoundarySettleTimer = undefined;
+    mobileBoundaryTransitionPending = null;
+  };
+
+  const flushMobileNativeBoundaryTransition = () => {
+    const pendingTransition = mobileBoundaryTransitionPending;
+
+    if (!pendingTransition) return false;
+    if (pendingTransition.started) return true;
+    if (runtime.activeTween || runtime.isProgrammaticScroll) return true;
+
+    window.clearTimeout(mobileBoundarySettleTimer);
+    mobileBoundarySettleTimer = undefined;
+    pendingTransition.started = true;
+
+    if (!pendingTransition.transition()) {
+      clearMobileBoundaryTransition();
+      return false;
+    }
+
+    return true;
+  };
+
+  const scheduleMobileBoundaryTransition = () => {
+    window.clearTimeout(mobileBoundarySettleTimer);
+    mobileBoundarySettleTimer = window.setTimeout(
+      flushMobileNativeBoundaryTransition,
+      SCROLL_SETTLE_DELAY_MS,
+    );
+  };
   const getSection = () => coordination.content.getSection("featured-projects");
   const getProjectPanels = (section = getSection()) =>
     section ? [...section.querySelectorAll(FEATURED_PROJECT_SELECTOR)] : [];
@@ -196,6 +231,7 @@ function createFeaturedProjectsController({
   };
 
   const resetNavigationState = () => {
+    clearMobileBoundaryTransition();
     resetExpansionProgress();
     preparationOffsets.forEach((_, index) => setPreparationOffset(index, 0));
     commitProjectIndex(0);
@@ -357,7 +393,7 @@ function createFeaturedProjectsController({
         if (direction < 0) setPreparationOffset(transition.index, 0);
         if (deferStateCommit) {
           previousMobileScrollTop = scroller.scrollTop;
-          mobileBoundaryTransitionPending = false;
+          clearMobileBoundaryTransition();
         }
         coordination.content.synchronizeContentScroll();
       },
@@ -621,6 +657,9 @@ function createFeaturedProjectsController({
     if (!isMobileTouchLayout()) return false;
 
     if (mobileBoundaryTransitionPending) {
+      if (!mobileBoundaryTransitionPending.started) {
+        scheduleMobileBoundaryTransition();
+      }
       return true;
     }
 
@@ -663,16 +702,15 @@ function createFeaturedProjectsController({
     if (!crossingDirection) return false;
 
     /*
-     * Finish the browser's current native-scroll frame before GSAP takes
-     * ownership of scrollTop. Starting ScrollTo synchronously inside the
-     * scroll event can cause a one-frame tug-of-war with touch momentum.
+     * Native touch scrolling owns the vertical axis until momentum settles.
+     * scrollend flushes this handoff when supported; the debounce is the
+     * capability-safe fallback for browsers that do not expose scrollend.
      */
-    mobileBoundaryTransitionPending = true;
-    runtime.requestAnimationFrame(() => {
-      if (!boundary.transition()) {
-        mobileBoundaryTransitionPending = false;
-      }
-    });
+    mobileBoundaryTransitionPending = {
+      started: false,
+      transition: boundary.transition,
+    };
+    scheduleMobileBoundaryTransition();
 
     return true;
   };
@@ -841,6 +879,7 @@ function createFeaturedProjectsController({
   };
 
   const prepareForScrollbarNavigation = () => {
+    clearMobileBoundaryTransition();
     cancelExpansionTweens();
 
     expansionCompletionLock = null;
@@ -856,15 +895,21 @@ function createFeaturedProjectsController({
     });
   };
 
+  const destroy = () => {
+    clearMobileBoundaryTransition();
+    cancelExpansionTweens();
+  };
+
  return {
   cancelExpansionTweens,
   commitProjectIndex,
-  destroy: cancelExpansionTweens,
+  destroy,
   getContentBoundary,
   getExpansionProgress,
   getPanelScrollBounds,
   getProjectPanels,
   getProjectTransition,
+  flushMobileNativeBoundaryTransition,
   handleBoundaryWheel,
   handleExpansionInput,
   isExpansionEnabled,
