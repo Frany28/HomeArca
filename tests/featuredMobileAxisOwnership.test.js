@@ -5,6 +5,8 @@ import {
   advanceCarouselAutoPosition,
   canResumeCarouselAutoScroll,
   canWriteCarouselAutoScroll,
+  normalizeCarouselLoopPosition,
+  resolveCarouselGestureAxis,
 } from "../src/pages/publicSite/featuredProjects/utils/carouselAutoScroll.js";
 import {
   TOUCH_GESTURE_OWNERS,
@@ -91,6 +93,19 @@ test("carousel autoplay wraps continuously at the duplicated-set boundary", () =
     advanceCarouselAutoPosition(999, 1, 1000, 24),
     23,
   );
+});
+
+test("carousel gesture axis waits for intent and locks to the dominant direction", () => {
+  assert.equal(resolveCarouselGestureAxis(3, 2), null);
+  assert.equal(resolveCarouselGestureAxis(20, 4), "horizontal");
+  assert.equal(resolveCarouselGestureAxis(4, 20), "vertical");
+  assert.equal(resolveCarouselGestureAxis(20, 19), null);
+});
+
+test("manual horizontal carousel movement wraps seamlessly across the repeated set", () => {
+  assert.equal(normalizeCarouselLoopPosition(1024, 1000), 24);
+  assert.equal(normalizeCarouselLoopPosition(-24, 1000), 976);
+  assert.equal(normalizeCarouselLoopPosition(350, 1000), 350);
 });
 
 test("carousel autoplay can resume only after interaction and scroll settle", () => {
