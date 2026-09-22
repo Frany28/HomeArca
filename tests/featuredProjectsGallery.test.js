@@ -91,7 +91,7 @@ test("tablet and mobile galleries use a horizontal photo carousel", () => {
 test("mobile Featured uses one uniform gap between every adjacent image", () => {
   assert.match(
     mobileCarouselSource,
-    /className="flex h-full touch-pan-y items-start gap-\[var\(--spacing-gap-7\)\][^"]*px-\[var\(--spacing-gap-5\)\]/,
+    /className="flex h-full w-max items-start gap-\[var\(--spacing-gap-7\)\][^"]*min-\[768px\]:gap-\[16px\]"/,
   );
   assert.match(
     mobileCarouselSource,
