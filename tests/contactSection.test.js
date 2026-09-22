@@ -128,3 +128,23 @@ test("the exact Figma logo vectors are stored locally", () => {
 
   assert.doesNotMatch(contactTiltCardSource, /figma\.com\/api\/mcp\/asset/);
 });
+
+
+test("public CTA footer stays visible above iPhone Safari chrome", () => {
+  assert.match(
+    footerSource,
+    /\[&_button\]:text-\[var\(--color-neutral-100-uniform\)\]/,
+  );
+  assert.doesNotMatch(
+    footerSource,
+    /\[&_button\]:text-\[var\(--color-primary-500\)\]/,
+  );
+  assert.match(
+    footerSource,
+    /safe-area-inset-bottom/,
+  );
+  assert.match(
+    footerSource,
+    /pb-\[calc\(24px\+env\(safe-area-inset-bottom\)\)\]/,
+  );
+});
