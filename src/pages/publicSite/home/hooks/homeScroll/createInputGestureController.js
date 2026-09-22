@@ -11,6 +11,10 @@ import {
   normalizeWheelDelta,
 } from "../../utils/homeScrollNavigation.js";
 import {
+  TOUCH_GESTURE_OWNERS,
+  getTouchGestureOwner,
+} from "../../utils/touchGestureOwnership.js";
+import {
   FEATURED_PROJECT_EDGE_TOLERANCE_PX,
   STATEMENT_PANEL_INDEX,
   TOUCH_SWIPE_THRESHOLD_PX,
@@ -26,6 +30,13 @@ function isInteractiveTarget(target) {
     Boolean(target.closest(
       'a, button, input, select, textarea, [contenteditable="true"], [role="button"]',
     ))
+  );
+}
+
+function isNativeHorizontalTarget(target) {
+  return (
+    target instanceof Element &&
+    Boolean(target.closest("[data-native-horizontal-scroll]"))
   );
 }
 
@@ -450,8 +461,7 @@ function createInputGestureController({
     if (
       event.pointerType !== "touch" ||
       !event.isPrimary ||
-      touchGesture ||
-      isInteractiveTarget(event.target)
+      touchGesture
     ) {
       return;
     }
@@ -460,8 +470,18 @@ function createInputGestureController({
       runtime.contentMode &&
       activeSectionRef.current === "featured-projects" &&
       !reduceMotion;
+    const gestureOwner = getTouchGestureOwner({
+      contentMode: runtime.contentMode,
+      featuredProjectReady,
+      featuredExpansionEnabled:
+        featuredProjectReady && coordination.featured.isExpansionEnabled(),
+      interactiveTarget: isInteractiveTarget(event.target),
+      nativeHorizontalTarget: isNativeHorizontalTarget(event.target),
+    });
+
+    if (gestureOwner !== TOUCH_GESTURE_OWNERS.CONTROLLED_VERTICAL) return;
+
     if (featuredProjectReady) {
-      if (!coordination.featured.isExpansionEnabled()) return;
 
       const projectPanels = coordination.featured.getProjectPanels();
       const projectIndex = activeFeaturedProjectIndexRef.current;
