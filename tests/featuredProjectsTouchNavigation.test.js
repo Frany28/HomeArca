@@ -49,24 +49,21 @@ const panelControllerSource = readFileSync(
   "utf8",
 );
 
-test("the featured carousel arbitrates horizontal cards vs vertical page scroll", () => {
+test("the featured carousel leaves axis arbitration to native touch scrolling", () => {
   assert.match(openingHomeSource, /touch-none/);
-  assert.match(mobileCarouselSource, /className="[^"]*touch-pan-y/);
+  assert.match(mobileCarouselSource, /className="[^"]*touch-auto/);
   assert.doesNotMatch(
     mobileCarouselSource,
-    /className="[^"]*touch-pan-x/,
+    /className="[^"]*touch-pan-[xy]/,
   );
   assert.match(mobileCarouselSource, /overflow-x-auto/);
   assert.match(mobileCarouselSource, /data-native-horizontal-scroll/);
-  assert.match(mobileCarouselSource, /resolveCarouselGestureAxis/);
-  assert.match(mobileCarouselSource, /onPointerMove=\{handlePointerMove\}/);
-  assert.match(mobileCarouselSource, /drag\.axis !== "horizontal"/);
-  assert.match(
-    mobileCarouselSource,
-    /writeCarouselPosition\([\s\S]*drag\.startScrollLeft - deltaX/,
-  );
-  assert.match(mobileCarouselSource, /onTouchStart=\{handleTouchStart\}/);
-  assert.match(mobileCarouselSource, /onTouchCancel=\{handleTouchEnd\}/);
+  assert.doesNotMatch(mobileCarouselSource, /resolveCarouselGestureAxis/);
+  assert.doesNotMatch(mobileCarouselSource, /onPointerMove=/);
+  assert.doesNotMatch(mobileCarouselSource, /writeCarouselPosition/);
+  assert.doesNotMatch(mobileCarouselSource, /startHorizontalInertia/);
+  assert.match(mobileCarouselSource, /onTouchStart=\{beginUserInteraction\}/);
+  assert.match(mobileCarouselSource, /onTouchCancel=\{endUserInteraction\}/);
   assert.doesNotMatch(mobileCarouselSource, /event\.preventDefault\(\)/);
   assert.doesNotMatch(mobileCarouselSource, /setPointerCapture/);
 });
