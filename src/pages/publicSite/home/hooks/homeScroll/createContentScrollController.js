@@ -6,6 +6,10 @@ import {
   getSequentialScrollbarPanelIndex,
 } from "../../utils/homeScrollNavigation.js";
 import {
+  VIEWPORT_RESIZE_KINDS,
+  classifyViewportResize,
+} from "../../utils/viewportResize.js";
+import {
   CONTENT_TITLE_SCOPE_SELECTOR,
   SCROLL_SETTLE_DELAY_MS,
   STATEMENT_PANEL_INDEX,
@@ -34,6 +38,30 @@ function createContentScrollController({
   setFeaturedStep,
   setVisibleContentTitleIds,
 }) {
+  let previousViewportSize = {
+    width: scroller.clientWidth,
+    height: scroller.clientHeight,
+  };
+
+  const getViewportResizeKind = () => {
+    const nextViewportSize = {
+      width: scroller.clientWidth,
+      height: scroller.clientHeight,
+    };
+    const resizeKind = classifyViewportResize({
+      previousWidth: previousViewportSize.width,
+      previousHeight: previousViewportSize.height,
+      nextWidth: nextViewportSize.width,
+      nextHeight: nextViewportSize.height,
+      hasVisualViewport: Boolean(window.visualViewport),
+      coarsePointer:
+        window.matchMedia?.("(pointer: coarse)").matches ?? false,
+    });
+
+    previousViewportSize = nextViewportSize;
+    return resizeKind;
+  };
+
   const setContentMode = (value) => {
     runtime.contentMode = value;
     contentModeRef.current = value;
@@ -265,6 +293,10 @@ function createContentScrollController({
   const handleScrollEnd = () => {
     if (runtime.isProgrammaticScroll || runtime.activeTween) return;
 
+    if (coordination.featured.flushMobileNativeBoundaryTransition()) {
+      return;
+    }
+
     if (runtime.ignoreNextScrollEnd) {
       runtime.ignoreNextScrollEnd = false;
       return;
@@ -273,6 +305,17 @@ function createContentScrollController({
   };
 
   const handleResize = () => {
+    const resizeKind = getViewportResizeKind();
+
+    if (resizeKind === VIEWPORT_RESIZE_KINDS.UNCHANGED) return;
+
+    if (
+      resizeKind === VIEWPORT_RESIZE_KINDS.TRANSIENT_MOBILE_HEIGHT
+    ) {
+      synchronizeTitleVisibility();
+      return;
+    }
+
     if (runtime.contentMode) {
       const servicesTop = getSection("services")?.offsetTop;
       if (servicesTop !== undefined && scroller.scrollTop < servicesTop) {
