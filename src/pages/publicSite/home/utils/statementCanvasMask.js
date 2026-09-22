@@ -140,7 +140,6 @@ function drawStatementCanvasMask({
   const fontSize = getStatementCanvasFontSize(width);
 
   context.save();
-  context.setTransform(1, 0, 0, 1, 0, 0);
   context.clearRect(0, 0, width, height);
   context.fillStyle = overlayColor;
   context.fillRect(0, 0, width, height);
