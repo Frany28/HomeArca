@@ -15,6 +15,7 @@ import ContactSection from "../contact/components/ContactSection.jsx";
 import { CONTACT_EXTERNAL_LINKS } from "../contact/contactContent.js";
 import useHomeOpeningSequence from "./hooks/useHomeOpeningSequence.js";
 import useHomeScrollController from "./hooks/useHomeScrollController.js";
+import useBrowserChromeScrollGuard from "./hooks/useBrowserChromeScrollGuard.js";
 import { HOME_PRELOAD_IMAGES } from "./homeContent.js";
 
 const PANEL_TRANSITION_DURATION_SECONDS = 1.15;
@@ -57,6 +58,11 @@ function OpeningHome() {
   });
 
   const homeActive = phase === "complete";
+
+  useBrowserChromeScrollGuard({
+    enabled: homeActive && initialScrollReady,
+    scrollerRef,
+  });
 
   const titleIsVisible = (id) =>
     visibleContentTitleIds.includes(id);
