@@ -63,9 +63,9 @@ test("tablet and mobile galleries use a horizontal photo carousel", () => {
   assert.match(gallerySource, /max-\[1023px\]:hidden/);
   assert.match(gallerySource, /FeaturedProjectsMobileCarousel/);
   assert.match(mobileCarouselSource, /overflow-x-auto/);
-  assert.match(mobileCarouselSource, /touch-pan-x/);
+  assert.match(mobileCarouselSource, /touch-pan-y/);
   assert.match(mobileCarouselSource, /data-native-horizontal-scroll/);
-  assert.doesNotMatch(mobileCarouselSource, /handlePointerMove/);
+  assert.match(mobileCarouselSource, /handlePointerMove/);
   assert.match(mobileCarouselSource, /h-\[500px\] w-\[300px\]/);
   assert.match(
     mobileCarouselSource,
@@ -88,7 +88,7 @@ test("tablet and mobile galleries use a horizontal photo carousel", () => {
 test("mobile Featured uses gap 7 between every adjacent image", () => {
   assert.match(
     mobileCarouselSource,
-    /className="flex h-full touch-pan-x items-start gap-\[var\(--spacing-gap-7\)\][^"]*px-\[var\(--spacing-gap-5\)\]/,
+    /className="flex h-full touch-pan-y items-start gap-\[var\(--spacing-gap-7\)\][^"]*px-\[var\(--spacing-gap-5\)\]/,
   );
 
   const mobileGap7Occurrences = [

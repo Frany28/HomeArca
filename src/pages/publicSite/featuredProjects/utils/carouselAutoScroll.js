@@ -1,3 +1,6 @@
+const CAROUSEL_AXIS_THRESHOLD_PX = 8;
+const CAROUSEL_AXIS_BIAS = 1.15;
+
 function canWriteCarouselAutoScroll({
   interactionActive = false,
   paused = false,
@@ -38,8 +41,42 @@ function advanceCarouselAutoPosition(
   return nextPosition;
 }
 
+function resolveCarouselGestureAxis(
+  deltaX,
+  deltaY,
+  {
+    bias = CAROUSEL_AXIS_BIAS,
+    threshold = CAROUSEL_AXIS_THRESHOLD_PX,
+  } = {},
+) {
+  const absX = Math.abs(deltaX);
+  const absY = Math.abs(deltaY);
+
+  if (Math.max(absX, absY) < threshold) return null;
+  if (absX > absY * bias) return "horizontal";
+  if (absY > absX * bias) return "vertical";
+
+  return null;
+}
+
+function normalizeCarouselLoopPosition(position, loopDistance) {
+  if (
+    !Number.isFinite(position) ||
+    !Number.isFinite(loopDistance) ||
+    loopDistance <= 0
+  ) {
+    return Number.isFinite(position) ? position : 0;
+  }
+
+  return ((position % loopDistance) + loopDistance) % loopDistance;
+}
+
 export {
+  CAROUSEL_AXIS_BIAS,
+  CAROUSEL_AXIS_THRESHOLD_PX,
   advanceCarouselAutoPosition,
   canResumeCarouselAutoScroll,
   canWriteCarouselAutoScroll,
+  normalizeCarouselLoopPosition,
+  resolveCarouselGestureAxis,
 };
