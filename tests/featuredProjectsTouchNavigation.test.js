@@ -529,7 +529,7 @@ test("mobile upward boundary handoff waits for touch release before starting the
   );
   assert.match(
     featuredControllerSource,
-    /const endMobileTouchGesture = \(\) =>[\s\S]*mobileTouchGestureActive = false[\s\S]*flushMobileBoundaryAfterTouchRelease\(\)/,
+    /const endMobileTouchGesture = \(\) =>[\s\S]*mobileTouchGestureActive = false[\s\S]*flushMobileBoundaryAfterTouchRelease\(\{[\s\S]*allowDownward:/,
   );
   assert.match(
     observerSource,
@@ -537,7 +537,7 @@ test("mobile upward boundary handoff waits for touch release before starting the
   );
   assert.match(
     observerSource,
-    /crossingDirection < 0[\s\S]*mobileTouchGestureActive[\s\S]*flushMobileBoundaryAfterTouchRelease\(\)/,
+    /shouldUseImmediateMobileBoundaryRelease\([\s\S]*direction: crossingDirection[\s\S]*mobileTouchGestureActive[\s\S]*flushMobileBoundaryAfterTouchRelease/,
   );
   assert.match(
     featuredControllerSource,
@@ -569,7 +569,7 @@ test("input controller reports native touch lifecycle without preventing the bro
 });
 
 
-test("mobile downward boundary handoff still waits for native momentum to settle", () => {
+test("iPhone downward boundary handoff still keeps the native momentum settle path", () => {
   assert.match(
     featuredControllerSource,
     /scheduleMobileBoundaryTransition\(\)/,
@@ -592,7 +592,14 @@ test("mobile downward boundary handoff still waits for native momentum to settle
     observerEnd,
   );
 
-  assert.doesNotMatch(observerSource, /requestAnimationFrame/);
+  assert.match(
+    observerSource,
+    /scheduleMobileBoundaryTransition\(\)/,
+  );
+  assert.match(
+    featuredControllerSource,
+    /shouldUseImmediateMobileBoundaryRelease\([\s\S]*direction > 0 && isAndroidTouchLayout/,
+  );
 });
 
 test("native handoff preserves the standard section speed", () => {
