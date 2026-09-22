@@ -173,3 +173,31 @@ test("mobile boundary handoff waits one animation frame before GSAP takes scroll
     /const mobileBoundaryTransitionClaimed =[\s\S]*observeMobileNativeBoundaryScroll\(\);[\s\S]*if \(mobileBoundaryTransitionClaimed\)[\s\S]*synchronizeTitleVisibility\(\);[\s\S]*return;/,
   );
 });
+
+
+test("mobile boundary transitions preserve the standard section speed after native overshoot", () => {
+  assert.match(
+    featuredControllerSource,
+    /const getMobileTransitionDuration = \(targetScrollTop\) =>/,
+  );
+  assert.match(
+    featuredControllerSource,
+    /SCROLL_STEP_DURATION_SECONDS \* distanceRatio/,
+  );
+  assert.match(
+    featuredControllerSource,
+    /duration: deferStateCommit[\s\S]*getMobileTransitionDuration\(transition\.scrollTop\)/,
+  );
+  assert.match(
+    featuredControllerSource,
+    /duration: deferStateCommit[\s\S]*getMobileTransitionDuration\(targetScrollTop\)/,
+  );
+  assert.match(
+    panelControllerSource,
+    /duration = SCROLL_STEP_DURATION_SECONDS/,
+  );
+  assert.match(
+    panelControllerSource,
+    /ease: SECTION_NAVIGATION_EASE/,
+  );
+});
