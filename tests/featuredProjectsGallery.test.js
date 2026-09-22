@@ -63,7 +63,7 @@ test("tablet and mobile galleries use a horizontal photo carousel", () => {
   assert.match(gallerySource, /max-\[1023px\]:hidden/);
   assert.match(gallerySource, /FeaturedProjectsMobileCarousel/);
   assert.match(mobileCarouselSource, /overflow-x-auto/);
-  assert.match(mobileCarouselSource, /touch-auto/);
+  assert.match(mobileCarouselSource, /touch-pan-x/);
   assert.match(mobileCarouselSource, /data-native-horizontal-scroll/);
   assert.doesNotMatch(mobileCarouselSource, /handlePointerMove/);
   assert.match(mobileCarouselSource, /h-\[500px\] w-\[300px\]/);
@@ -83,6 +83,25 @@ test("tablet and mobile galleries use a horizontal photo carousel", () => {
   assert.match(mobileCarouselSource, /<MainLogo/);
   assert.match(mobileCarouselSource, /data-featured-gallery-carousel/);
   assert.doesNotMatch(mobileCarouselSource, /onClick/);
+});
+
+test("mobile Featured uses gap 7 between every adjacent image", () => {
+  assert.match(
+    mobileCarouselSource,
+    /className="flex h-full touch-pan-x items-start gap-\[var\(--spacing-gap-7\)\][^"]*px-\[var\(--spacing-gap-5\)\]/,
+  );
+
+  const mobileGap7Occurrences = [
+    ...mobileCarouselSource.matchAll(
+      /gap-\[var\(--spacing-gap-7\)\]/g,
+    ),
+  ].length;
+
+  assert.ok(mobileGap7Occurrences >= 3);
+  assert.doesNotMatch(
+    mobileCarouselSource,
+    /className="flex shrink-0 gap-\[var\(--spacing-gap-5\)\]"/,
+  );
 });
 
 test("mobile Featured matches the two-level Figma spacing model", () => {
