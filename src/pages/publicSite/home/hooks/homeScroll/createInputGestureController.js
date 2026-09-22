@@ -42,6 +42,7 @@ function isNativeHorizontalTarget(target) {
 }
 
 const FEATURED_TOUCH_SWIPE_THRESHOLD_PX = 18;
+const FEATURED_TOUCH_UP_BOUNDARY_THRESHOLD_PX = 10;
 
 function shouldClaimTouchUpBoundary({
   boundaryScrollTop,
@@ -50,7 +51,7 @@ function shouldClaimTouchUpBoundary({
   startScrollTop,
   startX,
   startY,
-  threshold = FEATURED_TOUCH_SWIPE_THRESHOLD_PX,
+  threshold = FEATURED_TOUCH_UP_BOUNDARY_THRESHOLD_PX,
   verticalDominance = TOUCH_VERTICAL_DOMINANCE,
 }) {
   if (
