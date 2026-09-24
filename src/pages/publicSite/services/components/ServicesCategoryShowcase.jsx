@@ -105,24 +105,13 @@ function ServicesCategoryShowcase({
                 data-category-slide
                 aria-hidden={index !== activeIndex}
               >
-                {category.id === "residential" ? (
-                  <div className="absolute left-1/2 top-[47.92%] h-[108.58%] w-[118.79%] -translate-x-1/2 -translate-y-1/2">
-                    <img
-                      className="absolute left-[-173.55%] top-[-31.12%] h-[162.23%] w-[438.02%] max-w-none"
-                      src={category.image}
-                      alt={category.imageAlt}
-                    />
-                  </div>
-                ) : (
-                  <img
-                    className={category.id === "commercial"
-                      ? "absolute left-0 top-1/2 h-[106.73%] w-full max-w-none -translate-y-1/2"
-                      : "absolute inset-0 size-full object-cover"}
-                    src={category.image}
-                    alt={category.imageAlt}
-                    decoding="async"
-                  />
-                )}
+                <img
+                  className="services-category-showcase__image absolute inset-0 size-full object-cover"
+                  src={category.image}
+                  alt={category.imageAlt}
+                  decoding="async"
+                  style={{ objectPosition: category.imagePosition }}
+                />
               </div>
             ))}
           </div>
