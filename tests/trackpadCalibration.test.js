@@ -225,3 +225,59 @@ test("a renewed physical gesture can trigger immediately after a finished tween"
   gesture = advanceWheelGesture(gesture, 20, 32, 516);
   assert.equal(gesture.triggeredDirection, DOWN);
 });
+
+
+test("trackpad uses a lighter intent threshold while mouse keeps the original threshold", () => {
+  assert.match(
+    homeScrollConstantsSource,
+    /TRACKPAD_WHEEL_GESTURE_THRESHOLD_PX = 24;/,
+  );
+  assert.match(
+    homeScrollConstantsSource,
+    /WHEEL_GESTURE_THRESHOLD_PX = 32;/,
+  );
+  assert.match(
+    inputGestureSource,
+    /wheelGestureDeltaScale < 1[\s\S]*TRACKPAD_WHEEL_GESTURE_THRESHOLD_PX[\s\S]*WHEEL_GESTURE_THRESHOLD_PX/,
+  );
+});
+
+test("a soft trackpad curve becomes responsive without double-triggering", () => {
+  let gesture = createWheelGestureState();
+  const triggers = [];
+
+  [3, 4, 6, 7, 5, 3, 2].forEach((deltaY, index) => {
+    gesture = advanceWheelGesture(
+      gesture,
+      deltaY,
+      24,
+      index * 16,
+    );
+
+    if (gesture.triggeredDirection !== null) {
+      triggers.push(gesture.triggeredDirection);
+    }
+  });
+
+  assert.deepEqual(triggers, [DOWN]);
+});
+
+test("the same soft curve remains below the discrete mouse threshold", () => {
+  let gesture = createWheelGestureState();
+  const triggers = [];
+
+  [3, 4, 6, 7, 5, 3, 2].forEach((deltaY, index) => {
+    gesture = advanceWheelGesture(
+      gesture,
+      deltaY,
+      32,
+      index * 16,
+    );
+
+    if (gesture.triggeredDirection !== null) {
+      triggers.push(gesture.triggeredDirection);
+    }
+  });
+
+  assert.deepEqual(triggers, []);
+});
