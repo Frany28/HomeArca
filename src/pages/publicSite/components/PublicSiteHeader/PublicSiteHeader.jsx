@@ -89,11 +89,13 @@ function PublicSiteHeader({
       ref={headerRef}
       className={clsx(
         "main-tool-bar public-site-header dark relative flex h-[67px] w-full justify-center will-change-transform md:h-[64px]",
+        isMobileMenuOpen && "touch-none overscroll-none",
         className,
       )}
       data-node-id="4487:112595"
       data-background={backgroundAppearance}
       data-mobile-menu-open={isMobileMenuOpen}
+      data-home-input-blocker={isMobileMenuOpen ? "" : undefined}
     >
       <nav
         className="public-site-header__nav relative z-10 h-full w-full max-w-[1200px] px-[16px] pt-[12px] lg:px-[48px]"

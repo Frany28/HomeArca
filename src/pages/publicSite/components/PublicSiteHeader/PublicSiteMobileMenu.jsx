@@ -79,12 +79,13 @@ function PublicSiteMobileMenu({
         <Motion.div
           key="public-site-mobile-menu"
           id={id}
-          className="pointer-events-auto absolute inset-x-0 top-[67px] h-[calc(100dvh-67px)] md:hidden"
+          className="pointer-events-auto absolute inset-x-0 top-[67px] h-[calc(100dvh-67px)] touch-none overscroll-none md:hidden"
           initial="closed"
           animate="open"
           exit="closed"
           custom={motionContext}
           aria-label="Secciones de inicio"
+          data-home-input-blocker
           data-node-id="5156:130079"
         >
           <Motion.div
