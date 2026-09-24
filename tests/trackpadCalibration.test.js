@@ -230,7 +230,7 @@ test("a renewed physical gesture can trigger immediately after a finished tween"
 test("trackpad uses a lighter intent threshold while mouse keeps the original threshold", () => {
   assert.match(
     homeScrollConstantsSource,
-    /TRACKPAD_WHEEL_GESTURE_THRESHOLD_PX = 24;/,
+    /TRACKPAD_WHEEL_GESTURE_THRESHOLD_PX = 28;/,
   );
   assert.match(
     homeScrollConstantsSource,
@@ -242,7 +242,7 @@ test("trackpad uses a lighter intent threshold while mouse keeps the original th
   );
 });
 
-test("a soft trackpad curve becomes responsive without double-triggering", () => {
+test("a soft trackpad curve remains responsive at the balanced threshold", () => {
   let gesture = createWheelGestureState();
   const triggers = [];
 
@@ -250,7 +250,7 @@ test("a soft trackpad curve becomes responsive without double-triggering", () =>
     gesture = advanceWheelGesture(
       gesture,
       deltaY,
-      24,
+      28,
       index * 16,
     );
 
@@ -280,4 +280,52 @@ test("the same soft curve remains below the discrete mouse threshold", () => {
   });
 
   assert.deepEqual(triggers, []);
+});
+
+
+test("a very short trackpad impulse does not trigger at the balanced threshold", () => {
+  let gesture = createWheelGestureState();
+  const triggers = [];
+
+  [8, 9, 10].forEach((deltaY, index) => {
+    gesture = advanceWheelGesture(
+      gesture,
+      deltaY,
+      28,
+      index * 16,
+    );
+
+    if (gesture.triggeredDirection !== null) {
+      triggers.push(gesture.triggeredDirection);
+    }
+  });
+
+  assert.deepEqual(triggers, []);
+});
+
+test("medium and strong trackpad curves still trigger exactly once at 28px", () => {
+  const curves = [
+    [3, 6, 12, 18, 12, 6, 3],
+    [5, 10, 20, 32, 20, 10, 4],
+  ];
+
+  curves.forEach((curve) => {
+    let gesture = createWheelGestureState();
+    const triggers = [];
+
+    curve.forEach((deltaY, index) => {
+      gesture = advanceWheelGesture(
+        gesture,
+        deltaY,
+        28,
+        index * 16,
+      );
+
+      if (gesture.triggeredDirection !== null) {
+        triggers.push(gesture.triggeredDirection);
+      }
+    });
+
+    assert.deepEqual(triggers, [DOWN]);
+  });
 });
