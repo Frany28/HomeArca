@@ -14,9 +14,9 @@ import {
 import "./ContactTiltCard.css";
 
 const TILT_INTENSITY = 12;
-const GLARE_INTENSITY = 0.08;
 const TOUCH_HOLD_DELAY_MS = 180;
 const TOUCH_HOLD_SLOP_PX = 10;
+
 const MOVING_GRADIENT_SHADER = {
   setup: setupMovingGradient,
   render: renderMovingGradient,
@@ -75,13 +75,11 @@ function isAndroidTouchDevice() {
 
 function ContactTiltCard() {
   const cardRef = useRef(null);
-  const glareRef = useRef(null);
   const reduceMotion = useReducedMotion();
   const [gradientRenderer, setGradientRenderer] = useState("fallback");
 
   useEffect(() => {
     let cancelled = false;
-
     const prefersCssGradient = isAndroidTouchDevice();
 
     if (
@@ -111,16 +109,14 @@ function ContactTiltCard() {
 
   useLayoutEffect(() => {
     const card = cardRef.current;
-    const glare = glareRef.current;
 
-    if (!card || !glare) return undefined;
+    if (!card) return undefined;
 
     gsap.set(card, {
       rotationX: 0,
       rotationY: 0,
       transformOrigin: "center center",
     });
-    gsap.set(glare, { opacity: 0, x: 0, y: 0 });
 
     if (reduceMotion) return undefined;
 
@@ -130,31 +126,13 @@ function ContactTiltCard() {
     const rotateYTo = gsap.quickTo(card, "rotationY", {
       ease: "power3",
     });
-    const glareXTo = gsap.quickTo(glare, "x", {
-      duration: 0.36,
-      ease: "power2.out",
-    });
-    const glareYTo = gsap.quickTo(glare, "y", {
-      duration: 0.36,
-      ease: "power2.out",
-    });
-    const glareOpacityTo = gsap.quickTo(glare, "opacity", {
-      duration: 0.24,
-      ease: "power2.out",
-    });
 
     const resetTilt = () => {
       rotateXTo(0);
       rotateYTo(0);
-      glareXTo(0);
-      glareYTo(0);
-      glareOpacityTo(0);
     };
 
     const applyTiltFromPoint = (clientX, clientY) => {
-      const rect = card.getBoundingClientRect();
-      const offsetX = clientX - (rect.left + rect.width / 2);
-      const offsetY = clientY - (rect.top + rect.height / 2);
       const viewportX = gsap.utils.clamp(
         0,
         1,
@@ -172,9 +150,6 @@ function ContactTiltCard() {
       rotateYTo(
         gsap.utils.interpolate(-TILT_INTENSITY, TILT_INTENSITY, viewportX),
       );
-      glareXTo(offsetX * 0.47);
-      glareYTo(offsetY * 0.47);
-      glareOpacityTo(GLARE_INTENSITY);
     };
 
     let touchPointerId = null;
@@ -213,7 +188,7 @@ function ContactTiltCard() {
       resetTilt();
     };
 
-    const handlePointerMove = (event) => {
+    const handleMouseMove = (event) => {
       if (event.pointerType === "touch") return;
       applyTiltFromPoint(event.clientX, event.clientY);
     };
@@ -223,14 +198,13 @@ function ContactTiltCard() {
       resetTilt();
     };
 
-    const handleCardPointerDown = (event) => {
+    const handlePointerDown = (event) => {
       if (event.pointerType !== "touch" || touchPointerId !== null) return;
 
       touchPointerId = event.pointerId;
       touchStartX = event.clientX;
       touchStartY = event.clientY;
       touchActive = false;
-      clearTouchHoldTimer();
 
       touchHoldTimer = window.setTimeout(() => {
         if (touchPointerId !== event.pointerId) return;
@@ -241,7 +215,7 @@ function ContactTiltCard() {
       }, TOUCH_HOLD_DELAY_MS);
     };
 
-    const handleCardPointerMove = (event) => {
+    const handleTouchMove = (event) => {
       if (
         event.pointerType !== "touch" ||
         event.pointerId !== touchPointerId
@@ -267,28 +241,22 @@ function ContactTiltCard() {
       applyTiltFromPoint(event.clientX, event.clientY);
     };
 
-    const handleCardPointerUp = (event) => {
-      if (event.pointerType !== "touch") return;
-      finishTouchInteraction(event);
-    };
-
-    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointermove", handleMouseMove);
     window.addEventListener("pointerout", handleWindowPointerOut);
-    card.addEventListener("pointerdown", handleCardPointerDown);
-    card.addEventListener("pointermove", handleCardPointerMove);
-    card.addEventListener("pointerup", handleCardPointerUp);
-    card.addEventListener("pointercancel", handleCardPointerUp);
+    card.addEventListener("pointerdown", handlePointerDown);
+    card.addEventListener("pointermove", handleTouchMove);
+    card.addEventListener("pointerup", finishTouchInteraction);
+    card.addEventListener("pointercancel", finishTouchInteraction);
 
     return () => {
       clearTouchHoldTimer();
-      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointermove", handleMouseMove);
       window.removeEventListener("pointerout", handleWindowPointerOut);
-      card.removeEventListener("pointerdown", handleCardPointerDown);
-      card.removeEventListener("pointermove", handleCardPointerMove);
-      card.removeEventListener("pointerup", handleCardPointerUp);
-      card.removeEventListener("pointercancel", handleCardPointerUp);
+      card.removeEventListener("pointerdown", handlePointerDown);
+      card.removeEventListener("pointermove", handleTouchMove);
+      card.removeEventListener("pointerup", finishTouchInteraction);
+      card.removeEventListener("pointercancel", finishTouchInteraction);
       gsap.killTweensOf(card);
-      gsap.killTweensOf(glare);
     };
   }, [reduceMotion]);
 
@@ -297,8 +265,7 @@ function ContactTiltCard() {
       <div
         ref={cardRef}
         className="contact-tilt-card__surface relative aspect-[432/264.779] w-full overflow-hidden rounded-[var(--radius-4)] bg-[var(--color-primary-500-uniform)] will-change-transform"
-        data-node-id="4856:5063"
-        onContextMenu={(event) => event.preventDefault()}
+        data-node-id="5074:25773"
       >
         {gradientRenderer === "shader" ? (
           <ShaderFill
@@ -313,22 +280,16 @@ function ContactTiltCard() {
             aria-hidden="true"
           />
         )}
-        <div
-          ref={glareRef}
-          className="contact-tilt-card__glare pointer-events-none absolute z-10 will-change-transform"
-          aria-hidden="true"
-        />
 
         <div
-          className="contact-tilt-card__logo absolute z-20 overflow-hidden will-change-transform"
-          data-node-id="4856:5064"
+          className="contact-tilt-card__logo pointer-events-none absolute z-10 overflow-hidden"
+          data-node-id="5074:25774"
         >
           <img
             src={secondaryLogoMark}
             alt="ARCA Studio"
             className="absolute inset-x-0 top-0 block h-[90.93%] w-full"
             draggable={false}
-            onDragStart={(event) => event.preventDefault()}
           />
           <img
             src={secondaryLogoRegistration}
@@ -336,7 +297,6 @@ function ContactTiltCard() {
             aria-hidden="true"
             className="absolute bottom-0 left-[0.05%] block h-[5.1%] w-[23.35%]"
             draggable={false}
-            onDragStart={(event) => event.preventDefault()}
           />
           <img
             src={secondaryLogoDate}
@@ -344,7 +304,6 @@ function ContactTiltCard() {
             aria-hidden="true"
             className="absolute bottom-0 right-[0.05%] block h-[5.1%] w-[15.28%]"
             draggable={false}
-            onDragStart={(event) => event.preventDefault()}
           />
         </div>
       </div>

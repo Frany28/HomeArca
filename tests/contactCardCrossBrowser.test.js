@@ -21,6 +21,8 @@ const cardStyles = readFileSync(
 test("contact card keeps Figma geometry without percentage-height children", () => {
   assert.match(cardSource, /aspect-\[432\/264\.779\]/);
   assert.match(cardSource, /max-w-\[432px\]/);
+  assert.match(cardSource, /data-node-id="5074:25773"/);
+  assert.match(cardSource, /data-node-id="5074:25774"/);
   assert.match(
     cardStyles,
     /--contact-card-logo-width:\s*74\.0740741%/,
@@ -39,7 +41,7 @@ test("contact card keeps Figma geometry without percentage-height children", () 
   );
   assert.match(
     cardSource,
-    /contact-tilt-card__logo absolute/,
+    /contact-tilt-card__logo[^\"]*absolute/,
   );
   assert.doesNotMatch(
     cardSource,
@@ -49,6 +51,11 @@ test("contact card keeps Figma geometry without percentage-height children", () 
     cardStyles,
     /\.contact-tilt-card__logo\s*\{[^}]*inset:/,
   );
+  assert.match(cardSource, /gsap\.quickTo\(card, "rotationX"/);
+  assert.match(cardSource, /gsap\.quickTo\(card, "rotationY"/);
+  assert.match(cardSource, /TOUCH_HOLD_DELAY_MS/);
+  assert.doesNotMatch(cardSource, /contact-tilt-card__glare/);
+  assert.doesNotMatch(cardStyles, /contact-tilt-card__glare|__surface::after/);
 });
 
 test("contact card keeps the shader on compatible iPhone Safari and falls back on Android touch", () => {

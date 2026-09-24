@@ -86,13 +86,15 @@ test("Contact preserves the Home phases and owns no scroll interception", () => 
     EFFECT: "effect",
   });
   assert.doesNotMatch(contactSectionSource, /ScrollTrigger|data-home-panel|data-about-story/);
-  assert.doesNotMatch(contactTiltCardSource, /ScrollTrigger|addEventListener\("wheel"|preventDefault|stopPropagation/);
+  assert.doesNotMatch(contactTiltCardSource, /ScrollTrigger|addEventListener\("wheel"|stopPropagation/);
 });
 
-test("the card disables tilt and gradient motion for reduced motion", () => {
+test("the Figma card disables tilt and gradient motion for reduced motion", () => {
   assert.match(contactTiltCardSource, /useReducedMotion/);
   assert.match(contactTiltCardSource, /if \(reduceMotion\) return undefined/);
   assert.match(contactTiltCardSource, /paused=\{reduceMotion\}/);
+  assert.match(contactTiltCardSource, /gsap\.quickTo\(card, "rotationX"/);
+  assert.doesNotMatch(contactTiltCardSource, /glareRef|contact-tilt-card__glare/);
   assert.match(contactTiltCardStyles, /prefers-reduced-motion: reduce/);
   assert.match(contactShaderRuntimeSource, /frameState\.time = paused \? 0 : time/);
 });
