@@ -40,6 +40,14 @@
   -webkit-mask-image: -webkit-radial-gradient(white, black);
 }
 
+.services-category-showcase__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+}
+
 .services-category-showcase__tab {
   color: var(--color-neutral-100-uniform);
 }

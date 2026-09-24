@@ -1,5 +1,5 @@
 import residentialDesignImage from "../../../assets/services/residential-design.webp";
-import commercialDesignImage from "../../../assets/services/commercial-design.webp";
+import commercialDesignImage from "../../../assets/services/commercial-design-portrait-v2.webp";
 import institutionalDesignImage from "../../../assets/services/institutional-design.webp";
 import industrialDesignImage from "../../../assets/services/industrial-design.webp";
 import remodelingDesignImage from "../../../assets/services/remodeling-design.webp";
@@ -22,42 +22,49 @@ const SERVICES_CATEGORIES = Object.freeze([
     id: "residential",
     label: "Diseño residencial",
     image: residentialDesignImage,
+    imagePosition: "50% 50%",
     imageAlt: "Proyecto de diseño residencial de ARCA Studio",
   }),
   Object.freeze({
     id: "commercial",
     label: "Diseño comercial",
     image: commercialDesignImage,
+    imagePosition: "50% 50%",
     imageAlt: "Proyecto de diseño comercial de ARCA Studio",
   }),
   Object.freeze({
     id: "institutional",
     label: "Diseño institucional",
     image: institutionalDesignImage,
+    imagePosition: "43% 50%",
     imageAlt: "Oficina con escritorio blanco y ventanales en un proyecto institucional",
   }),
   Object.freeze({
     id: "industrial",
     label: "Diseño industrial",
     image: industrialDesignImage,
+    imagePosition: "52% 50%",
     imageAlt: "Estructura industrial de varios niveles durante su construcción",
   }),
   Object.freeze({
     id: "remodeling",
     label: "Remodelaciones",
     image: remodelingDesignImage,
+    imagePosition: "55% 50%",
     imageAlt: "Baño remodelado con ducha acristalada y revestimientos cerámicos",
   }),
   Object.freeze({
     id: "interior-design",
     label: "Interiorismo",
     image: interiorDesignImage,
+    imagePosition: "50% 50%",
     imageAlt: "Dormitorio con cabecera tapizada, iluminación cálida y tonos neutros",
   }),
   Object.freeze({
     id: "construction-management",
     label: "Planificación, ejecución y supervisión de obra",
     image: constructionManagementImage,
+    imagePosition: "33% 50%",
     imageAlt: "Supervisión de trabajos en obra con casco y chaleco de seguridad",
   }),
 ]);
