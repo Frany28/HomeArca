@@ -42,6 +42,13 @@ function isNativeHorizontalTarget(target) {
   );
 }
 
+function isInputBlockedTarget(target) {
+  return (
+    target instanceof Element &&
+    Boolean(target.closest("[data-home-input-blocker]"))
+  );
+}
+
 const FEATURED_TOUCH_SWIPE_THRESHOLD_PX = 18;
 const FEATURED_TOUCH_UP_BOUNDARY_THRESHOLD_PX = 10;
 
@@ -215,6 +222,11 @@ function createInputGestureController({
   };
 
   const handleWheel = (event) => {
+    if (isInputBlockedTarget(event.target)) {
+      event.preventDefault();
+      return;
+    }
+
     if (event.ctrlKey) {
       debugWheel(event, { x: 0, y: 0 }, { x: 0, y: 0 }, null, "IGNORED_CTRL_KEY");
       return;
@@ -540,6 +552,7 @@ function createInputGestureController({
 
   const handleBoundaryTouchStart = (event) => {
     if (
+      isInputBlockedTarget(event.target) ||
       upwardBoundaryTouch ||
       event.touches.length !== 1 ||
       !canWatchUpwardTouchBoundary()
@@ -632,6 +645,7 @@ function createInputGestureController({
 
   const handlePointerDown = (event) => {
     if (
+      isInputBlockedTarget(event.target) ||
       event.pointerType !== "touch" ||
       !event.isPrimary ||
       touchGesture
@@ -899,11 +913,15 @@ function createInputGestureController({
     );
   };
 
-  const handleNativeTouchStart = () => {
+  const handleNativeTouchStart = (event) => {
+    if (isInputBlockedTarget(event.target)) return;
+
     coordination.featured.beginMobileTouchGesture?.();
   };
 
-  const handleNativeTouchEnd = () => {
+  const handleNativeTouchEnd = (event) => {
+    if (isInputBlockedTarget(event.target)) return;
+
     coordination.featured.endMobileTouchGesture?.();
   };
 
@@ -1121,6 +1139,7 @@ function createInputGestureController({
 
 export {
   createInputGestureController,
+  isInputBlockedTarget,
   isInteractiveTarget,
   shouldClaimTouchUpBoundary,
 };
