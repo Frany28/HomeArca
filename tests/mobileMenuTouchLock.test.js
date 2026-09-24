@@ -26,6 +26,11 @@ const inputGestureSource = readFileSync(
   "utf8",
 );
 
+const openingHomeSource = readFileSync(
+  new URL("../src/pages/publicSite/home/OpeningHome.jsx", import.meta.url),
+  "utf8",
+);
+
 const scrollVisibilitySource = readFileSync(
   new URL("../src/hooks/useScrollDirectionVisibility.js", import.meta.url),
   "utf8",
@@ -37,10 +42,18 @@ test("mobile navigation overlay blocks native touch panning", () => {
     /data-home-input-blocker=\{isMobileMenuOpen \? "" : undefined\}/,
   );
   assert.match(headerSource, /isMobileMenuOpen && "touch-none overscroll-none"/);
-  assert.match(headerSource, /scroller\.style\.overflowY = "hidden"/);
-  assert.match(headerSource, /scroller\.style\.touchAction = "none"/);
-  assert.match(headerSource, /scroller\.dataset\.homeInputLocked = "true"/);
-  assert.match(headerSource, /delete scroller\.dataset\.homeInputLocked/);
+  assert.match(
+    openingHomeSource,
+    /initialScrollReady && !isMobileMenuOpen[\s\S]*?"overflow-y-auto"[\s\S]*?"overflow-y-hidden"/,
+  );
+  assert.match(
+    openingHomeSource,
+    /data-home-input-locked=\{isMobileMenuOpen \? "true" : undefined\}/,
+  );
+  assert.match(
+    openingHomeSource,
+    /isMobileMenuOpen \? "overscroll-y-none" : "overscroll-y-contain"/,
+  );
   assert.match(mobileMenuSource, /data-home-input-blocker/);
   assert.match(mobileMenuSource, /touch-none/);
   assert.match(mobileMenuSource, /overscroll-none/);
@@ -92,4 +105,22 @@ test("mobile menu keeps the public header visible while input is locked", () => 
     /\[disabled, reduceMotion, scrollContainerRef, targetRef\]/,
   );
   assert.match(mobileMenuSource, /pointer-events-auto/);
+});
+
+
+test("OpeningHome owns the mobile menu state and scrollability in the same render", () => {
+  assert.match(
+    openingHomeSource,
+    /const \[isMobileMenuOpen, setIsMobileMenuOpen\] = useState\(false\)/,
+  );
+  assert.match(
+    openingHomeSource,
+    /isMobileMenuOpen=\{[\s\S]*?isMobileMenuOpen[\s\S]*?\}/,
+  );
+  assert.match(
+    openingHomeSource,
+    /onMobileMenuOpenChange=\{[\s\S]*?setIsMobileMenuOpen[\s\S]*?\}/,
+  );
+  assert.doesNotMatch(headerSource, /scroller\.style\.overflowY/);
+  assert.doesNotMatch(headerSource, /scroller\.style\.touchAction/);
 });
