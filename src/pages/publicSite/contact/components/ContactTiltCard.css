@@ -3,7 +3,7 @@
 }
 
 .contact-tilt-card__surface {
-  --contact-card-inset: 12.9629629%;
+  --contact-card-logo-width: 74.0740741%;
   isolation: isolate;
   transform-origin: center center;
   transform-style: preserve-3d;
@@ -87,7 +87,11 @@
 }
 
 .contact-tilt-card__logo {
-  inset: var(--contact-card-inset);
+  aspect-ratio: 320 / 152.779;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: var(--contact-card-logo-width);
 }
 
 .contact-tilt-card__surface img {

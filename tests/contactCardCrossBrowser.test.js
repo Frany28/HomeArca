@@ -23,11 +23,19 @@ test("contact card keeps Figma geometry without percentage-height children", () 
   assert.match(cardSource, /max-w-\[432px\]/);
   assert.match(
     cardStyles,
-    /--contact-card-inset:\s*12\.9629629%/,
+    /--contact-card-logo-width:\s*74\.0740741%/,
   );
   assert.match(
     cardStyles,
-    /\.contact-tilt-card__logo\s*\{[\s\S]*inset:\s*var\(--contact-card-inset\)/,
+    /\.contact-tilt-card__logo\s*\{[^}]*aspect-ratio:\s*320\s*\/\s*152\.779/,
+  );
+  assert.match(
+    cardStyles,
+    /\.contact-tilt-card__logo\s*\{[^}]*width:\s*var\(--contact-card-logo-width\)/,
+  );
+  assert.match(
+    cardStyles,
+    /\.contact-tilt-card__logo\s*\{[^}]*transform:\s*translate\(-50%,\s*-50%\)/,
   );
   assert.match(
     cardSource,
@@ -39,7 +47,7 @@ test("contact card keeps Figma geometry without percentage-height children", () 
   );
   assert.doesNotMatch(
     cardStyles,
-    /\.contact-tilt-card__surface\s*\{[\s\S]*padding:\s*12\.9629629%/,
+    /\.contact-tilt-card__logo\s*\{[^}]*inset:/,
   );
 });
 
