@@ -91,6 +91,25 @@ test("tablet and mobile galleries use a horizontal photo carousel", () => {
   assert.doesNotMatch(mobileCarouselSource, /onClick/);
 });
 
+test("tablet and mobile layouts cannot keep the desktop expansion stage visible", () => {
+  assert.match(
+    gallerySource,
+    /FEATURED_CAROUSEL_MEDIA_QUERY = "\\(max-width: 1023px\\)"/,
+  );
+  assert.match(
+    gallerySource,
+    /isFeaturedCarouselLayout\(\) \|\|[\s\S]*!stage/,
+  );
+  assert.match(
+    gallerySource,
+    /!stage \|\| progress <= 0 \|\| isFeaturedCarouselLayout\(\)/,
+  );
+  assert.match(
+    gallerySource,
+    /data-featured-gallery-stage[\s\S]*max-\[1023px\]:hidden/,
+  );
+});
+
 test("mobile Featured uses one uniform gap between every adjacent image", () => {
   assert.match(
     mobileCarouselSource,
