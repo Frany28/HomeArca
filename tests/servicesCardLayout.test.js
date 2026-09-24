@@ -26,6 +26,14 @@ const sectionCss = readFileSync(
   "utf8",
 );
 
+const servicesContentSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/services/servicesContent.js",
+    import.meta.url,
+  ),
+  "utf8",
+);
+
 test("services card viewport uses explicit inset geometry instead of percentage height", () => {
   assert.match(
     showcaseSource,
@@ -60,5 +68,31 @@ test("services card enables a WebKit-safe rounded clipping layer", () => {
   assert.match(
     showcaseCss,
     /-webkit-mask-image:\s*-webkit-radial-gradient\(white, black\)/,
+  );
+});
+
+
+test("service images use consistent cover geometry with explicit focal points", () => {
+  assert.match(
+    showcaseSource,
+    /className="services-category-showcase__image absolute inset-0 size-full object-cover"/,
+  );
+  assert.match(
+    showcaseSource,
+    /style=\{\{ objectPosition: category\.imagePosition \}\}/,
+  );
+  assert.doesNotMatch(showcaseSource, /h-\[162\.23%\]|w-\[438\.02%\]/);
+  assert.match(
+    showcaseCss,
+    /\.services-category-showcase__image\s*\{[\s\S]*object-fit:\s*cover/,
+  );
+  assert.doesNotMatch(showcaseSource, /category\.id === "commercial"/);
+  assert.match(
+    servicesContentSource,
+    /commercial-design-portrait-v2\.webp/,
+  );
+  assert.equal(
+    servicesContentSource.match(/imagePosition:\s*"\d+% \d+%"/g)?.length,
+    7,
   );
 });
