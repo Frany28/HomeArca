@@ -32,6 +32,10 @@ test("mobile navigation overlay blocks native touch panning", () => {
     /data-home-input-blocker=\{isMobileMenuOpen \? "" : undefined\}/,
   );
   assert.match(headerSource, /isMobileMenuOpen && "touch-none overscroll-none"/);
+  assert.match(headerSource, /scroller\.style\.overflowY = "hidden"/);
+  assert.match(headerSource, /scroller\.style\.touchAction = "none"/);
+  assert.match(headerSource, /scroller\.dataset\.homeInputLocked = "true"/);
+  assert.match(headerSource, /delete scroller\.dataset\.homeInputLocked/);
   assert.match(mobileMenuSource, /data-home-input-blocker/);
   assert.match(mobileMenuSource, /touch-none/);
   assert.match(mobileMenuSource, /overscroll-none/);
@@ -53,5 +57,17 @@ test("home gesture controller ignores input that starts inside the mobile menu",
   assert.match(
     inputGestureSource,
     /const handleNativeTouchStart = \(event\) => \{[\s\S]*?isInputBlockedTarget\(event\.target\)/,
+  );
+  assert.match(
+    inputGestureSource,
+    /scroller\.dataset\.homeInputLocked === "true"/,
+  );
+  assert.match(
+    inputGestureSource,
+    /const handlePointerMove = \(event\) => \{[\s\S]*?if \(isHomeInputLocked\(\)\)/,
+  );
+  assert.match(
+    inputGestureSource,
+    /const handleBoundaryTouchMove = \(event\) => \{[\s\S]*?if \(isHomeInputLocked\(\)\)/,
   );
 });
