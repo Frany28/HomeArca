@@ -94,7 +94,7 @@ test("tablet and mobile galleries use a horizontal photo carousel", () => {
 test("tablet and mobile layouts cannot keep the desktop expansion stage visible", () => {
   assert.match(
     gallerySource,
-    /FEATURED_CAROUSEL_MEDIA_QUERY = "\\(max-width: 1023px\\)"/,
+    /FEATURED_CAROUSEL_MEDIA_QUERY = "\(max-width: 1023px\)";/,
   );
   assert.match(
     gallerySource,
