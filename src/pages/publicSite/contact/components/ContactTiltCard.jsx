@@ -197,11 +197,11 @@ function ContactTiltCard() {
   }, [reduceMotion]);
 
   return (
-    <div className="contact-tilt-card w-full max-w-[432px] shrink-0">
+    <div className="contact-tilt-card w-full max-w-[432px] shrink-0 max-[767px]:max-w-[343px] max-[767px]:justify-self-center">
       <div
         ref={cardRef}
         className="contact-tilt-card__surface relative aspect-[432/264.779] w-full overflow-hidden rounded-[var(--radius-4)] bg-[var(--color-primary-500-uniform)] will-change-transform"
-        data-node-id="4856:5063"
+        data-node-id="5074:25773"
       >
         {gradientRenderer === "shader" ? (
           <ShaderFill
@@ -223,8 +223,8 @@ function ContactTiltCard() {
         />
 
         <div
-          className="contact-tilt-card__logo absolute z-20 overflow-hidden will-change-transform"
-          data-node-id="4856:5064"
+          className="contact-tilt-card__logo pointer-events-none absolute z-20 overflow-hidden"
+          data-node-id="5074:25774"
         >
           <img
             src={secondaryLogoMark}
