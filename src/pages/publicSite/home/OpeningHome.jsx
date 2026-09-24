@@ -1,5 +1,5 @@
 import { motion as Motion, useReducedMotion } from "motion/react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 
 import ArcaOpeningMark, {
@@ -23,6 +23,7 @@ const PANEL_TRANSITION_EASE = [0.815, 0.005, 0.17, 0.995];
 function OpeningHome() {
   const reduceMotion = useReducedMotion();
   const { hash } = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const {
     completeInitialTitleReveal,
@@ -61,11 +62,13 @@ function OpeningHome() {
   const titleIsVisible = (id) =>
     visibleContentTitleIds.includes(id);
 
-  const touchNavigationClassName = !contentScrollActive
+  const touchNavigationClassName = isMobileMenuOpen
     ? "touch-none"
-    : activeSectionId === "featured-projects" && !reduceMotion
-      ? "touch-auto min-[1024px]:touch-pan-x"
-      : "touch-auto";
+    : !contentScrollActive
+      ? "touch-none"
+      : activeSectionId === "featured-projects" && !reduceMotion
+        ? "touch-auto min-[1024px]:touch-pan-x"
+        : "touch-auto";
 
   useEffect(() => {
     if (
@@ -139,14 +142,15 @@ function OpeningHome() {
 
         <main
           ref={scrollerRef}
-          className={`dark relative h-dvh shrink-0 overflow-x-hidden overscroll-y-contain bg-[var(--color-neutral-950-uniform)] [scrollbar-gutter:stable] ${touchNavigationClassName} ${
-            initialScrollReady
+          className={`dark relative h-dvh shrink-0 overflow-x-hidden bg-[var(--color-neutral-950-uniform)] [scrollbar-gutter:stable] ${isMobileMenuOpen ? "overscroll-y-none" : "overscroll-y-contain"} ${touchNavigationClassName} ${
+            initialScrollReady && !isMobileMenuOpen
               ? "overflow-y-auto"
               : "overflow-y-hidden"
           }`}
           aria-hidden={!homeActive}
           aria-label="Secciones de inicio de ARCA Studio"
           data-home-scroll-container
+          data-home-input-locked={isMobileMenuOpen ? "true" : undefined}
           tabIndex={
             initialScrollReady
               ? 0
@@ -174,6 +178,12 @@ function OpeningHome() {
               }
               onNavigate={
                 navigateToSection
+              }
+              isMobileMenuOpen={
+                isMobileMenuOpen
+              }
+              onMobileMenuOpenChange={
+                setIsMobileMenuOpen
               }
               contactHref={CONTACT_EXTERNAL_LINKS.whatsapp}
             />
