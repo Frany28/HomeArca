@@ -26,6 +26,11 @@ const inputGestureSource = readFileSync(
   "utf8",
 );
 
+const scrollVisibilitySource = readFileSync(
+  new URL("../src/hooks/useScrollDirectionVisibility.js", import.meta.url),
+  "utf8",
+);
+
 test("mobile navigation overlay blocks native touch panning", () => {
   assert.match(
     headerSource,
@@ -70,4 +75,21 @@ test("home gesture controller ignores input that starts inside the mobile menu",
     inputGestureSource,
     /const handleBoundaryTouchMove = \(event\) => \{[\s\S]*?if \(isHomeInputLocked\(\)\)/,
   );
+});
+
+
+test("mobile menu keeps the public header visible while input is locked", () => {
+  assert.match(
+    headerSource,
+    /useScrollDirectionVisibility\(headerRef, \{[\s\S]*?disabled: isMobileMenuOpen/,
+  );
+  assert.match(
+    scrollVisibilitySource,
+    /if \(disabled \|\| reduceMotion\) \{[\s\S]*?clearProps: "transform"/,
+  );
+  assert.match(
+    scrollVisibilitySource,
+    /\[disabled, reduceMotion, scrollContainerRef, targetRef\]/,
+  );
+  assert.match(mobileMenuSource, /pointer-events-auto/);
 });

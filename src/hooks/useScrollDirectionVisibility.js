@@ -20,7 +20,10 @@ function getClosestScrollContainer(element) {
   return window;
 }
 
-function useScrollDirectionVisibility(targetRef, { scrollContainerRef } = {}) {
+function useScrollDirectionVisibility(
+  targetRef,
+  { disabled = false, scrollContainerRef } = {},
+) {
   const reduceMotion = useReducedMotion();
 
   // Espera a que React asigne también las refs de los contenedores ancestros.
@@ -28,7 +31,7 @@ function useScrollDirectionVisibility(targetRef, { scrollContainerRef } = {}) {
     const target = targetRef.current;
     if (!target) return undefined;
 
-    if (reduceMotion) {
+    if (disabled || reduceMotion) {
       gsap.set(target, { clearProps: "transform" });
       return undefined;
     }
@@ -142,7 +145,7 @@ function useScrollDirectionVisibility(targetRef, { scrollContainerRef } = {}) {
       removeInputListeners?.();
       context.revert();
     };
-  }, [reduceMotion, scrollContainerRef, targetRef]);
+  }, [disabled, reduceMotion, scrollContainerRef, targetRef]);
 }
 
 export {
