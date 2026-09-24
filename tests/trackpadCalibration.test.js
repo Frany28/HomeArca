@@ -25,6 +25,22 @@ const homeScrollConstantsSource = readFileSync(
   "utf8",
 );
 
+const panelNavigationSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/home/hooks/homeScroll/createPanelNavigationController.js",
+    import.meta.url,
+  ),
+  "utf8",
+);
+
+const homeScrollControllerSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/home/hooks/useHomeScrollController.js",
+    import.meta.url,
+  ),
+  "utf8",
+);
+
 const { DOWN, UP } = HOME_SCROLL_DIRECTIONS;
 
 test("vertical wheel intent matches the September 4 one-to-one axis rule", () => {
@@ -153,4 +169,59 @@ test("wheel events are still observed while transitions are active", () => {
     inputGestureSource,
     /runtime\.activeTween \|\| runtime\.isProgrammaticScroll[\s\S]*observeConsumedWheelGesture\(/,
   );
+});
+
+
+test("panel completion releases wheel input immediately instead of waiting for idle", () => {
+  assert.match(
+    panelNavigationSource,
+    /Release as soon as the visual alignment completes/,
+  );
+  assert.doesNotMatch(
+    panelNavigationSource,
+    /if \(panelChanged\) \{[\s\S]*scheduleWheelGestureSettlement\(\)/,
+  );
+});
+
+test("title reveal completion has no artificial 180 ms wheel dead zone", () => {
+  assert.match(
+    homeScrollControllerSource,
+    /completeTitleReveal[\s\S]*releaseWheelTransitionLock\(\)/,
+  );
+  assert.doesNotMatch(
+    homeScrollControllerSource,
+    /completeTitleReveal[\s\S]{0,900}requireFreshWheelGesture\(\)/,
+  );
+  assert.match(
+    inputGestureSource,
+    /const releaseWheelTransitionLock = \(\) => \{\s*runtime\.wheelTransitionLock = false;/,
+  );
+});
+
+test("a renewed physical gesture can trigger immediately after a finished tween", () => {
+  let gesture = createWheelGestureState();
+
+  gesture = advanceWheelGesture(gesture, 18, 32, 0);
+  gesture = advanceWheelGesture(gesture, 18, 32, 20);
+  assert.equal(gesture.triggeredDirection, DOWN);
+
+  // Residual inertia is observed during the tween.
+  [12, 7, 3].forEach((deltaY, index) => {
+    gesture = advanceWheelGesture(
+      gesture,
+      deltaY,
+      32,
+      80 + index * 60,
+    );
+    assert.equal(gesture.triggeredDirection, null);
+  });
+
+  // Tween is now finished. A new hand impulse should be accepted without
+  // waiting for the separate 180 ms idle timer.
+  gesture = advanceWheelGesture(gesture, 14, 32, 500);
+  assert.equal(gesture.triggeredDirection, null);
+  assert.equal(gesture.consumed, false);
+
+  gesture = advanceWheelGesture(gesture, 20, 32, 516);
+  assert.equal(gesture.triggeredDirection, DOWN);
 });
