@@ -111,6 +111,9 @@ function createInputGestureController({
   let touchGesture = null;
   let upwardBoundaryTouch = null;
 
+  const isHomeInputLocked = () =>
+    scroller.dataset.homeInputLocked === "true";
+
  const settleWheelGesture = () => {
     runtime.wheelGestureState =
       markWheelGestureIdle(runtime.wheelGestureState);
@@ -222,7 +225,7 @@ function createInputGestureController({
   };
 
   const handleWheel = (event) => {
-    if (isInputBlockedTarget(event.target)) {
+    if (isHomeInputLocked() || isInputBlockedTarget(event.target)) {
       event.preventDefault();
       return;
     }
@@ -552,6 +555,7 @@ function createInputGestureController({
 
   const handleBoundaryTouchStart = (event) => {
     if (
+      isHomeInputLocked() ||
       isInputBlockedTarget(event.target) ||
       upwardBoundaryTouch ||
       event.touches.length !== 1 ||
@@ -573,6 +577,12 @@ function createInputGestureController({
   };
 
   const handleBoundaryTouchMove = (event) => {
+    if (isHomeInputLocked()) {
+      event.preventDefault();
+      upwardBoundaryTouch = null;
+      return;
+    }
+
     const gesture = upwardBoundaryTouch;
     if (!gesture) return;
 
@@ -645,6 +655,7 @@ function createInputGestureController({
 
   const handlePointerDown = (event) => {
     if (
+      isHomeInputLocked() ||
       isInputBlockedTarget(event.target) ||
       event.pointerType !== "touch" ||
       !event.isPrimary ||
@@ -726,6 +737,12 @@ function createInputGestureController({
   };
 
   const handlePointerMove = (event) => {
+    if (isHomeInputLocked()) {
+      event.preventDefault();
+      touchGesture = null;
+      return;
+    }
+
     if (
       !touchGesture ||
       touchGesture.pointerId !== event.pointerId ||
@@ -914,13 +931,13 @@ function createInputGestureController({
   };
 
   const handleNativeTouchStart = (event) => {
-    if (isInputBlockedTarget(event.target)) return;
+    if (isHomeInputLocked() || isInputBlockedTarget(event.target)) return;
 
     coordination.featured.beginMobileTouchGesture?.();
   };
 
   const handleNativeTouchEnd = (event) => {
-    if (isInputBlockedTarget(event.target)) return;
+    if (isHomeInputLocked() || isInputBlockedTarget(event.target)) return;
 
     coordination.featured.endMobileTouchGesture?.();
   };
@@ -937,6 +954,10 @@ function createInputGestureController({
   const handleKeyDown = (event) => {
     const direction = getKeyboardDirection(event);
     if (direction === null || isInteractiveTarget(event.target)) return;
+    if (isHomeInputLocked()) {
+      event.preventDefault();
+      return;
+    }
     if (runtime.activeTween || runtime.isProgrammaticScroll) {
       event.preventDefault();
       return;
