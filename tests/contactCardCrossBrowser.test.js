@@ -18,29 +18,41 @@ const cardStyles = readFileSync(
   "utf8",
 );
 
-test("contact card keeps Figma geometry without percentage-height children", () => {
+test("contact card keeps exact Figma geometry while preserving tilt and glare", () => {
   assert.match(cardSource, /aspect-\[432\/264\.779\]/);
   assert.match(cardSource, /max-w-\[432px\]/);
+  assert.match(cardSource, /max-\[767px\]:max-w-\[343px\]/);
+  assert.match(cardSource, /max-\[767px\]:justify-self-center/);
+  assert.match(cardSource, /data-node-id="5074:25773"/);
+  assert.match(cardSource, /data-node-id="5074:25774"/);
   assert.match(
     cardStyles,
-    /--contact-card-inset:\s*12\.9629629%/,
+    /--contact-card-logo-width:\s*74\.0740741%/,
   );
   assert.match(
     cardStyles,
-    /\.contact-tilt-card__logo\s*\{[\s\S]*inset:\s*var\(--contact-card-inset\)/,
+    /\.contact-tilt-card__logo\s*\{[^}]*aspect-ratio:\s*320\s*\/\s*152\.779/,
   );
   assert.match(
-    cardSource,
-    /contact-tilt-card__logo absolute/,
+    cardStyles,
+    /\.contact-tilt-card__logo\s*\{[^}]*width:\s*var\(--contact-card-logo-width\)/,
+  );
+  assert.match(
+    cardStyles,
+    /\.contact-tilt-card__logo\s*\{[^}]*transform:\s*translate\(-50%,\s*-50%\)/,
   );
   assert.doesNotMatch(
-    cardSource,
-    /contact-tilt-card__logo[^"]*h-full[^"]*w-full/,
-  );
-  assert.doesNotMatch(
     cardStyles,
-    /\.contact-tilt-card__surface\s*\{[\s\S]*padding:\s*12\.9629629%/,
+    /\.contact-tilt-card__logo\s*\{[^}]*inset:/,
   );
+
+  // The geometry fix must not remove the interaction requested for the card.
+  assert.match(cardSource, /gsap\.quickTo\(card, "rotationX"/);
+  assert.match(cardSource, /gsap\.quickTo\(card, "rotationY"/);
+  assert.match(cardSource, /contact-tilt-card__glare/);
+  assert.match(cardStyles, /perspective:\s*650px/);
+  assert.match(cardStyles, /transform-style:\s*preserve-3d/);
+  assert.match(cardStyles, /contact-tilt-card__surface::after/);
 });
 
 test("contact card keeps the shader on compatible iPhone Safari and falls back on Android touch", () => {
