@@ -128,17 +128,16 @@ function createPanelNavigationController({
       }
       runtime.statementEnteringUp = false;
 
-      if (panelChanged) {
-        /*
-         * Al entrar en un nuevo panel, la inercia restante del mismo
-         * gesto de wheel/trackpad no puede revelar su título.
-         * Esperamos a que exista una pausa real antes de desbloquear
-         * la siguiente intención.
-         */
-        coordination.input?.scheduleWheelGestureSettlement();
-      } else {
-        releaseTransitionLock();
-      }
+      /*
+       * The wheel gesture state already owns inertia filtering. Keeping an
+       * extra lock until 180 ms of silence made the next physical trackpad
+       * gesture feel sticky even after the panel tween had finished.
+       *
+       * Release as soon as the visual alignment completes; residual inertia
+       * remains consumed by advanceWheelGesture, while a genuinely renewed
+       * impulse can rearm through the calibrated 4-Sep curve.
+       */
+      releaseTransitionLock();
 
       coordination.content?.synchronizeTitleVisibility();
     };
