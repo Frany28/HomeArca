@@ -1152,9 +1152,6 @@ function createFeaturedProjectsController({
         direction * intentMagnitude,
         WHEEL_GESTURE_THRESHOLD_PX,
         event.timeStamp,
-        {
-          allowSameDirectionRearm: false,
-        },
       );
     }
     if (
