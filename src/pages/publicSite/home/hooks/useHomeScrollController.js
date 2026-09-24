@@ -151,7 +151,14 @@ function useHomeScrollController({
       }
 
       titleRevealLockedRef.current = false;
-      inputGestureControllerRef.current?.requireFreshWheelGesture();
+
+      /*
+       * The title animation is finished, so navigation can become responsive
+       * immediately. We deliberately keep the current wheel gesture state:
+       * its consumed inertia is still filtered by advanceWheelGesture, while
+       * a real new impulse can rearm without an artificial 180 ms dead zone.
+       */
+      inputGestureControllerRef.current?.releaseWheelTransitionLock();
     },
     [],
   );
