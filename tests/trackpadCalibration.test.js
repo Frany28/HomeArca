@@ -25,19 +25,18 @@ const featuredControllerSource = readFileSync(
   "utf8",
 );
 
-const { DOWN, UP } = HOME_SCROLL_DIRECTIONS;
+const { DOWN } = HOME_SCROLL_DIRECTIONS;
 
-test("same-direction trackpad inertia cannot become a second navigation intention", () => {
+test("one physical trackpad curve still produces one navigation intention", () => {
   let gesture = createWheelGestureState();
   const triggers = [];
 
-  [40, 18, 10, 6, 12, 20, 10, 4].forEach((deltaY, index) => {
+  [3, 6, 12, 24, 31, 26, 18, 11, 6, 3, 1].forEach((deltaY, index) => {
     gesture = advanceWheelGesture(
       gesture,
       deltaY,
       32,
-      index * 32,
-      { allowSameDirectionRearm: false },
+      index * 16,
     );
 
     if (gesture.triggeredDirection !== null) {
@@ -48,26 +47,24 @@ test("same-direction trackpad inertia cannot become a second navigation intentio
   assert.deepEqual(triggers, [DOWN]);
 });
 
-test("a genuinely idle trackpad gesture can navigate again in the same direction", () => {
-  let gesture = advanceWheelGesture(
-    createWheelGestureState(),
-    40,
-    32,
-    0,
-    { allowSameDirectionRearm: false },
-  );
-
-  gesture = markWheelGestureIdle(gesture);
-
+test("a fresh trackpad impulse can rearm after the previous curve has decayed", () => {
+  let gesture = createWheelGestureState();
   const triggers = [];
 
-  [8, 12, 20].forEach((deltaY, index) => {
+  [
+    [18, 0],
+    [18, 20],
+    [12, 70],
+    [7, 120],
+    [3, 190],
+    [14, 280],
+    [20, 300],
+  ].forEach(([deltaY, eventTime]) => {
     gesture = advanceWheelGesture(
       gesture,
       deltaY,
       32,
-      240 + index * 16,
-      { allowSameDirectionRearm: false },
+      eventTime,
     );
 
     if (gesture.triggeredDirection !== null) {
@@ -75,37 +72,31 @@ test("a genuinely idle trackpad gesture can navigate again in the same direction
     }
   });
 
-  assert.deepEqual(triggers, [DOWN]);
+  assert.deepEqual(triggers, [DOWN, DOWN]);
 });
 
-test("an intentional opposite trackpad gesture remains responsive", () => {
+test("a mouse wheel pulse works again after a genuine idle", () => {
   let gesture = advanceWheelGesture(
     createWheelGestureState(),
-    40,
+    100,
     32,
     0,
-    { allowSameDirectionRearm: false },
   );
-  const triggers = [gesture.triggeredDirection];
 
-  [-14, -20].forEach((deltaY, index) => {
-    gesture = advanceWheelGesture(
-      gesture,
-      deltaY,
-      32,
-      64 + index * 16,
-      { allowSameDirectionRearm: false },
-    );
+  assert.equal(gesture.triggeredDirection, DOWN);
 
-    if (gesture.triggeredDirection !== null) {
-      triggers.push(gesture.triggeredDirection);
-    }
-  });
+  gesture = markWheelGestureIdle(gesture);
+  gesture = advanceWheelGesture(
+    gesture,
+    100,
+    32,
+    300,
+  );
 
-  assert.deepEqual(triggers, [DOWN, UP]);
+  assert.equal(gesture.triggeredDirection, DOWN);
 });
 
-test("wheel navigation separates raw intent from smoothed visual progress", () => {
+test("controllers keep raw intent calibration without disabling natural rearming", () => {
   assert.match(
     inputGestureSource,
     /const wheelIntentDelta = normalizedDelta\.y;/,
@@ -114,12 +105,12 @@ test("wheel navigation separates raw intent from smoothed visual progress", () =
     inputGestureSource,
     /handleBoundaryWheel\(\s*event,\s*wheelIntentDelta,\s*direction,/,
   );
-  assert.match(
+  assert.doesNotMatch(
     inputGestureSource,
-    /wheelIntentDelta,\s*WHEEL_GESTURE_THRESHOLD_PX,\s*event\.timeStamp,\s*\{\s*allowSameDirectionRearm: false,/,
+    /allowSameDirectionRearm:\s*false/,
   );
-  assert.match(
+  assert.doesNotMatch(
     featuredControllerSource,
-    /direction \* intentMagnitude,\s*WHEEL_GESTURE_THRESHOLD_PX,\s*event\.timeStamp,\s*\{\s*allowSameDirectionRearm: false,/,
+    /allowSameDirectionRearm:\s*false/,
   );
 });
