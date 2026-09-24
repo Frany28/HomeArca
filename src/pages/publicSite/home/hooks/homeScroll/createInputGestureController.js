@@ -149,7 +149,9 @@ function createInputGestureController({
       deltaY,
       WHEEL_GESTURE_THRESHOLD_PX,
       eventTime,
-      
+      {
+        allowSameDirectionRearm: false,
+      },
     );
 
     runtime.wheelGestureState = {
@@ -223,6 +225,7 @@ function createInputGestureController({
         runtime.wheelGestureDeltaScale,
         currentGestureScale,
       );
+    const wheelIntentDelta = normalizedDelta.y;
     const progressDelta = {
       x: normalizedDelta.x * runtime.wheelGestureDeltaScale,
       y: normalizedDelta.y * runtime.wheelGestureDeltaScale,
@@ -233,7 +236,7 @@ function createInputGestureController({
     ) {
       event.preventDefault();
       event.stopPropagation?.();
-      observeConsumedWheelGesture(progressDelta.y, event.timeStamp);
+      observeConsumedWheelGesture(wheelIntentDelta, event.timeStamp);
       scheduleWheelGestureSettlement();
       debugWheel(
         event,
@@ -248,9 +251,9 @@ function createInputGestureController({
       event.preventDefault();
       event.stopPropagation?.();
       observeConsumedWheelGesture(
-      progressDelta.y,
-      event.timeStamp,
-    );
+        wheelIntentDelta,
+        event.timeStamp,
+      );
       runtime.wheelTransitionLock = true;
       scheduleWheelGestureSettlement();
       debugWheel(
@@ -313,9 +316,9 @@ function createInputGestureController({
         debugWheel(event, normalizedDelta, progressDelta, direction, "FEATURED_EXPANSION");
         return;
       }
-     coordination.featured.handleBoundaryWheel(
+      coordination.featured.handleBoundaryWheel(
         event,
-        progressDelta.y,
+        wheelIntentDelta,
         direction,
       );
       debugWheel(
@@ -405,11 +408,14 @@ function createInputGestureController({
     
 
     runtime.wheelGestureState = advanceWheelGesture(
-        runtime.wheelGestureState,
-        progressDelta.y,
-        WHEEL_GESTURE_THRESHOLD_PX,
-        event.timeStamp,
-      );
+      runtime.wheelGestureState,
+      wheelIntentDelta,
+      WHEEL_GESTURE_THRESHOLD_PX,
+      event.timeStamp,
+      {
+        allowSameDirectionRearm: false,
+      },
+    );
         const triggeredDirection =
       runtime.wheelGestureState.triggeredDirection;
 
