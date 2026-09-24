@@ -225,7 +225,7 @@ test("trackpad direction changes reset an incomplete accumulator", () => {
   assert.equal(gesture.triggeredDirection, null);
 });
 
-test("a new trackpad impulse rearms after the previous inertia decays", () => {
+test("September 4 calibration rearms after inertia decays", () => {
   let gesture = createWheelGestureState();
 
   gesture = advanceWheelGesture(gesture, 18, 32, 0);
@@ -245,7 +245,7 @@ test("a new trackpad impulse rearms after the previous inertia decays", () => {
   assert.equal(gesture.triggeredDirection, DOWN);
 });
 
-test("trackpad inertia cannot rearm without decaying first", () => {
+test("September 4 calibration does not rearm on undecayed inertia", () => {
   let gesture = advanceWheelGesture(createWheelGestureState(), 40, 32, 0);
 
   gesture = advanceWheelGesture(gesture, 18, 32, 250);
@@ -256,27 +256,11 @@ test("trackpad inertia cannot rearm without decaying first", () => {
   assert.equal(gesture.consumed, true);
 });
 
-test("observed tween inertia lets a renewed same-direction gesture rearm", () => {
-  let gesture = advanceWheelGesture(createWheelGestureState(), 40, 32, 0);
-
-  [18, 10, 6].forEach((deltaY, index) => {
-    gesture = advanceWheelGesture(gesture, deltaY, 32, 100 + index * 80);
-    assert.equal(gesture.triggeredDirection, null);
-  });
-
-  gesture = advanceWheelGesture(gesture, 12, 32, 520);
-  assert.equal(gesture.triggeredDirection, null);
-
-  gesture = advanceWheelGesture(gesture, 20, 32, 536);
-
-  assert.equal(gesture.triggeredDirection, DOWN);
-});
-
-test("an intentional opposite trackpad gesture rearms after the lock window", () => {
+test("September 4 opposite-direction gesture respects the lock window", () => {
   let gesture = advanceWheelGesture(createWheelGestureState(), 40, 32, 0);
 
   gesture = advanceWheelGesture(gesture, -14, 32, 240);
-  assert.equal(gesture.consumed, true);
+  assert.equal(gesture.consumed, false);
   assert.equal(gesture.triggeredDirection, null);
 
   gesture = advanceWheelGesture(gesture, -20, 32, 260);
@@ -297,152 +281,12 @@ test("one complete trackpad curve keeps a single discrete intention", () => {
   assert.deepEqual(triggers, [DOWN]);
 });
 
-test("moderate, strong and residual trackpad curves each keep one intention", () => {
-  const sequences = [
-    [4, 9, 17, 26, 20, 13, 7, 3, 1],
-    [8, 18, 35, 52, 38, 20, 9, 3],
-    [30, 22, 15, 10, 6, 3, 2, 1, 10, 6, 3, 2, 1],
-  ];
-
-  sequences.forEach((sequence) => {
-    let gesture = createWheelGestureState();
-    let eventTime = 0;
-    const triggers = [];
-
-    sequence.forEach((deltaY) => {
-      gesture = advanceWheelGesture(
-        gesture,
-        deltaY,
-        32,
-        eventTime += 16,
-      );
-      if (gesture.triggeredDirection !== null) {
-        triggers.push(gesture.triggeredDirection);
-      }
-    });
-
-    assert.deepEqual(triggers, [DOWN]);
-  });
-});
-
-function collectWheelIntentions(
-  sequences,
-  {
-    pauseMs = 0,
-    markIdle = false,
-    allowSameDirectionRearm = false,
-  } = {},
-) {
-  let gesture = createWheelGestureState();
-  let eventTime = 0;
-  const intentions = [];
-
-  sequences.forEach((sequence, sequenceIndex) => {
-    if (sequenceIndex > 0) {
-      eventTime += pauseMs;
-
-      if (markIdle) {
-        gesture = markWheelGestureIdle(gesture);
-      }
-    }
-
-    sequence.forEach((deltaY) => {
-      eventTime += 16;
-
-      gesture = advanceWheelGesture(
-        gesture,
-        deltaY,
-        32,
-        eventTime,
-        {
-          allowSameDirectionRearm,
-        },
-      );
-
-      if (gesture.triggeredDirection !== null) {
-        intentions.push(gesture.triggeredDirection);
-      }
-    });
-  });
-
-  return intentions;
-}
-
 test("realistic smooth trackpad curve produces one intention", () => {
-  assert.deepEqual(
-    collectWheelIntentions([[2, 5, 11, 20, 34, 25, 16, 9, 4, 2]]),
-    [DOWN],
-  );
-});
-
-test("realistic trackpad curves separated by idle produce two intentions", () => {
-  assert.deepEqual(
-    collectWheelIntentions(
-      [[5, 14, 29, 20, 10, 4, 2], [3, 8, 18, 32]],
-      { pauseMs: 300, markIdle: true },
-    ),
-    [DOWN, DOWN],
-  );
-});
-
-test("short residual inertia remains part of the same trackpad gesture", () => {
-  assert.deepEqual(
-    collectWheelIntentions(
-      [[30, 22, 14, 8, 4, 2], [7, 15, 26]],
-      { pauseMs: 96 },
-    ),
-    [DOWN],
-  );
-});
-
-test("purely decaying inertia produces one intention", () => {
-  assert.deepEqual(
-    collectWheelIntentions([[35, 28, 21, 15, 10, 6, 3, 2]]),
-    [DOWN],
-  );
-});
-
-test("a small rebound inside inertia does not rearm", () => {
-  assert.deepEqual(
-    collectWheelIntentions([[35, 24, 14, 7, 3, 5, 3, 2]]),
-    [DOWN],
-  );
-});
-
-test("trackpad rebound cannot consume a second navigation phase", () => {
   let gesture = createWheelGestureState();
-
-  const deltas = [
-    3,
-    8,
-    18,
-    31,
-    24,
-    14,
-    7,
-    3,
-    2,
-    6,
-    12,
-    20,
-    10,
-    4,
-    2,
-  ];
-
   const triggers = [];
 
-  deltas.forEach((deltaY, index) => {
-    gesture = advanceWheelGesture(
-      gesture,
-      deltaY,
-      32,
-      index * 16,
-      {
-        allowSameDirectionRearm: false,
-      },
-    );
-
+  [2, 5, 11, 20, 34, 25, 16, 9, 4, 2].forEach((deltaY, index) => {
+    gesture = advanceWheelGesture(gesture, deltaY, 32, index * 16);
     if (gesture.triggeredDirection !== null) {
       triggers.push(gesture.triggeredDirection);
     }
@@ -451,109 +295,61 @@ test("trackpad rebound cannot consume a second navigation phase", () => {
   assert.deepEqual(triggers, [DOWN]);
 });
 
-test("renewed acceleration inside the same trackpad gesture does not rearm", () => {
-  assert.deepEqual(
-    collectWheelIntentions([
-      [35, 24, 14, 7, 3, 2, 7, 14, 25],
-    ]),
-    [DOWN],
-  );
-});
-
-test("sustained small trackpad deltas eventually produce one intention", () => {
-  assert.deepEqual(
-    collectWheelIntentions([[1, 2, 3, 4, 5, 6, 7, 8]]),
-    [DOWN],
-  );
-});
-
-test("a deliberate opposite trackpad curve produces one intention per direction", () => {
-  assert.deepEqual(
-    collectWheelIntentions(
-      [[8, 18, 30, 18, 7, 3], [-4, -10, -22, -35]],
-      { pauseMs: 16 },
-    ),
-    [DOWN, UP],
-  );
-});
-
-test("a micro direction correction remains part of the original gesture", () => {
-  assert.deepEqual(
-    collectWheelIntentions([[6, 14, 25, 18, -2, 10, 5, 2]]),
-    [DOWN],
-  );
-});
-
-test("a renewed trackpad impulse responds immediately after genuine idle", () => {
+test("short residual inertia stays part of the same physical gesture", () => {
   let gesture = createWheelGestureState();
-  let eventTime = 0;
   const triggers = [];
+  let eventTime = 0;
 
-  [30, 22, 15, 10, 6, 3, 2, 1].forEach((deltaY) => {
+  [30, 22, 14, 8, 4, 2].forEach((deltaY) => {
     gesture = advanceWheelGesture(gesture, deltaY, 32, eventTime += 16);
-    if (gesture.triggeredDirection !== null) triggers.push(gesture.triggeredDirection);
+    if (gesture.triggeredDirection !== null) {
+      triggers.push(gesture.triggeredDirection);
+    }
   });
 
+  eventTime += 96;
+
+  [7, 15, 26].forEach((deltaY) => {
+    gesture = advanceWheelGesture(gesture, deltaY, 32, eventTime += 16);
+    if (gesture.triggeredDirection !== null) {
+      triggers.push(gesture.triggeredDirection);
+    }
+  });
+
+  assert.deepEqual(triggers, [DOWN]);
+});
+
+test("idle resets the wheel state completely like the September 4 implementation", () => {
+  let gesture = advanceWheelGesture(createWheelGestureState(), 40, 32, 0);
+
+  assert.equal(gesture.consumed, true);
   gesture = markWheelGestureIdle(gesture);
-  eventTime += 200;
 
-  [8, 20, 35].forEach((deltaY) => {
-    gesture = advanceWheelGesture(gesture, deltaY, 32, eventTime += 16);
-    if (gesture.triggeredDirection !== null) triggers.push(gesture.triggeredDirection);
-  });
-
-  assert.deepEqual(triggers, [DOWN, DOWN]);
+  assert.deepEqual(gesture, createWheelGestureState());
 });
 
-test("a real pause and renewed acceleration allow a second trackpad intention", () => {
-  let gesture = createWheelGestureState();
-  const triggers = [];
-  let eventTime = 0;
-
-  [3, 8, 17, 28, 18, 8, 3, 1].forEach((deltaY) => {
-    gesture = advanceWheelGesture(gesture, deltaY, 32, eventTime += 16);
-    if (gesture.triggeredDirection !== null) triggers.push(gesture.triggeredDirection);
-  });
-
-  eventTime += 300;
-  [4, 10, 21, 30].forEach((deltaY) => {
-    gesture = advanceWheelGesture(gesture, deltaY, 32, eventTime += 16);
-    if (gesture.triggeredDirection !== null) triggers.push(gesture.triggeredDirection);
-  });
-
-  assert.deepEqual(triggers, [DOWN, DOWN]);
-});
-
-test("an accumulated opposite impulse rearms quickly without accepting sign noise", () => {
-  let gesture = createWheelGestureState();
-  const triggers = [];
-  let eventTime = 0;
-
-  [20, 28, 15, 5, -18, -30].forEach((deltaY) => {
-    gesture = advanceWheelGesture(gesture, deltaY, 32, eventTime += 16);
-    if (gesture.triggeredDirection !== null) triggers.push(gesture.triggeredDirection);
-  });
-
-  assert.deepEqual(triggers, [DOWN, UP]);
-
-  gesture = createWheelGestureState();
-  const noisyTriggers = [];
-  eventTime = 0;
-  [24, 18, 8, 3, -1, 2, 1].forEach((deltaY) => {
-    gesture = advanceWheelGesture(gesture, deltaY, 32, eventTime += 16);
-    if (gesture.triggeredDirection !== null) noisyTriggers.push(gesture.triggeredDirection);
-  });
-
-  assert.deepEqual(noisyTriggers, [DOWN]);
-});
-
-test("an idle discrete mouse-wheel pulse remains immediately reusable", () => {
+test("a fresh gesture responds immediately after genuine idle", () => {
   let gesture = advanceWheelGesture(createWheelGestureState(), 100, 32, 0);
   assert.equal(gesture.triggeredDirection, DOWN);
 
   gesture = markWheelGestureIdle(gesture);
   gesture = advanceWheelGesture(gesture, 100, 32, 300);
+
   assert.equal(gesture.triggeredDirection, DOWN);
+});
+
+test("a small opposite-direction correction does not create another intention", () => {
+  let gesture = createWheelGestureState();
+  const triggers = [];
+
+  [6, 14, 25, 18, -2, 10, 5, 2].forEach((deltaY, index) => {
+    gesture = advanceWheelGesture(gesture, deltaY, 32, index * 16);
+    if (gesture.triggeredDirection !== null) {
+      triggers.push(gesture.triggeredDirection);
+    }
+  });
+
+  assert.deepEqual(triggers, [DOWN]);
 });
 
 test("touch gestures require distance and vertical dominance", () => {
