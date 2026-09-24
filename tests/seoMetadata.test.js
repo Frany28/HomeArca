@@ -11,7 +11,7 @@ test("the public site exposes complete indexable metadata", () => {
   assert.match(indexSource, /<html lang="es">/);
   assert.match(
     indexSource,
-    /<title>ARCA Studio \\| Arquitectura, Construcción e Interiorismo<\/title>/,
+    /<title>ARCA Studio \| Arquitectura, Construcción e Interiorismo<\/title>/,
   );
   assert.match(indexSource, /name="description"/);
   assert.match(
