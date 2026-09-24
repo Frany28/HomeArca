@@ -9,6 +9,7 @@ function HomeHeroTitle({
   captionNodeId,
   captionTitleNodeId,
   description,
+  headingLevel = 2,
   projectName,
   title,
   visible,
@@ -16,6 +17,7 @@ function HomeHeroTitle({
 }) {
   const reduceMotion = useReducedMotion();
   const revealTransition = getSectionRevealTransition(visible, reduceMotion);
+  const Heading = headingLevel === 1 ? "h1" : "h2";
 
   return (
     <div className="pointer-events-none absolute inset-0 z-[5]">
@@ -40,12 +42,12 @@ function HomeHeroTitle({
           data-node-id="4451:132680"
           aria-hidden={!visible}
         >
-          <h1
+          <Heading
             className="absolute left-1/2 top-[89.5px] m-0 w-[min(1104px,calc(100%-32px))] -translate-x-1/2 whitespace-nowrap text-center font-[var(--font-sans)] text-[clamp(40px,8vw,96px)] font-bold leading-[clamp(48px,6.33vw,76px)] tracking-[clamp(-2px,-0.139vw,-1px)] text-[var(--color-neutral-100-uniform)]"
             data-node-id="4451:132681"
           >
             {title}
-          </h1>
+          </Heading>
         </Motion.div>
       </div>
 
