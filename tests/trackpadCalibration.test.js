@@ -17,7 +17,22 @@ const inputGestureSource = readFileSync(
   "utf8",
 );
 
+const homeScrollConstantsSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/home/hooks/homeScroll/homeScrollConstants.js",
+    import.meta.url,
+  ),
+  "utf8",
+);
+
 const { DOWN, UP } = HOME_SCROLL_DIRECTIONS;
+
+test("vertical wheel intent matches the September 4 one-to-one axis rule", () => {
+  assert.match(
+    homeScrollConstantsSource,
+    /WHEEL_VERTICAL_DOMINANCE = 1;/,
+  );
+});
 
 test("September 4 constants still define the calibrated gesture behavior", () => {
   const source = readFileSync(
