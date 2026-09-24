@@ -1,5 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { gsap } from "gsap";
+import { useEffect, useState } from "react";
 import { useReducedMotion } from "motion/react";
 
 import secondaryLogoMark from "../../../../assets/logos/secondaryLogoParts/mark.svg";
@@ -12,10 +11,6 @@ import {
   setup as setupMovingGradient,
 } from "./lib/custom-effects/CodeComponentId_8ce92017e53431a2f04b3574f4ba7c98f6f55f1e_625.js";
 import "./ContactTiltCard.css";
-
-const TILT_INTENSITY = 12;
-const TOUCH_HOLD_DELAY_MS = 180;
-const TOUCH_HOLD_SLOP_PX = 10;
 
 const MOVING_GRADIENT_SHADER = {
   setup: setupMovingGradient,
@@ -74,7 +69,6 @@ function isAndroidTouchDevice() {
 }
 
 function ContactTiltCard() {
-  const cardRef = useRef(null);
   const reduceMotion = useReducedMotion();
   const [gradientRenderer, setGradientRenderer] = useState("fallback");
 
@@ -107,164 +101,10 @@ function ContactTiltCard() {
     };
   }, []);
 
-  useLayoutEffect(() => {
-    const card = cardRef.current;
-
-    if (!card) return undefined;
-
-    gsap.set(card, {
-      rotationX: 0,
-      rotationY: 0,
-      transformOrigin: "center center",
-    });
-
-    if (reduceMotion) return undefined;
-
-    const rotateXTo = gsap.quickTo(card, "rotationX", {
-      ease: "power3",
-    });
-    const rotateYTo = gsap.quickTo(card, "rotationY", {
-      ease: "power3",
-    });
-
-    const resetTilt = () => {
-      rotateXTo(0);
-      rotateYTo(0);
-    };
-
-    const applyTiltFromPoint = (clientX, clientY) => {
-      const viewportX = gsap.utils.clamp(
-        0,
-        1,
-        clientX / Math.max(window.innerWidth, 1),
-      );
-      const viewportY = gsap.utils.clamp(
-        0,
-        1,
-        clientY / Math.max(window.innerHeight, 1),
-      );
-
-      rotateXTo(
-        gsap.utils.interpolate(TILT_INTENSITY, -TILT_INTENSITY, viewportY),
-      );
-      rotateYTo(
-        gsap.utils.interpolate(-TILT_INTENSITY, TILT_INTENSITY, viewportX),
-      );
-    };
-
-    let touchPointerId = null;
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchActive = false;
-    let touchHoldTimer = null;
-
-    const clearTouchHoldTimer = () => {
-      if (touchHoldTimer !== null) {
-        window.clearTimeout(touchHoldTimer);
-        touchHoldTimer = null;
-      }
-    };
-
-    const finishTouchInteraction = (event) => {
-      if (
-        event?.pointerType === "touch" &&
-        touchPointerId !== null &&
-        event.pointerId !== touchPointerId
-      ) {
-        return;
-      }
-
-      clearTouchHoldTimer();
-
-      if (
-        touchPointerId !== null &&
-        card.hasPointerCapture?.(touchPointerId)
-      ) {
-        card.releasePointerCapture(touchPointerId);
-      }
-
-      touchPointerId = null;
-      touchActive = false;
-      resetTilt();
-    };
-
-    const handleMouseMove = (event) => {
-      if (event.pointerType === "touch") return;
-      applyTiltFromPoint(event.clientX, event.clientY);
-    };
-
-    const handleWindowPointerOut = (event) => {
-      if (event.pointerType === "touch" || event.relatedTarget) return;
-      resetTilt();
-    };
-
-    const handlePointerDown = (event) => {
-      if (event.pointerType !== "touch" || touchPointerId !== null) return;
-
-      touchPointerId = event.pointerId;
-      touchStartX = event.clientX;
-      touchStartY = event.clientY;
-      touchActive = false;
-
-      touchHoldTimer = window.setTimeout(() => {
-        if (touchPointerId !== event.pointerId) return;
-
-        touchActive = true;
-        card.setPointerCapture?.(event.pointerId);
-        applyTiltFromPoint(event.clientX, event.clientY);
-      }, TOUCH_HOLD_DELAY_MS);
-    };
-
-    const handleTouchMove = (event) => {
-      if (
-        event.pointerType !== "touch" ||
-        event.pointerId !== touchPointerId
-      ) {
-        return;
-      }
-
-      if (!touchActive) {
-        const distance = Math.hypot(
-          event.clientX - touchStartX,
-          event.clientY - touchStartY,
-        );
-
-        if (distance > TOUCH_HOLD_SLOP_PX) {
-          clearTouchHoldTimer();
-          touchPointerId = null;
-        }
-
-        return;
-      }
-
-      event.preventDefault();
-      applyTiltFromPoint(event.clientX, event.clientY);
-    };
-
-    window.addEventListener("pointermove", handleMouseMove);
-    window.addEventListener("pointerout", handleWindowPointerOut);
-    card.addEventListener("pointerdown", handlePointerDown);
-    card.addEventListener("pointermove", handleTouchMove);
-    card.addEventListener("pointerup", finishTouchInteraction);
-    card.addEventListener("pointercancel", finishTouchInteraction);
-
-    return () => {
-      clearTouchHoldTimer();
-      window.removeEventListener("pointermove", handleMouseMove);
-      window.removeEventListener("pointerout", handleWindowPointerOut);
-      card.removeEventListener("pointerdown", handlePointerDown);
-      card.removeEventListener("pointermove", handleTouchMove);
-      card.removeEventListener("pointerup", finishTouchInteraction);
-      card.removeEventListener("pointercancel", finishTouchInteraction);
-      gsap.killTweensOf(card);
-    };
-  }, [reduceMotion]);
-
   return (
-    <div className="contact-tilt-card w-full max-w-[432px] shrink-0">
+    <div className="contact-tilt-card w-full max-w-[432px] shrink-0 max-[767px]:max-w-[343px] max-[767px]:justify-self-center">
       <div
-        ref={cardRef}
-        className="contact-tilt-card__surface relative aspect-[432/264.779] w-full overflow-hidden rounded-[var(--radius-4)] bg-[var(--color-primary-500-uniform)] will-change-transform"
+        className="contact-tilt-card__surface relative aspect-[432/264.779] w-full overflow-hidden rounded-[var(--radius-4)] bg-[var(--color-primary-500-uniform)]"
         data-node-id="5074:25773"
       >
         {gradientRenderer === "shader" ? (

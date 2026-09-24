@@ -1,12 +1,6 @@
-.contact-tilt-card {
-  perspective: 650px;
-}
-
 .contact-tilt-card__surface {
   --contact-card-logo-width: 74.0740741%;
   isolation: isolate;
-  transform-origin: center center;
-  transform-style: preserve-3d;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
