@@ -9,6 +9,7 @@ function HomeScrollPanel({
   captionNodeId,
   captionTitleNodeId,
   description,
+  headingLevel = 2,
   image,
   imageAlt,
   projectName,
@@ -57,6 +58,7 @@ function HomeScrollPanel({
         captionNodeId={captionNodeId}
         captionTitleNodeId={captionTitleNodeId}
         description={description}
+        headingLevel={headingLevel}
         projectName={projectName}
         title={title}
         visible={titleVisible}
