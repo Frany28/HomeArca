@@ -14,6 +14,7 @@ import {
   FEATURED_PROJECT_SELECTOR,
   SCROLL_SETTLE_DELAY_MS,
   SCROLL_STEP_DURATION_SECONDS,
+  TRACKPAD_WHEEL_GESTURE_THRESHOLD_PX,
   WHEEL_GESTURE_THRESHOLD_PX,
 } from "./homeScrollConstants.js";
 
@@ -1150,7 +1151,10 @@ function createFeaturedProjectsController({
       runtime.wheelGestureState = advanceWheelGesture(
         runtime.wheelGestureState,
         direction * intentMagnitude,
-        WHEEL_GESTURE_THRESHOLD_PX,
+        runtime.wheelGestureDeltaScale !== null &&
+          runtime.wheelGestureDeltaScale < 1
+          ? TRACKPAD_WHEEL_GESTURE_THRESHOLD_PX
+          : WHEEL_GESTURE_THRESHOLD_PX,
         event.timeStamp,
       );
     }
