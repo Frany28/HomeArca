@@ -35,7 +35,10 @@ function PublicSiteHeader({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const backgroundAppearance = useHeaderBackground(headerRef, scrollContainerRef);
 
-  useScrollDirectionVisibility(headerRef, { scrollContainerRef });
+  useScrollDirectionVisibility(headerRef, {
+    disabled: isMobileMenuOpen,
+    scrollContainerRef,
+  });
 
   const closeMobileMenu = useCallback((restoreFocus = false) => {
     setIsMobileMenuOpen(false);
