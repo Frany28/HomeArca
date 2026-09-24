@@ -70,6 +70,27 @@ function PublicSiteHeader({
   }, []);
 
   useEffect(() => {
+    const scroller = scrollContainerRef?.current;
+    if (!isMobileMenuOpen || !scroller) return undefined;
+
+    const previousOverflowY = scroller.style.overflowY;
+    const previousTouchAction = scroller.style.touchAction;
+    const previousOverscrollBehaviorY = scroller.style.overscrollBehaviorY;
+
+    scroller.dataset.homeInputLocked = "true";
+    scroller.style.overflowY = "hidden";
+    scroller.style.touchAction = "none";
+    scroller.style.overscrollBehaviorY = "none";
+
+    return () => {
+      scroller.style.overflowY = previousOverflowY;
+      scroller.style.touchAction = previousTouchAction;
+      scroller.style.overscrollBehaviorY = previousOverscrollBehaviorY;
+      delete scroller.dataset.homeInputLocked;
+    };
+  }, [isMobileMenuOpen, scrollContainerRef]);
+
+  useEffect(() => {
     if (!isMobileMenuOpen) return undefined;
 
     const handleEscape = (event) => {
