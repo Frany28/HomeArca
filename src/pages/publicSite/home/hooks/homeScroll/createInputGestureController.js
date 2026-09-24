@@ -149,9 +149,6 @@ function createInputGestureController({
       deltaY,
       WHEEL_GESTURE_THRESHOLD_PX,
       eventTime,
-      {
-        allowSameDirectionRearm: false,
-      },
     );
 
     runtime.wheelGestureState = {
@@ -412,9 +409,6 @@ function createInputGestureController({
       wheelIntentDelta,
       WHEEL_GESTURE_THRESHOLD_PX,
       event.timeStamp,
-      {
-        allowSameDirectionRearm: false,
-      },
     );
         const triggeredDirection =
       runtime.wheelGestureState.triggeredDirection;
