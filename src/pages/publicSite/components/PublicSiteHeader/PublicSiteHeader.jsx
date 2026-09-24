@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import clsx from "clsx";
 import { HambergerMenu } from "iconsax-react";
 import useHeaderBackground from "./useHeaderBackground.js";
@@ -28,11 +28,12 @@ function PublicSiteHeader({
   navigationItems = DEFAULT_NAVIGATION_ITEMS,
   onNavigate,
   onContact,
+  isMobileMenuOpen = false,
+  onMobileMenuOpenChange,
   scrollContainerRef,
 }) {
   const headerRef = useRef(null);
   const menuToggleRef = useRef(null);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const backgroundAppearance = useHeaderBackground(headerRef, scrollContainerRef);
 
   useScrollDirectionVisibility(headerRef, {
@@ -41,12 +42,12 @@ function PublicSiteHeader({
   });
 
   const closeMobileMenu = useCallback((restoreFocus = false) => {
-    setIsMobileMenuOpen(false);
+    onMobileMenuOpenChange?.(false);
 
     if (restoreFocus) {
       window.requestAnimationFrame(() => menuToggleRef.current?.focus());
     }
-  }, []);
+  }, [onMobileMenuOpenChange]);
 
   const handleMobileNavigate = useCallback(
     (navigationId) => {
@@ -64,34 +65,13 @@ function PublicSiteHeader({
   useEffect(() => {
     const desktopQuery = window.matchMedia("(min-width: 768px)");
     const closeAtDesktop = (event) => {
-      if (event.matches) setIsMobileMenuOpen(false);
+      if (event.matches) onMobileMenuOpenChange?.(false);
     };
 
     closeAtDesktop(desktopQuery);
     desktopQuery.addEventListener("change", closeAtDesktop);
     return () => desktopQuery.removeEventListener("change", closeAtDesktop);
-  }, []);
-
-  useEffect(() => {
-    const scroller = scrollContainerRef?.current;
-    if (!isMobileMenuOpen || !scroller) return undefined;
-
-    const previousOverflowY = scroller.style.overflowY;
-    const previousTouchAction = scroller.style.touchAction;
-    const previousOverscrollBehaviorY = scroller.style.overscrollBehaviorY;
-
-    scroller.dataset.homeInputLocked = "true";
-    scroller.style.overflowY = "hidden";
-    scroller.style.touchAction = "none";
-    scroller.style.overscrollBehaviorY = "none";
-
-    return () => {
-      scroller.style.overflowY = previousOverflowY;
-      scroller.style.touchAction = previousTouchAction;
-      scroller.style.overscrollBehaviorY = previousOverscrollBehaviorY;
-      delete scroller.dataset.homeInputLocked;
-    };
-  }, [isMobileMenuOpen, scrollContainerRef]);
+  }, [onMobileMenuOpenChange]);
 
   useEffect(() => {
     if (!isMobileMenuOpen) return undefined;
@@ -207,7 +187,7 @@ function PublicSiteHeader({
             aria-expanded={isMobileMenuOpen}
             aria-controls={MOBILE_MENU_ID}
             tooltip={isMobileMenuOpen ? false : "Abrir menú"}
-            onClick={() => setIsMobileMenuOpen((isOpen) => !isOpen)}
+            onClick={() => onMobileMenuOpenChange?.(!isMobileMenuOpen)}
             data-node-id={isMobileMenuOpen ? "5156:130000" : "5074:27974"}
           />
         </div>
