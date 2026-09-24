@@ -1,0 +1,44 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+
+const mobileMenuSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/components/PublicSiteHeader/PublicSiteMobileMenu.jsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
+
+const inputGestureSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/home/hooks/homeScroll/createInputGestureController.js",
+    import.meta.url,
+  ),
+  "utf8",
+);
+
+test("mobile navigation overlay blocks native touch panning", () => {
+  assert.match(mobileMenuSource, /data-home-input-blocker/);
+  assert.match(mobileMenuSource, /touch-none/);
+  assert.match(mobileMenuSource, /overscroll-none/);
+});
+
+test("home gesture controller ignores input that starts inside the mobile menu", () => {
+  assert.match(
+    inputGestureSource,
+    /target\.closest\("\[data-home-input-blocker\]"\)/,
+  );
+  assert.match(
+    inputGestureSource,
+    /const handleBoundaryTouchStart = \(event\) => \{[\s\S]*?isInputBlockedTarget\(event\.target\)/,
+  );
+  assert.match(
+    inputGestureSource,
+    /const handlePointerDown = \(event\) => \{[\s\S]*?isInputBlockedTarget\(event\.target\)/,
+  );
+  assert.match(
+    inputGestureSource,
+    /const handleNativeTouchStart = \(event\) => \{[\s\S]*?isInputBlockedTarget\(event\.target\)/,
+  );
+});
