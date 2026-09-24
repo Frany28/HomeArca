@@ -20,6 +20,7 @@ import {
   STATEMENT_PANEL_INDEX,
   TOUCH_SWIPE_THRESHOLD_PX,
   TOUCH_VERTICAL_DOMINANCE,
+  TRACKPAD_WHEEL_GESTURE_THRESHOLD_PX,
   WHEEL_GESTURE_IDLE_MS,
   WHEEL_GESTURE_THRESHOLD_PX,
   WHEEL_VERTICAL_DOMINANCE,
@@ -145,6 +146,12 @@ function createInputGestureController({
     runtime.wheelTransitionLock = false;
   };
 
+  const getWheelIntentThreshold = () =>
+    runtime.wheelGestureDeltaScale !== null &&
+    runtime.wheelGestureDeltaScale < 1
+      ? TRACKPAD_WHEEL_GESTURE_THRESHOLD_PX
+      : WHEEL_GESTURE_THRESHOLD_PX;
+
   const observeConsumedWheelGesture = (deltaY, eventTime) => {
     /*
      * Igual que en la calibración estable del 4-sep, incluso mientras una
@@ -155,7 +162,7 @@ function createInputGestureController({
     const observedGesture = advanceWheelGesture(
       runtime.wheelGestureState,
       deltaY,
-      WHEEL_GESTURE_THRESHOLD_PX,
+      getWheelIntentThreshold(),
       eventTime,
     );
 
@@ -415,7 +422,7 @@ function createInputGestureController({
     runtime.wheelGestureState = advanceWheelGesture(
       runtime.wheelGestureState,
       wheelIntentDelta,
-      WHEEL_GESTURE_THRESHOLD_PX,
+      getWheelIntentThreshold(),
       event.timeStamp,
     );
         const triggeredDirection =
