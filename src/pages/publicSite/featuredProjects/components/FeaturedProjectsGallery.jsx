@@ -34,12 +34,18 @@ const COLUMNS = [
 ];
 
 const PRIMARY_CARD_ID = "1-1";
+const FEATURED_CAROUSEL_MEDIA_QUERY = "(max-width: 1023px)";
 
 gsap.registerPlugin(ExpoScaleEase, Flip);
 
 function clampProgress(progress) {
   if (!Number.isFinite(progress)) return 0;
   return Math.min(Math.max(progress, 0), 1);
+}
+
+function isFeaturedCarouselLayout() {
+  return typeof window !== "undefined" &&
+    (window.matchMedia?.(FEATURED_CAROUSEL_MEDIA_QUERY).matches ?? false);
 }
 
 function FeaturedProjectsImageContent({
@@ -163,6 +169,7 @@ function FeaturedProjectsGallery({
     const stageColumns = [...stageColumnRefs.current.entries()];
 
     if (
+      isFeaturedCarouselLayout() ||
       !stage ||
       !sourceGrid ||
       !stageGrid ||
@@ -237,7 +244,7 @@ function FeaturedProjectsGallery({
     const progress = clampProgress(rawProgress);
     const stage = stageRef.current;
 
-    if (!stage || progress <= 0) {
+    if (!stage || progress <= 0 || isFeaturedCarouselLayout()) {
       if (stage) {
         stage.style.visibility = "hidden";
       }
@@ -335,7 +342,7 @@ function FeaturedProjectsGallery({
       ref={stageRef}
       aria-hidden="true"
       data-featured-gallery-stage
-      className="pointer-events-none absolute inset-0 z-10 overflow-hidden"
+      className="pointer-events-none absolute inset-0 z-10 overflow-hidden max-[1023px]:hidden"
       style={{ visibility: "hidden" }}
     >
       <div
