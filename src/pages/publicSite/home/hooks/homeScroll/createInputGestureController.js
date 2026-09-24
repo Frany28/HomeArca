@@ -141,6 +141,10 @@ function createInputGestureController({
     scheduleWheelGestureSettlement();
   };
 
+  const releaseWheelTransitionLock = () => {
+    runtime.wheelTransitionLock = false;
+  };
+
   const observeConsumedWheelGesture = (deltaY, eventTime) => {
     /*
      * Igual que en la calibración estable del 4-sep, incluso mientras una
@@ -1102,6 +1106,7 @@ function createInputGestureController({
     attach,
     destroy,
     observeConsumedWheelGesture,
+    releaseWheelTransitionLock,
     requireFreshWheelGesture,
     scheduleWheelGestureSettlement,
   };
