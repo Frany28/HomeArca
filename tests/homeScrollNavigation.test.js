@@ -276,7 +276,7 @@ test("an intentional opposite trackpad gesture rearms after the lock window", ()
   let gesture = advanceWheelGesture(createWheelGestureState(), 40, 32, 0);
 
   gesture = advanceWheelGesture(gesture, -14, 32, 240);
-  assert.equal(gesture.consumed, true);
+  assert.equal(gesture.consumed, false);
   assert.equal(gesture.triggeredDirection, null);
 
   gesture = advanceWheelGesture(gesture, -20, 32, 260);
@@ -467,13 +467,13 @@ test("sustained small trackpad deltas eventually produce one intention", () => {
   );
 });
 
-test("a deliberate opposite trackpad curve produces one intention per direction", () => {
+test("opposite trackpad inertia is ignored until the calibrated lock window passes", () => {
   assert.deepEqual(
     collectWheelIntentions(
       [[8, 18, 30, 18, 7, 3], [-4, -10, -22, -35]],
       { pauseMs: 16 },
     ),
-    [DOWN, UP],
+    [DOWN],
   );
 });
 
@@ -524,7 +524,7 @@ test("a real pause and renewed acceleration allow a second trackpad intention", 
   assert.deepEqual(triggers, [DOWN, DOWN]);
 });
 
-test("an accumulated opposite impulse rearms quickly without accepting sign noise", () => {
+test("opposite sign noise remains part of the current physical gesture", () => {
   let gesture = createWheelGestureState();
   const triggers = [];
   let eventTime = 0;
@@ -534,7 +534,7 @@ test("an accumulated opposite impulse rearms quickly without accepting sign nois
     if (gesture.triggeredDirection !== null) triggers.push(gesture.triggeredDirection);
   });
 
-  assert.deepEqual(triggers, [DOWN, UP]);
+  assert.deepEqual(triggers, [DOWN]);
 
   gesture = createWheelGestureState();
   const noisyTriggers = [];

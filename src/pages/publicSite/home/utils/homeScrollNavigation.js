@@ -148,19 +148,14 @@ function createWheelGestureState() {
   };
 }
 
-function markWheelGestureIdle(state) {
-  const currentState = state ?? createWheelGestureState();
-
-  if (!currentState.consumed) return createWheelGestureState();
-
-  return {
-    ...currentState,
-    idle: true,
-    oppositeAccumulator: 0,
-    rearmAccumulator: 0,
-    rearmLastMagnitude: 0,
-    triggeredDirection: null,
-  };
+function markWheelGestureIdle() {
+  /*
+   * Historical calibration restored from 2026-09-04:
+   * a real idle period starts a completely fresh physical gesture.
+   * Keeping consumed/rearm state across idle made both trackpads and
+   * discrete mouse wheels feel sticky or inconsistent.
+   */
+  return createWheelGestureState();
 }
 
 function consumeWheelGesture(state, deltaY, eventTime = 0) {
@@ -173,16 +168,16 @@ function consumeWheelGesture(state, deltaY, eventTime = 0) {
   return {
     ...currentState,
     accumulator: deltaY,
-    consumed: true,
     direction,
+    consumed: true,
     idle: false,
+    triggeredDirection: null,
     lastMagnitude: magnitude,
-    lastTriggerTime: eventTime,
     minimumMagnitudeAfterTrigger: Number.POSITIVE_INFINITY,
+    lastTriggerTime: eventTime,
     oppositeAccumulator: 0,
     rearmAccumulator: 0,
     rearmLastMagnitude: 0,
-    triggeredDirection: null,
   };
 }
 
@@ -191,7 +186,6 @@ function advanceWheelGesture(
   deltaY,
   threshold = 32,
   eventTime = 0,
-  { allowSameDirectionRearm = true } = {},
 ) {
   if (!Number.isFinite(deltaY) || deltaY === 0) {
     return {
@@ -209,113 +203,22 @@ function advanceWheelGesture(
 
   if (currentState.consumed) {
     const sameDirection = currentState.direction === direction;
-
-    if (!sameDirection) {
-      const oppositeAccumulator =
-        Math.sign(currentState.oppositeAccumulator) === direction
-          ? currentState.oppositeAccumulator + deltaY
-          : deltaY;
-      const oppositeIntentConfirmed =
-        Math.abs(oppositeAccumulator) >= threshold;
-
-      if (!oppositeIntentConfirmed) {
-        return {
-          ...currentState,
-          idle: false,
-          lastMagnitude: magnitude,
-          oppositeAccumulator,
-          rearmAccumulator: 0,
-          rearmLastMagnitude: 0,
-          triggeredDirection: null,
-        };
-      }
-
-      return {
-        accumulator: oppositeAccumulator,
-        direction,
-        consumed: true,
-        idle: false,
-        triggeredDirection: direction,
-        lastMagnitude: magnitude,
-        minimumMagnitudeAfterTrigger: Number.POSITIVE_INFINITY,
-        lastTriggerTime: eventTime,
-        oppositeAccumulator: 0,
-        rearmAccumulator: 0,
-        rearmLastMagnitude: 0,
-      };
-    }
-
-    if (
-      currentState.idle &&
-      magnitude < Math.max(threshold, WHEEL_DISCRETE_IMPULSE_MIN_PX)
-    ) {
-      return {
-        ...currentState,
-        idle: false,
-        lastMagnitude: magnitude,
-        oppositeAccumulator: 0,
-        rearmAccumulator: deltaY,
-        rearmLastMagnitude: magnitude,
-        triggeredDirection: null,
-      };
-    }
-
-    if (currentState.rearmAccumulator !== 0) {
-      const continuesWithFreshImpulse =
-        magnitude >= currentState.rearmLastMagnitude;
-
-      if (continuesWithFreshImpulse) {
-        const rearmAccumulator = currentState.rearmAccumulator + deltaY;
-        const rearmed = Math.abs(rearmAccumulator) >= threshold;
-
-        return {
-          ...currentState,
-          accumulator: rearmAccumulator,
-          consumed: true,
-          idle: false,
-          lastMagnitude: magnitude,
-          lastTriggerTime: rearmed ? eventTime : currentState.lastTriggerTime,
-          oppositeAccumulator: 0,
-          rearmAccumulator: rearmed ? 0 : rearmAccumulator,
-          rearmLastMagnitude: rearmed ? 0 : magnitude,
-          triggeredDirection: rearmed ? direction : null,
-        };
-      }
-    }
-
-        if (!allowSameDirectionRearm) { 
-      return {
-        ...currentState,
-        idle: false,
-        triggeredDirection: null,
-        lastMagnitude: magnitude,
-        minimumMagnitudeAfterTrigger: Math.min(
-          currentState.minimumMagnitudeAfterTrigger,
-          magnitude,
-        ),
-        oppositeAccumulator: 0,
-        rearmAccumulator: 0,
-        rearmLastMagnitude: 0,
-      };
-    }
-
     const minimumMagnitudeAfterTrigger = sameDirection
       ? Math.min(currentState.minimumMagnitudeAfterTrigger, magnitude)
       : currentState.minimumMagnitudeAfterTrigger;
     const enoughTimePassed =
       eventTime - currentState.lastTriggerTime >= WHEEL_REARM_MIN_DELAY_MS;
-    const discreteIdleImpulse =
-      currentState.idle &&
-      magnitude >= Math.max(threshold, WHEEL_DISCRETE_IMPULSE_MIN_PX);
+    const directionChanged =
+      !sameDirection && magnitude >= WHEEL_NEW_IMPULSE_MAGNITUDE_PX;
     const newSameDirectionImpulse =
+      sameDirection &&
       minimumMagnitudeAfterTrigger <= WHEEL_DECAY_MAGNITUDE_PX &&
       magnitude >= WHEEL_NEW_IMPULSE_MAGNITUDE_PX &&
       magnitude >= currentState.lastMagnitude * WHEEL_NEW_IMPULSE_RATIO;
-   
 
     if (
-      !discreteIdleImpulse &&
-      (!enoughTimePassed || !newSameDirectionImpulse)
+      !enoughTimePassed ||
+      (!directionChanged && !newSameDirectionImpulse)
     ) {
       return {
         ...currentState,
@@ -347,7 +250,8 @@ function advanceWheelGesture(
   }
 
   const accumulator =
-    currentState.direction !== null && currentState.direction !== direction
+    currentState.direction !== null &&
+    currentState.direction !== direction
       ? deltaY
       : currentState.accumulator + deltaY;
   const consumed = Math.abs(accumulator) >= threshold;

@@ -142,8 +142,12 @@ function createInputGestureController({
   };
 
   const observeConsumedWheelGesture = (deltaY, eventTime) => {
-  if (!runtime.wheelGestureState.consumed) return;
-
+    /*
+     * Igual que en la calibración estable del 4-sep, incluso mientras una
+     * transición está activa seguimos observando la curva del wheel. Así la
+     * cola de inercia puede decaer y un impulso realmente nuevo se distingue
+     * del gesto físico que originó la transición.
+     */
     const observedGesture = advanceWheelGesture(
       runtime.wheelGestureState,
       deltaY,
